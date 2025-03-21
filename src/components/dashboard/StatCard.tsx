@@ -21,7 +21,7 @@ export const StatCard = ({
   className,
   animationDelay = 0,
 }: StatCardProps) => {
-  const animationStyle = animationDelay ? `animation-delay: ${animationDelay}ms` : undefined;
+  const animationStyle = animationDelay ? { animationDelay: `${animationDelay}ms` } : undefined;
 
   return (
     <div 
@@ -30,7 +30,7 @@ export const StatCard = ({
         slideInBottom,
         className
       )} 
-      style={{ animationStyle }}
+      style={animationStyle}
     >
       <div className="flex items-start justify-between">
         <div>

@@ -25,7 +25,7 @@ export const DashboardCard = ({
   footerClassName,
   animationDelay = 0,
 }: DashboardCardProps) => {
-  const animationStyle = animationDelay ? `animation-delay: ${animationDelay}ms` : undefined;
+  const animationStyle = animationDelay ? { animationDelay: `${animationDelay}ms` } : undefined;
 
   return (
     <div 
@@ -34,7 +34,7 @@ export const DashboardCard = ({
         slideInBottom,
         className
       )} 
-      style={{ animationStyle }}
+      style={animationStyle}
     >
       <div className={cn("flex items-center justify-between p-4 border-b border-border", headerClassName)}>
         <h2 className="font-medium">{title}</h2>
