@@ -1,13 +1,123 @@
 
 import { useState } from "react";
-import { ClipboardList, Plus, Search } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { format } from "date-fns";
+import { ClipboardList, Plus, Search, Filter, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useTasks } from "@/context/TasksContext";
+import { useContacts } from "@/context/ContactsContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 
 const Tasks = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const tasks = []; // This would be populated from your backend
+  const [filterStatus, setFilterStatus] = useState<string>("active");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const { tasks, completeTask } = useTasks();
+  const { getContactById } = useContacts();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Extract contactId from query param if it exists
+  const queryParams = new URLSearchParams(location.search);
+  const contactId = queryParams.get("contactId");
+  
+  // Filter tasks based on filters and search query
+  const filteredTasks = tasks.filter(task => {
+    // Filter by contact if specified
+    if (contactId && task.contactId !== contactId) {
+      return false;
+    }
+    
+    // Filter by status
+    if (filterStatus !== "all" && task.status !== filterStatus) {
+      return false;
+    }
+    
+    // Filter by priority
+    if (filterPriority !== "all" && task.priority !== filterPriority) {
+      return false;
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
+      const title = task.title.toLowerCase();
+      const description = task.description?.toLowerCase() || "";
+      
+      // If task has a contact, search contact details too
+      let contactMatch = false;
+      if (task.contactId) {
+        const contact = getContactById(task.contactId);
+        if (contact) {
+          const contactName = contact.fullName?.toLowerCase() || "";
+          const contactCompany = contact.company?.toLowerCase() || "";
+          contactMatch = contactName.includes(searchLower) || contactCompany.includes(searchLower);
+        }
+      }
+      
+      return title.includes(searchLower) || 
+             description.includes(searchLower) || 
+             contactMatch;
+    }
+    
+    return true;
+  });
+  
+  // Sort tasks by due date (closest first) and then by priority (high to low)
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    // First sort by due date
+    if (a.dueDate && b.dueDate) {
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    }
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    
+    // Then sort by priority
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  });
+
+  // Get priority badge color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "low":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handleCompleteTask = (id: string) => {
+    completeTask(id);
+  };
 
   return (
     <div className="space-y-6">
@@ -18,8 +128,10 @@ const Tasks = () => {
             Create and manage tasks for your team
           </p>
         </div>
-        <Button className="sm:w-auto w-full">
-          <Plus className="mr-2 h-4 w-4" /> Create Task
+        <Button className="sm:w-auto w-full" asChild>
+          <Link to={contactId ? `/tasks/new?contactId=${contactId}` : "/tasks/new"}>
+            <Plus className="mr-2 h-4 w-4" /> Create Task
+          </Link>
         </Button>
       </div>
 
@@ -35,27 +147,122 @@ const Tasks = () => {
           />
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
-          <Button variant="outline" size="sm">
-            Filter
-          </Button>
-          <Button variant="outline" size="sm">
-            Sort
-          </Button>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterPriority} onValueChange={setFilterPriority}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {tasks.length === 0 ? (
+      {sortedTasks.length === 0 ? (
         <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
           <EmptyState
             icon={<ClipboardList size={40} />}
             title="No tasks created"
             description="Start creating tasks to track your work."
             actionText="Create Task"
+            actionLink="/tasks/new"
           />
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed">
-          {/* Tasks list would go here */}
+        <div className="space-y-4">
+          {sortedTasks.map((task) => {
+            const contact = task.contactId ? getContactById(task.contactId) : null;
+            return (
+              <Card 
+                key={task.id} 
+                className={`overflow-hidden ${task.status === 'completed' ? 'bg-muted/50' : ''}`}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <Badge
+                      className={getPriorityColor(task.priority)}
+                      variant="outline"
+                    >
+                      {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => navigate(`/tasks/${task.id}`)}>
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/tasks/edit/${task.id}`)}>
+                          Edit Task
+                        </DropdownMenuItem>
+                        {task.status === "active" && (
+                          <DropdownMenuItem onClick={() => handleCompleteTask(task.id)}>
+                            Mark as Completed
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <CardTitle className={`text-xl ${task.status === 'completed' ? 'line-through opacity-75' : ''}`}>
+                    {task.title}
+                  </CardTitle>
+                  {task.dueDate && (
+                    <CardDescription>
+                      Due: {format(new Date(task.dueDate), "PPP")}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {task.description && (
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                      {task.description}
+                    </p>
+                  )}
+                  {contact && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Contact: </span>
+                      <span>
+                        {contact.fullName || contact.company || "Unnamed Contact"}
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="pt-2">
+                  {task.status === "active" ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleCompleteTask(task.id)}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Mark as Completed
+                    </Button>
+                  ) : (
+                    <Badge variant="outline" className="w-full justify-center py-1">
+                      Completed
+                    </Badge>
+                  )}
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
