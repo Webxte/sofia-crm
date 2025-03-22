@@ -101,8 +101,8 @@ const Calendar = () => {
     });
     
     // Filter events by date and event type
-    filterEventsByDate(date, view, events);
-  }, [meetings, tasks, date, view, eventFilter]);
+    filterEventsByDate(events);
+  }, [meetings, tasks, date, view, eventFilter, getContactById]);
 
   // Calculate calendar days based on view
   useEffect(() => {
@@ -124,26 +124,26 @@ const Calendar = () => {
   }, [date, view]);
 
   // Filter events by selected date and view
-  const filterEventsByDate = (selectedDate: Date, currentView: string, allEvents: CalendarEvent[]) => {
+  const filterEventsByDate = (allEvents: CalendarEvent[]) => {
     let filteredEvents: CalendarEvent[] = [];
     
-    if (currentView === 'month') {
+    if (view === 'month') {
       // For month view, show events for the selected day
       filteredEvents = allEvents.filter(event => 
-        isSameDay(new Date(event.date), selectedDate)
+        isSameDay(new Date(event.date), date)
       );
-    } else if (currentView === 'week') {
+    } else if (view === 'week') {
       // For week view, show events within the week
-      const startDate = startOfWeek(selectedDate, { weekStartsOn: 0 });
-      const endDate = endOfWeek(selectedDate, { weekStartsOn: 0 });
+      const startDate = startOfWeek(date, { weekStartsOn: 0 });
+      const endDate = endOfWeek(date, { weekStartsOn: 0 });
       filteredEvents = allEvents.filter(event => {
         const eventDate = new Date(event.date);
         return eventDate >= startDate && eventDate <= endDate;
       });
-    } else if (currentView === 'day') {
+    } else if (view === 'day') {
       // For day view, show events for the selected day
       filteredEvents = allEvents.filter(event => 
-        isSameDay(new Date(event.date), selectedDate)
+        isSameDay(new Date(event.date), date)
       );
     }
     
@@ -205,9 +205,11 @@ const Calendar = () => {
 
   // Create day content for calendar
   const getDayContent = (day: Date) => {
-    const dayEvents = [...meetings.filter(meeting => isSameDay(new Date(meeting.date), day)),
-                      ...meetings.filter(meeting => meeting.followUpScheduled && meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day)),
-                      ...tasks.filter(task => task.dueDate && isSameDay(new Date(task.dueDate), day))];
+    const dayEvents = [
+      ...meetings.filter(meeting => isSameDay(new Date(meeting.date), day)),
+      ...meetings.filter(meeting => meeting.followUpScheduled && meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day)),
+      ...tasks.filter(task => task.dueDate && isSameDay(new Date(task.dueDate), day))
+    ];
     
     if (dayEvents.length === 0) return null;
     
@@ -317,28 +319,28 @@ const Calendar = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 rounded-lg border border-border overflow-hidden bg-card">
-          <div className="p-4">
-            <CalendarComponent
-              mode="single"
-              selected={date}
-              onSelect={handleDateChange}
-              className="mx-auto pointer-events-auto"
-              components={{
-                DayContent: ({ date: day }) => getDayContent(day),
-              }}
-              modifiers={{
-                hasEvent: [...meetings.map(meeting => new Date(meeting.date)),
-                          ...meetings.filter(m => m.followUpScheduled && m.followUpDate).map(m => new Date(m.followUpDate as Date)),
-                          ...tasks.filter(t => t.dueDate).map(t => new Date(t.dueDate as Date))],
-              }}
-              modifiersStyles={{
-                hasEvent: { 
-                  fontWeight: 'bold',
-                },
-              }}
-            />
-          </div>
+        <div className="md:col-span-2 rounded-lg border border-border overflow-hidden bg-background p-4">
+          <CalendarComponent
+            mode="single"
+            selected={date}
+            onSelect={handleDateChange}
+            className="mx-auto pointer-events-auto bg-background"
+            components={{
+              DayContent: ({ date: day }) => getDayContent(day),
+            }}
+            modifiers={{
+              hasEvent: [
+                ...meetings.map(meeting => new Date(meeting.date)),
+                ...meetings.filter(m => m.followUpScheduled && m.followUpDate).map(m => new Date(m.followUpDate as Date)),
+                ...tasks.filter(t => t.dueDate).map(t => new Date(t.dueDate as Date))
+              ],
+            }}
+            modifiersStyles={{
+              hasEvent: { 
+                fontWeight: 'bold',
+              },
+            }}
+          />
         </div>
 
         <div className="space-y-4">
@@ -395,7 +397,7 @@ const Calendar = () => {
               onClick={() => handleAddEvent(type === 'all' ? 'meeting' : type)}
             >
               <Plus className="mr-2 h-4 w-4" /> Add {type === 'all' || type === 'meeting' ? 'Meeting' : 
-                                                 type === 'task' ? 'Task' : 'Follow-up'}
+                                               type === 'task' ? 'Task' : 'Follow-up'}
             </Button>
           </CardContent>
         </Card>
