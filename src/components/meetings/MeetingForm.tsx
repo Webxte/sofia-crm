@@ -99,8 +99,8 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     setIsSubmitting(true);
     
     try {
-      // Make sure required fields are present
-      const meetingData = {
+      // Create complete object with all required properties
+      const meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt"> = {
         contactId: data.contactId,
         type: data.type,
         date: data.date,

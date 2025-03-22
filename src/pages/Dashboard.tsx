@@ -24,14 +24,15 @@ const Dashboard = () => {
       
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <StatCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            viewAllLink={stat.link}
-            animationDelay={index * 100}
-          />
+          <Link to={stat.link} key={stat.title} className="block">
+            <StatCard
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              viewAllLink={stat.link}
+              animationDelay={index * 100}
+            />
+          </Link>
         ))}
       </div>
       

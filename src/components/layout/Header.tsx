@@ -20,7 +20,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 const getPageTitle = (pathname: string): string => {
@@ -39,6 +38,10 @@ const getPageTitle = (pathname: string): string => {
       return "Orders";
     case "calendar":
       return "Calendar";
+    case "profile":
+      return "Profile";
+    case "reports":
+      return "Reports";
     default:
       return "Dashboard";
   }

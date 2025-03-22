@@ -7,10 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { TaskDetailsForm } from "./TaskDetailsForm";
-import { TaskPriorityForm } from "./TaskPriorityForm";
-import { TaskDateForm } from "./TaskDateForm";
-import { TaskContactForm } from "./TaskContactForm";
-import { TaskDescriptionForm } from "./TaskDescriptionForm";
 
 interface TaskFormProps {
   task?: Task;
@@ -24,16 +20,16 @@ const TaskForm = ({ task, isEditing = false, contactId }: TaskFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (data: Partial<Task>) => {
+  const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     
     try {
       // Make sure required fields are present
       const taskData = {
-        title: data.title || "",
+        title: data.title,
         description: data.description || "",
         dueDate: data.dueDate,
-        dueTime: data.dueTime,
+        dueTime: data.dueTime || "",
         priority: data.priority || "medium",
         contactId: data.contactId === "none" ? undefined : data.contactId,
         status: data.status || "active",

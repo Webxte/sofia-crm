@@ -12,6 +12,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, role: "admin" | "agent") => Promise<void>;
   logout: () => void;
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Check for existing user in localStorage on mount
   useEffect(() => {
@@ -31,55 +33,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(parsedUser);
       setIsAuthenticated(true);
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    // This is a mock login. In a real app, you would call an API
-    return new Promise<void>((resolve, reject) => {
-      try {
-        // For demo purposes, we'll accept any email and password combination
-        // and assign a role based on email pattern
-        const isAdmin = email.includes("admin");
-        const user: User = {
-          id: Math.random().toString(36).substring(2, 9),
-          name: email.split("@")[0],
-          email,
-          role: isAdmin ? "admin" : "agent",
-        };
-        
-        // Save to localStorage (mimicking a session)
-        localStorage.setItem("crm_user", JSON.stringify(user));
-        
-        setUser(user);
-        setIsAuthenticated(true);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
+    setIsLoading(true);
+    try {
+      // For demo purposes, we'll accept any email and password combination
+      // and assign a role based on email pattern
+      const isAdmin = email.includes("admin");
+      const user: User = {
+        id: Math.random().toString(36).substring(2, 9),
+        name: email.split("@")[0],
+        email,
+        role: isAdmin ? "admin" : "agent",
+      };
+      
+      // Save to localStorage (mimicking a session)
+      localStorage.setItem("crm_user", JSON.stringify(user));
+      
+      setUser(user);
+      setIsAuthenticated(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signup = async (name: string, email: string, password: string, role: "admin" | "agent") => {
-    // This is a mock signup. In a real app, you would call an API
-    return new Promise<void>((resolve, reject) => {
-      try {
-        const user: User = {
-          id: Math.random().toString(36).substring(2, 9),
-          name,
-          email,
-          role,
-        };
-        
-        // Save to localStorage (mimicking a session)
-        localStorage.setItem("crm_user", JSON.stringify(user));
-        
-        setUser(user);
-        setIsAuthenticated(true);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
+    setIsLoading(true);
+    try {
+      const user: User = {
+        id: Math.random().toString(36).substring(2, 9),
+        name,
+        email,
+        role,
+      };
+      
+      // Save to localStorage (mimicking a session)
+      localStorage.setItem("crm_user", JSON.stringify(user));
+      
+      setUser(user);
+      setIsAuthenticated(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
@@ -88,7 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   };
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = !!user && user.role === "admin";
 
   return (
     <AuthContext.Provider
@@ -96,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         isAuthenticated,
         isAdmin,
+        isLoading,
         login,
         signup,
         logout,

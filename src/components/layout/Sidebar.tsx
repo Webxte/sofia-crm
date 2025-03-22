@@ -53,6 +53,7 @@ const navigationItems = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const { user, isAdmin } = useAuth();
@@ -116,6 +117,44 @@ export const Sidebar = () => {
           <div className="p-4 border-t mt-auto">
             <div className="text-sm text-muted-foreground">
               Logged in as: <span className="font-medium">{isAdmin ? "Admin" : "Agent"}</span>
+            </div>
+            <div className="mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/profile");
+                }}
+              >
+                Profile
+              </Button>
+              {isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start mt-2"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/reports");
+                  }}
+                >
+                  Reports
+                </Button>
+              )}
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="w-full justify-start mt-2"
+                onClick={() => {
+                  const { logout } = useAuth();
+                  logout();
+                  navigate("/login");
+                }}
+              >
+                Logout
+              </Button>
             </div>
           </div>
         </div>
