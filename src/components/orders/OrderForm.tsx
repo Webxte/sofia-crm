@@ -1,3 +1,7 @@
+
+// No need to display all the code for OrderForm.tsx as it's a large file
+// Just updating to use the correct properties for OrderItem
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -264,12 +268,12 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
                   </thead>
                   <tbody className="bg-card divide-y divide-border">
                     {orderItems.map((item, index) => (
-                      <tr key={item.id}>
+                      <tr key={index}>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {item.product.code}
+                          {item.code}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {item.product.description}
+                          {item.description}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
                           ${item.price.toFixed(2)}

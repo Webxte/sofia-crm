@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -69,8 +68,8 @@ const Orders = () => {
       // Check products in order
       for (const item of order.items) {
         if (
-          item.product.code.toLowerCase().includes(searchLower) ||
-          item.product.description.toLowerCase().includes(searchLower)
+          item.code.toLowerCase().includes(searchLower) ||
+          item.description.toLowerCase().includes(searchLower)
         ) {
           return true;
         }
@@ -115,7 +114,7 @@ const Orders = () => {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          {isAdmin() && <ProductImporter />}
+          {isAdmin && <ProductImporter />}
           <Button className="sm:w-auto w-full" asChild>
             <Link to={contactId ? `/orders/new?contactId=${contactId}` : "/orders/new"}>
               <Plus className="mr-2 h-4 w-4" /> Create Order

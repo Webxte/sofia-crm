@@ -9,6 +9,7 @@ export interface Contact {
   mobile?: string;
   address?: string;
   notes?: string;
+  position?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,6 +64,9 @@ export interface OrderItem {
   price: number;
   quantity: number;
   subtotal: number;
+  // Adding id and product properties to match implementation
+  id: string;
+  product: Product;
 }
 
 export interface Order {

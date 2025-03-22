@@ -58,12 +58,15 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     if (!product) return undefined;
     
     return {
-      id: Math.random().toString(36).substring(2, 9),
       productId: product.id,
-      product,
-      quantity,
+      code: product.code,
+      description: product.description,
       price: product.price,
+      quantity,
       subtotal: product.price * quantity,
+      // Add the id and product properties to match the updated interface
+      id: Math.random().toString(36).substring(2, 9),
+      product,
     };
   };
 

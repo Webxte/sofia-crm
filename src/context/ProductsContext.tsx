@@ -68,12 +68,15 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
           const cost = parseFloat(costStr.trim());
           
           if (!isNaN(price) && !isNaN(cost)) {
+            // Add createdAt and updatedAt to match Product interface
             importedProducts.push({
               id: Math.random().toString(36).substring(2, 9),
               code: code.trim(),
               description: description.trim(),
               price,
               cost,
+              createdAt: new Date(),
+              updatedAt: new Date()
             });
           }
         }
