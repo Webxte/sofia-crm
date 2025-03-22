@@ -19,6 +19,8 @@ import Orders from "./pages/Orders";
 import NewOrder from "./pages/orders/NewOrder";
 import EditOrder from "./pages/orders/EditOrder";
 import Calendar from "./pages/Calendar";
+import Profile from "./pages/Profile";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
@@ -81,6 +83,12 @@ const App = () => (
                         
                         {/* Calendar route */}
                         <Route path="/calendar" element={<Calendar />} />
+                        
+                        {/* User routes */}
+                        <Route path="/profile" element={<Profile />} />
+                        
+                        {/* Admin routes */}
+                        <Route path="/reports" element={<Reports />} />
                       </Route>
 
                       {/* Redirect to login for unmatched routes */}

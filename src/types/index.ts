@@ -1,13 +1,5 @@
 
-export type UserRole = "admin" | "agent";
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
-
+// Contact types
 export interface Contact {
   id: string;
   fullName?: string;
@@ -16,54 +8,60 @@ export interface Contact {
   phone?: string;
   mobile?: string;
   address?: string;
-  position?: string;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Meeting types
 export interface Meeting {
   id: string;
   contactId: string;
+  type: "meeting" | "phone" | "email" | "other";
   date: Date;
   time: string;
   location?: string;
   notes: string;
+  followUpScheduled: boolean;
+  followUpDate?: Date | null;
+  followUpNotes?: string;
   nextSteps?: string[];
-  followUpScheduled?: boolean;
-  followUpDate?: Date;
-  type: "meeting" | "phone" | "email" | "other";
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Task types
 export interface Task {
   id: string;
   title: string;
   description?: string;
   dueDate?: Date;
+  dueTime?: string;
   priority: "low" | "medium" | "high";
   status: "active" | "completed";
   contactId?: string;
-  assignedTo?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Product types
 export interface Product {
   id: string;
   code: string;
   description: string;
   price: number;
   cost: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
+// Order types
 export interface OrderItem {
-  id: string;
   productId: string;
-  product: Product;
-  quantity: number;
+  code: string;
+  description: string;
   price: number;
+  quantity: number;
   subtotal: number;
 }
 
@@ -77,4 +75,12 @@ export interface Order {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// User types
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "agent";
 }

@@ -1,58 +1,85 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { UserRole } from "@/types";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const signupSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  password: z.string().min(6, {
+    message: "Password must be at least 6 characters.",
+  }),
+  role: z.enum(["admin", "agent"], {
+    required_error: "Please select a role.",
+  }),
+});
+
+type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Signup = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("agent");
   const [isLoading, setIsLoading] = useState(false);
-  const { register } = useAuth();
+  const { signup } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name || !email || !password || !confirmPassword) {
-      return toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-    }
-    
-    if (password !== confirmPassword) {
-      return toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-    }
-    
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "agent",
+    },
+  });
+
+  const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     
     try {
-      await register(name, email, password, role);
+      await signup(values.name, values.email, values.password, values.role);
       toast({
-        title: "Success",
-        description: "Your account has been created",
+        title: "Account created",
+        description: "You've been signed up successfully.",
       });
       navigate("/");
     } catch (error) {
       console.error(error);
       toast({
         title: "Error",
-        description: "Something went wrong",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -61,90 +88,96 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="mx-auto max-w-md w-full p-8">
-        <div className="flex flex-col space-y-2 text-center mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">Sign up</CardTitle>
+          <CardDescription>
+            Create an account to access the CRM system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="your.email@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="******" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="agent">Agent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating account..." : "Create account"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            Enter your details below to create your account
+            Already have an account?{" "}
+            <Link to="/login" className="text-primary underline">
+              Log in
+            </Link>
           </p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              placeholder="name@example.com"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Account Type</Label>
-            <RadioGroup value={role} onValueChange={(value) => setRole(value as UserRole)}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="agent" id="agent" />
-                <Label htmlFor="agent">Agent</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="admin" id="admin" />
-                <Label htmlFor="admin">Admin</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Create account"}
-          </Button>
-        </form>
-        
-        <div className="mt-4 text-center text-sm">
-          Already have an account?{" "}
-          <Link to="/login" className="underline underline-offset-4 hover:text-primary">
-            Sign in
-          </Link>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

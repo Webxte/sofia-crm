@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -54,7 +55,8 @@ const meetingSchema = z.object({
     required_error: "Meeting notes are required",
   }),
   followUpScheduled: z.boolean().default(false),
-  followUpDate: z.date().optional(),
+  followUpDate: z.date().optional().nullable(),
+  followUpNotes: z.string().optional(),
   nextSteps: z.array(z.string()).optional(),
 });
 
@@ -81,7 +83,8 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     location: meeting?.location || "",
     notes: meeting?.notes || "",
     followUpScheduled: meeting?.followUpScheduled || false,
-    followUpDate: meeting?.followUpDate ? new Date(meeting.followUpDate) : undefined,
+    followUpDate: meeting?.followUpDate ? new Date(meeting.followUpDate) : null,
+    followUpNotes: meeting?.followUpNotes || "",
     nextSteps: meeting?.nextSteps || [],
   };
 
@@ -96,26 +99,28 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     setIsSubmitting(true);
     
     try {
+      // Make sure required fields are present
+      const meetingData = {
+        contactId: data.contactId,
+        type: data.type,
+        date: data.date,
+        time: data.time,
+        notes: data.notes,
+        location: data.location || "",
+        followUpScheduled: data.followUpScheduled,
+        followUpDate: data.followUpScheduled ? data.followUpDate : null,
+        followUpNotes: data.followUpScheduled ? data.followUpNotes || "" : "",
+        nextSteps: data.nextSteps || [],
+      };
+      
       if (isEditing && meeting) {
-        updateMeeting(meeting.id, data);
+        updateMeeting(meeting.id, meetingData);
         toast({
           title: "Success",
           description: "Meeting updated successfully",
         });
       } else {
-        const newMeeting: Omit<Meeting, "id" | "createdAt" | "updatedAt"> = {
-          contactId: data.contactId,
-          type: data.type,
-          date: data.date,
-          time: data.time,
-          notes: data.notes,
-          location: data.location,
-          followUpScheduled: data.followUpScheduled,
-          followUpDate: data.followUpDate,
-          nextSteps: data.nextSteps || [],
-        };
-        
-        addMeeting(newMeeting);
+        addMeeting(meetingData);
         toast({
           title: "Success",
           description: "Meeting created successfully",
@@ -283,7 +288,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
             name="notes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Meeting Notes</FormLabel>
+                <FormLabel>Meeting Notes *</FormLabel>
                 <FormControl>
                   <Textarea 
                     placeholder="What was discussed?" 
@@ -320,45 +325,65 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
           />
 
           {followUpScheduled && (
-            <FormField
-              control={form.control}
-              name="followUpDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Follow-up Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
+            <>
+              <FormField
+                control={form.control}
+                name="followUpDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Follow-up Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={field.onChange}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="followUpNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Follow-up Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Notes for follow-up" 
+                        className="min-h-20" 
+                        {...field} 
                       />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
           )}
 
           <div className="flex justify-end gap-4">
@@ -369,7 +394,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
               {isSubmitting ? "Saving..." : isEditing ? "Update Meeting" : "Schedule Meeting"}
             </Button>
           </div>

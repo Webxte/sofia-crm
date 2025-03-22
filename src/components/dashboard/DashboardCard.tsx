@@ -1,51 +1,47 @@
 
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { slideInBottom } from "@/utils/transitions";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface DashboardCardProps {
   title: string;
-  children: ReactNode;
-  viewAllLink?: string;
-  className?: string;
-  headerClassName?: string;
-  contentClassName?: string;
-  footerClassName?: string;
+  viewAllLink: string;
   animationDelay?: number;
+  className?: string;
+  children: ReactNode;
 }
 
 export const DashboardCard = ({
   title,
-  children,
   viewAllLink,
-  className,
-  headerClassName,
-  contentClassName,
-  footerClassName,
   animationDelay = 0,
+  className = "",
+  children,
 }: DashboardCardProps) => {
-  const animationStyle = animationDelay ? { animationDelay: `${animationDelay}ms` } : undefined;
-
   return (
-    <div 
-      className={cn(
-        "rounded-lg border border-border bg-card shadow-sm overflow-hidden",
-        slideInBottom,
-        className
-      )} 
-      style={animationStyle}
+    <Card className={`overflow-hidden ${className}`}
+      style={{
+        animationDelay: `${animationDelay}ms`,
+      }}
     >
-      <div className={cn("flex items-center justify-between p-4 border-b border-border", headerClassName)}>
-        <h2 className="font-medium">{title}</h2>
-        {viewAllLink && (
-          <Link to={viewAllLink} className="text-primary text-sm hover:underline flex items-center">
-            View all →
+      <CardHeader className="bg-muted/20 pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <Link to={viewAllLink}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-[#0EA5E9] text-white hover:bg-[#0EA5E9]/90 border-[#0EA5E9]"
+            >
+              View details
+            </Button>
           </Link>
-        )}
-      </div>
-      <div className={cn("p-4", contentClassName)}>{children}</div>
-      {footerClassName && <div className={cn("p-4 border-t border-border", footerClassName)} />}
-    </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4">
+        {children}
+      </CardContent>
+    </Card>
   );
 };
