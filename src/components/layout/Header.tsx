@@ -12,21 +12,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sidebar } from "./Sidebar";
-import ProductImporter from "@/components/orders/ProductImporter";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import ProductImporter from "@/components/orders/ProductImporter";
+
+// Mobile menu only for Header
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 const getPageTitle = (pathname: string): string => {
   const path = pathname.split("/")[1];
@@ -72,7 +74,6 @@ export const Header = () => {
   return (
     <header className="border-b border-border px-4 py-3 flex items-center justify-between bg-white">
       <div className="flex items-center gap-2">
-        <Sidebar />
         <h1 className="text-xl font-semibold">{pageTitle}</h1>
       </div>
       <div className="flex items-center space-x-2">
