@@ -276,13 +276,13 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
                           {item.description}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                          ${item.price.toFixed(2)}
+                          €{item.price.toFixed(2)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
                           {item.quantity}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                          ${item.subtotal.toFixed(2)}
+                          €{item.subtotal.toFixed(2)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                           <Button
@@ -302,7 +302,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
                         Total
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right">
-                        ${calculateTotal().toFixed(2)}
+                        €{calculateTotal().toFixed(2)}
                       </td>
                       <td></td>
                     </tr>

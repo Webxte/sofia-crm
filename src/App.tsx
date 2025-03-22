@@ -65,21 +65,25 @@ const App = () => (
                         <Route path="/contacts" element={<Contacts />} />
                         <Route path="/contacts/new" element={<NewContact />} />
                         <Route path="/contacts/edit/:id" element={<EditContact />} />
+                        <Route path="/contacts/:id" element={<Navigate to="/contacts/edit/:id" replace />} />
                         
                         {/* Meetings routes */}
                         <Route path="/meetings" element={<Meetings />} />
                         <Route path="/meetings/new" element={<NewMeeting />} />
                         <Route path="/meetings/edit/:id" element={<EditMeeting />} />
+                        <Route path="/meetings/:id" element={<Navigate to="/meetings/edit/:id" replace />} />
                         
                         {/* Tasks routes */}
                         <Route path="/tasks" element={<Tasks />} />
                         <Route path="/tasks/new" element={<NewTask />} />
                         <Route path="/tasks/edit/:id" element={<EditTask />} />
+                        <Route path="/tasks/:id" element={<Navigate to="/tasks/edit/:id" replace />} />
                         
                         {/* Orders routes */}
                         <Route path="/orders" element={<Orders />} />
                         <Route path="/orders/new" element={<NewOrder />} />
                         <Route path="/orders/edit/:id" element={<EditOrder />} />
+                        <Route path="/orders/:id" element={<Navigate to="/orders/edit/:id" replace />} />
                         
                         {/* Calendar route */}
                         <Route path="/calendar" element={<Calendar />} />

@@ -1,6 +1,6 @@
 
-import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 interface ProtectedRouteProps {
@@ -9,7 +9,16 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, isAdmin } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin, user } = useAuth();
+  const navigate = useNavigate();
+
+  // This effect ensures we have a valid user session
+  useEffect(() => {
+    // If we're not loading and not authenticated, redirect to login
+    if (!isLoading && !isAuthenticated) {
+      navigate("/login", { replace: true });
+    }
+  }, [isLoading, isAuthenticated, navigate]);
 
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
@@ -19,7 +28,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" replace />;
   }
 
-  // isAdmin is a boolean value, not a function
   if (requireAdmin && !isAdmin) {
     return <Navigate to="/" replace />;
   }

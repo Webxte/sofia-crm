@@ -18,7 +18,7 @@ export interface Contact {
 export interface Meeting {
   id: string;
   contactId: string;
-  type: "meeting" | "phone" | "email" | "other";
+  type: "meeting" | "phone" | "email" | "online" | "other";
   date: Date;
   time: string;
   location?: string;

@@ -44,8 +44,11 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     return products.find(product => product.id === id);
   };
 
+  // Updated to be case-insensitive
   const getProductByCode = (code: string) => {
-    return products.find(product => product.code === code);
+    return products.find(product => 
+      product.code.toLowerCase() === code.toLowerCase()
+    );
   };
 
   const importProducts = (csvData: string) => {

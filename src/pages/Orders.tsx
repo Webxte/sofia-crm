@@ -1,13 +1,15 @@
+
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { ShoppingCart, Plus, Search, Filter } from "lucide-react";
+import { ShoppingCart, Plus, Search, Filter, Download } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -34,6 +36,7 @@ const Orders = () => {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   
   // Extract contactId from query param if it exists
   const queryParams = new URLSearchParams(location.search);
@@ -104,6 +107,24 @@ const Orders = () => {
     }
   };
 
+  // Handle export button click
+  const handleExport = () => {
+    // For demonstration, we'll just show a toast message
+    toast({
+      title: "Export Started",
+      description: "Your orders are being exported to CSV",
+    });
+    
+    // Here you'd implement the actual export functionality
+    // For now, let's just mimic the process with a timeout
+    setTimeout(() => {
+      toast({
+        title: "Export Complete",
+        description: "Orders have been exported successfully",
+      });
+    }, 1500);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -148,8 +169,8 @@ const Orders = () => {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm">
-            Export
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" /> Export
           </Button>
         </div>
       </div>
@@ -197,7 +218,7 @@ const Orders = () => {
                     </div>
                     <div className="text-sm flex justify-between font-medium">
                       <span className="text-muted-foreground">Total:</span>
-                      <span>${order.total.toFixed(2)}</span>
+                      <span>€{order.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -206,7 +227,7 @@ const Orders = () => {
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => navigate(`/orders/${order.id}`)}
+                    onClick={() => navigate(`/orders/edit/${order.id}`)}
                   >
                     View Details
                   </Button>

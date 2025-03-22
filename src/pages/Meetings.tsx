@@ -79,6 +79,8 @@ const Meetings = () => {
         return "bg-green-100 text-green-800";
       case "email":
         return "bg-purple-100 text-purple-800";
+      case "online":
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -93,6 +95,8 @@ const Meetings = () => {
         return "Phone Call";
       case "email":
         return "Email";
+      case "online":
+        return "Online Meeting";
       default:
         return "Other";
     }
@@ -109,7 +113,7 @@ const Meetings = () => {
         </div>
         <Button className="sm:w-auto w-full" asChild>
           <Link to={contactId ? `/meetings/new?contactId=${contactId}` : "/meetings/new"}>
-            <Plus className="mr-2 h-4 w-4" /> Schedule Meeting
+            <Plus className="mr-2 h-4 w-4" /> Add Meeting
           </Link>
         </Button>
       </div>
@@ -133,6 +137,7 @@ const Meetings = () => {
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="meeting">In-person Meeting</SelectItem>
+              <SelectItem value="online">Online Meeting</SelectItem>
               <SelectItem value="phone">Phone Call</SelectItem>
               <SelectItem value="email">Email</SelectItem>
               <SelectItem value="other">Other</SelectItem>
@@ -151,8 +156,8 @@ const Meetings = () => {
           <EmptyState
             icon={<MessagesSquare size={40} />}
             title="No meetings scheduled"
-            description="Schedule your first meeting to get started."
-            actionText="Schedule Meeting"
+            description="Add your first meeting to get started."
+            actionText="Add Meeting"
             actionLink="/meetings/new"
           />
         </div>
@@ -192,7 +197,7 @@ const Meetings = () => {
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => navigate(`/meetings/${meeting.id}`)}
+                    onClick={() => navigate(`/meetings/edit/${meeting.id}`)}
                   >
                     View Details
                   </Button>
