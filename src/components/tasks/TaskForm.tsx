@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -90,7 +89,16 @@ const TaskForm = ({ task, isEditing = false, contactId }: TaskFormProps) => {
           description: "Task updated successfully",
         });
       } else {
-        addTask(data);
+        const taskData: Omit<Task, "id" | "createdAt" | "updatedAt"> = {
+          title: data.title,
+          description: data.description,
+          dueDate: data.dueDate,
+          priority: data.priority,
+          contactId: data.contactId,
+          status: data.status || "active",
+        };
+        
+        addTask(taskData);
         toast({
           title: "Success",
           description: "Task created successfully",

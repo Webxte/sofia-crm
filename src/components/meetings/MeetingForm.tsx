@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -104,7 +103,19 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
           description: "Meeting updated successfully",
         });
       } else {
-        addMeeting(data);
+        const newMeeting: Omit<Meeting, "id" | "createdAt" | "updatedAt"> = {
+          contactId: data.contactId,
+          type: data.type,
+          date: data.date,
+          time: data.time,
+          notes: data.notes,
+          location: data.location,
+          followUpScheduled: data.followUpScheduled,
+          followUpDate: data.followUpDate,
+          nextSteps: data.nextSteps || [],
+        };
+        
+        addMeeting(newMeeting);
         toast({
           title: "Success",
           description: "Meeting created successfully",

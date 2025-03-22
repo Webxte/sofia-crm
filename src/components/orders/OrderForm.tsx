@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -101,8 +100,11 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     setIsSubmitting(true);
     
     try {
-      const orderData = {
-        ...data,
+      const orderData: Omit<Order, "id" | "createdAt" | "updatedAt"> = {
+        contactId: data.contactId,
+        date: data.date,
+        status: data.status,
+        notes: data.notes || "",
         items: orderItems,
         total: calculateTotal(),
       };
