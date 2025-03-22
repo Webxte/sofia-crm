@@ -244,7 +244,7 @@ const Calendar = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-background">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
@@ -319,14 +319,20 @@ const Calendar = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 rounded-lg border border-border overflow-hidden bg-background p-4">
+        <div className="md:col-span-2 rounded-lg border border-border overflow-hidden bg-card p-4">
           <CalendarComponent
             mode="single"
             selected={date}
             onSelect={handleDateChange}
-            className="mx-auto pointer-events-auto bg-background"
+            className="mx-auto pointer-events-auto bg-card"
+            showOutsideDays={true}
             components={{
-              DayContent: ({ date: day }) => getDayContent(day),
+              DayContent: ({ date: day, ...props }) => (
+                <div className="relative flex flex-col items-center justify-center h-full w-full">
+                  <div {...props}>{format(day, "d")}</div>
+                  {getDayContent(day)}
+                </div>
+              ),
             }}
             modifiers={{
               hasEvent: [
@@ -343,7 +349,7 @@ const Calendar = () => {
           />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 bg-card p-4 rounded-lg border border-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium">
               {view === 'day' && format(date, "MMMM d, yyyy")}

@@ -20,7 +20,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const getPageTitle = (pathname: string): string => {
   const path = pathname.split("/")[1];
@@ -70,9 +76,16 @@ export const Header = () => {
         <h1 className="text-xl font-semibold">{pageTitle}</h1>
       </div>
       <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <BellIcon size={20} />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-muted-foreground">
+              <BellIcon size={20} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Notifications (Coming Soon)
+          </TooltipContent>
+        </Tooltip>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative flex items-center gap-2">

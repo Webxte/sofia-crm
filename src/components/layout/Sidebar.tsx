@@ -56,7 +56,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
 
   // Close sidebar when route changes on mobile
   useEffect(() => {
@@ -69,6 +69,11 @@ export const Sidebar = () => {
     if (path === "/" && location.pathname === "/") return true;
     if (path !== "/" && location.pathname.startsWith(path)) return true;
     return false;
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   // Mobile sidebar component
@@ -148,9 +153,8 @@ export const Sidebar = () => {
                 size="sm" 
                 className="w-full justify-start mt-2"
                 onClick={() => {
-                  const { logout } = useAuth();
-                  logout();
-                  navigate("/login");
+                  setOpen(false);
+                  handleLogout();
                 }}
               >
                 Logout
