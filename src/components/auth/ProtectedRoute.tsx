@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" replace />;
   }
 
-  // Fix: isAdmin is a boolean value, not a function
+  // isAdmin is a boolean value, not a function
   if (requireAdmin && !isAdmin) {
     return <Navigate to="/" replace />;
   }
