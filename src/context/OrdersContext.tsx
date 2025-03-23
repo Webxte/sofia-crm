@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { Order, OrderItem, Product } from "@/types";
 import { useProducts } from "./ProductsContext";
+import { useAuth } from "./AuthContext";
 
 interface OrdersContextType {
   orders: Order[];
@@ -11,6 +12,7 @@ interface OrdersContextType {
   getOrderById: (id: string) => Order | undefined;
   getOrdersByContactId: (contactId: string) => Order[];
   createOrderItem: (productId: string, quantity: number) => OrderItem | undefined;
+  sendOrderEmail: (orderId: string, recipient: string, subject: string, message: string) => Promise<boolean>;
 }
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -18,10 +20,18 @@ const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const { getProductById } = useProducts();
+  const { user } = useAuth();
 
   const addOrder = (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => {
+    // Add agent information if available
+    const agentData = user ? {
+      agentId: user.id,
+      agentName: user.name
+    } : {};
+    
     const newOrder: Order = {
       ...orderData,
+      ...agentData,
       id: Math.random().toString(36).substring(2, 9),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -58,16 +68,35 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     if (!product) return undefined;
     
     return {
+      id: Math.random().toString(36).substring(2, 9),
       productId: product.id,
       code: product.code,
       description: product.description,
       price: product.price,
       quantity,
+      vat: product.vat || 0,
       subtotal: product.price * quantity,
-      // Add the id and product properties to match the updated interface
-      id: Math.random().toString(36).substring(2, 9),
       product,
     };
+  };
+
+  // Simulate sending an order by email
+  const sendOrderEmail = async (
+    orderId: string, 
+    recipient: string, 
+    subject: string, 
+    message: string
+  ): Promise<boolean> => {
+    // This is a mock function - in a real application you would connect to an email service
+    console.log(`Sending order ${orderId} to ${recipient}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Message: ${message}`);
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Return success (true) to simulate successful delivery
+    return true;
   };
 
   return (
@@ -80,6 +109,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         getOrderById,
         getOrdersByContactId,
         createOrderItem,
+        sendOrderEmail,
       }}
     >
       {children}

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +29,8 @@ import { MeetingsProvider } from "./context/MeetingsContext";
 import { TasksProvider } from "./context/TasksContext";
 import { ProductsProvider } from "./context/ProductsContext";
 import { OrdersProvider } from "./context/OrdersContext";
+import { SettingsProvider } from "./context/SettingsContext";
+import Settings from "./pages/Settings";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -43,62 +44,69 @@ const App = () => (
             <TasksProvider>
               <ProductsProvider>
                 <OrdersProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <Routes>
-                      {/* Auth routes */}
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/signup" element={<Signup />} />
-                      
-                      {/* Protected routes */}
-                      <Route 
-                        element={
-                          <ProtectedRoute>
-                            <Layout />
-                          </ProtectedRoute>
-                        }
-                      >
-                        <Route path="/" element={<Dashboard />} />
+                  <SettingsProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      <Routes>
+                        {/* Auth routes */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/signup" element={<Signup />} />
                         
-                        {/* Contacts routes */}
-                        <Route path="/contacts" element={<Contacts />} />
-                        <Route path="/contacts/new" element={<NewContact />} />
-                        <Route path="/contacts/edit/:id" element={<EditContact />} />
-                        <Route path="/contacts/:id" element={<Navigate to="/contacts/edit/:id" replace />} />
-                        
-                        {/* Meetings routes */}
-                        <Route path="/meetings" element={<Meetings />} />
-                        <Route path="/meetings/new" element={<NewMeeting />} />
-                        <Route path="/meetings/edit/:id" element={<EditMeeting />} />
-                        <Route path="/meetings/:id" element={<Navigate to="/meetings/edit/:id" replace />} />
-                        
-                        {/* Tasks routes */}
-                        <Route path="/tasks" element={<Tasks />} />
-                        <Route path="/tasks/new" element={<NewTask />} />
-                        <Route path="/tasks/edit/:id" element={<EditTask />} />
-                        <Route path="/tasks/:id" element={<Navigate to="/tasks/edit/:id" replace />} />
-                        
-                        {/* Orders routes */}
-                        <Route path="/orders" element={<Orders />} />
-                        <Route path="/orders/new" element={<NewOrder />} />
-                        <Route path="/orders/edit/:id" element={<EditOrder />} />
-                        <Route path="/orders/:id" element={<Navigate to="/orders/edit/:id" replace />} />
-                        
-                        {/* Calendar route */}
-                        <Route path="/calendar" element={<Calendar />} />
-                        
-                        {/* User routes */}
-                        <Route path="/profile" element={<Profile />} />
-                        
-                        {/* Admin routes */}
-                        <Route path="/reports" element={<Reports />} />
-                      </Route>
+                        {/* Protected routes */}
+                        <Route 
+                          element={
+                            <ProtectedRoute>
+                              <Layout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route path="/" element={<Dashboard />} />
+                          
+                          {/* Contacts routes */}
+                          <Route path="/contacts" element={<Contacts />} />
+                          <Route path="/contacts/new" element={<NewContact />} />
+                          <Route path="/contacts/edit/:id" element={<EditContact />} />
+                          <Route path="/contacts/:id" element={<Navigate to="/contacts/edit/:id" replace />} />
+                          
+                          {/* Meetings routes */}
+                          <Route path="/meetings" element={<Meetings />} />
+                          <Route path="/meetings/new" element={<NewMeeting />} />
+                          <Route path="/meetings/edit/:id" element={<EditMeeting />} />
+                          <Route path="/meetings/:id" element={<Navigate to="/meetings/edit/:id" replace />} />
+                          
+                          {/* Tasks routes */}
+                          <Route path="/tasks" element={<Tasks />} />
+                          <Route path="/tasks/new" element={<NewTask />} />
+                          <Route path="/tasks/edit/:id" element={<EditTask />} />
+                          <Route path="/tasks/:id" element={<Navigate to="/tasks/edit/:id" replace />} />
+                          
+                          {/* Orders routes */}
+                          <Route path="/orders" element={<Orders />} />
+                          <Route path="/orders/new" element={<NewOrder />} />
+                          <Route path="/orders/edit/:id" element={<EditOrder />} />
+                          <Route path="/orders/:id" element={<Navigate to="/orders/edit/:id" replace />} />
+                          
+                          {/* Calendar route */}
+                          <Route path="/calendar" element={<Calendar />} />
+                          
+                          {/* User routes */}
+                          <Route path="/profile" element={<Profile />} />
+                          
+                          {/* Admin routes */}
+                          <Route path="/reports" element={<Reports />} />
+                          <Route path="/settings" element={
+                            <ProtectedRoute requireAdmin>
+                              <Settings />
+                            </ProtectedRoute>
+                          } />
+                        </Route>
 
-                      {/* Redirect to login for unmatched routes */}
-                      <Route path="*" element={<Navigate to="/login" replace />} />
-                    </Routes>
-                  </BrowserRouter>
+                        {/* Redirect to login for unmatched routes */}
+                        <Route path="*" element={<Navigate to="/login" replace />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </SettingsProvider>
                 </OrdersProvider>
               </ProductsProvider>
             </TasksProvider>

@@ -10,6 +10,7 @@ interface ProductsContextType {
   getProductById: (id: string) => Product | undefined;
   getProductByCode: (code: string) => Product | undefined;
   importProducts: (csvData: string) => void;
+  importProductsFromFile: (file: File) => Promise<void>;
 }
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
@@ -65,10 +66,11 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         const values = lines[i].split(',');
         
         if (values.length >= 4) {
-          const [code, description, priceStr, costStr] = values;
+          const [code, description, priceStr, costStr, vatStr] = values;
           
           const price = parseFloat(priceStr.trim());
           const cost = parseFloat(costStr.trim());
+          const vat = vatStr ? parseFloat(vatStr.trim()) : 0;
           
           if (!isNaN(price) && !isNaN(cost)) {
             // Add createdAt and updatedAt to match Product interface
@@ -78,6 +80,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
               description: description.trim(),
               price,
               cost,
+              vat,
               createdAt: new Date(),
               updatedAt: new Date()
             });
@@ -92,6 +95,28 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const importProductsFromFile = async (file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const csvData = e.target?.result as string;
+          importProducts(csvData);
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      
+      reader.readAsText(file);
+    });
+  };
+
   return (
     <ProductsContext.Provider
       value={{
@@ -102,6 +127,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         getProductById,
         getProductByCode,
         importProducts,
+        importProductsFromFile,
       }}
     >
       {children}

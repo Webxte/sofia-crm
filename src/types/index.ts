@@ -52,31 +52,37 @@ export interface Product {
   description: string;
   price: number;
   cost: number;
+  vat?: number; // Adding VAT field
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Order types
 export interface OrderItem {
+  id: string;
   productId: string;
   code: string;
   description: string;
   price: number;
   quantity: number;
+  vat?: number; // Adding VAT field
   subtotal: number;
-  // Adding id and product properties to match implementation
-  id: string;
   product: Product;
 }
 
 export interface Order {
   id: string;
   contactId: string;
+  agentId?: string; // Adding agent ID
+  agentName?: string; // Adding agent name
   date: Date;
-  status: "draft" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  status: "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled";
   items: OrderItem[];
   total: number;
+  vatTotal?: number; // Adding VAT total
   notes?: string;
+  termsAndConditions?: string; // Adding terms and conditions
+  reference?: string; // Adding reference/order number
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,4 +93,15 @@ export interface User {
   name: string;
   email: string;
   role: "admin" | "agent";
+}
+
+// Settings types
+export interface Settings {
+  id: string;
+  defaultTermsAndConditions: string;
+  companyName: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  defaultVatRate: number;
 }

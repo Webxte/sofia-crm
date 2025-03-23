@@ -1,223 +1,139 @@
-
-import { Home, Users, Calendar, MessagesSquare, ShoppingCart, ClipboardList, Menu, X } from "lucide-react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import {
-  Sidebar as SidebarComponent,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import {
+  Home, 
+  Users, 
+  Calendar as CalendarIcon, 
+  ListTodo, 
+  ShoppingCart, 
+  BarChart, 
+  Settings,
+  Menu,
+} from "lucide-react";
 
-const navigationItems = [
-  {
-    title: "Dashboard",
-    path: "/",
-    icon: Home,
-  },
-  {
-    title: "Contacts",
-    path: "/contacts",
-    icon: Users,
-  },
-  {
-    title: "Meetings",
-    path: "/meetings",
-    icon: MessagesSquare,
-  },
-  {
-    title: "Tasks",
-    path: "/tasks",
-    icon: ClipboardList,
-  },
-  {
-    title: "Orders",
-    path: "/orders",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Calendar",
-    path: "/calendar",
-    icon: Calendar,
-  },
-];
+interface SidebarProps {
+  className?: string;
+}
 
-export const Sidebar = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
-  const { user, isAdmin, logout } = useAuth();
+const Sidebar = ({ className }: SidebarProps) => {
+  const { pathname } = useLocation();
+  const { isAdmin } = useAuth();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  // Close sidebar when route changes on mobile
-  useEffect(() => {
-    if (isMobile) {
-      setOpen(false);
-    }
-  }, [location, isMobile]);
+  const menuItems = [
+    {
+      title: "Dashboard",
+      href: "/",
+      icon: Home,
+    },
+    {
+      title: "Contacts",
+      href: "/contacts",
+      icon: Users,
+    },
+    {
+      title: "Calendar",
+      href: "/calendar",
+      icon: CalendarIcon,
+    },
+    {
+      title: "Tasks",
+      href: "/tasks",
+      icon: ListTodo,
+    },
+    {
+      title: "Orders",
+      href: "/orders",
+      icon: ShoppingCart,
+    },
+    {
+      title: "Reports",
+      href: "/reports",
+      icon: BarChart,
+    },
+    ...(isAdmin ? [
+      {
+        title: "Settings",
+        href: "/settings",
+        icon: Settings,
+      }
+    ] : []),
+  ];
 
-  const isActive = (path: string) => {
-    if (path === "/" && location.pathname === "/") return true;
-    if (path !== "/" && location.pathname.startsWith(path)) return true;
-    return false;
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  // Mobile sidebar component
-  const MobileSidebar = () => (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu size={24} />
-          <span className="sr-only">Toggle menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-md bg-primary p-1">
-                <div className="h-6 w-6 text-white flex items-center justify-center font-semibold">
-                  CRM
-                </div>
-              </div>
-              <span className="font-semibold text-lg">CRM System</span>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              <X size={18} />
-            </Button>
-          </div>
-          <div className="flex-1 overflow-auto py-2">
-            <div className="px-2">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2 my-1 rounded-md transition-colors ${
-                    isActive(item.path)
-                      ? "bg-sidebar-accent text-primary font-medium"
-                      : "hover:bg-sidebar-accent/50"
-                  }`}
-                  onClick={() => setOpen(false)}
-                >
-                  <item.icon size={20} className="shrink-0" />
-                  <span>{item.title}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="p-4 border-t mt-auto">
-            <div className="text-sm text-muted-foreground">
-              Logged in as: <span className="font-medium">{isAdmin ? "Admin" : "Agent"}</span>
-            </div>
-            <div className="mt-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start"
-                onClick={() => {
-                  setOpen(false);
-                  navigate("/profile");
-                }}
-              >
-                Profile
-              </Button>
-              {isAdmin && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start mt-2"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/reports");
-                  }}
-                >
-                  Reports
-                </Button>
-              )}
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="w-full justify-start mt-2"
-                onClick={() => {
-                  setOpen(false);
-                  handleLogout();
-                }}
-              >
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-
-  // Desktop sidebar component
   return (
     <>
-      {isMobile ? (
-        <MobileSidebar />
-      ) : (
-        <SidebarComponent className="border-r border-border">
-          <SidebarHeader className="p-4">
-            <div className="flex items-center gap-2 px-2">
-              <div className="rounded-md bg-primary p-1">
-                <div className="h-6 w-6 text-white flex items-center justify-center font-semibold">
-                  CRM
-                </div>
-              </div>
-              <span className="font-semibold text-lg">CRM System</span>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navigationItems.map((item) => (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton asChild>
-                        <Link 
-                          to={item.path}
-                          className={`group transition-all duration-300 ${
-                            isActive(item.path) 
-                              ? "bg-sidebar-accent text-primary font-medium" 
-                              : "hover:bg-sidebar-accent/50"
-                          }`}
-                        >
-                          <item.icon size={20} className="shrink-0" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-          <div className="mt-auto p-4 border-t border-border">
-            <div className="mb-2 text-sm text-muted-foreground">
-              Logged in as: <span className="font-medium">{isAdmin ? "Admin" : "Agent"}</span>
-            </div>
-            <SidebarTrigger className="w-full justify-between">
-              <span>Collapse sidebar</span>
-            </SidebarTrigger>
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-4 top-4 md:hidden"
+          >
+            <Menu />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-full sm:w-64">
+          <SheetHeader className="text-left">
+            <SheetTitle>Menu</SheetTitle>
+            <SheetDescription>
+              Navigate through your CRM.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="py-4">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center space-x-2 rounded-md p-2 hover:bg-secondary",
+                  pathname === item.href
+                    ? "bg-secondary font-medium"
+                    : "text-muted-foreground",
+                  "w-full"
+                )}
+                onClick={() => setIsSheetOpen(false)}
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.title}</span>
+              </Link>
+            ))}
           </div>
-        </SidebarComponent>
-      )}
+        </SheetContent>
+      </Sheet>
+      <div className={cn("hidden md:flex flex-col w-64 border-r px-2 py-4", className)}>
+        <div className="mb-4 font-bold">CRM</div>
+        <div className="flex flex-col space-y-1">
+          {menuItems.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex items-center space-x-2 rounded-md p-2 hover:bg-secondary",
+                pathname === item.href
+                  ? "bg-secondary font-medium"
+                  : "text-muted-foreground",
+                "w-full"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
     </>
   );
 };
+
+export default Sidebar;

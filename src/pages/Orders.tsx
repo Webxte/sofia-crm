@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { ShoppingCart, Plus, Search, Filter, Download } from "lucide-react";
+import { ShoppingCart, Plus, Search, Filter, Download, Mail } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +78,16 @@ const Orders = () => {
         }
       }
       
+      // Check agent name
+      if (order.agentName?.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Check reference number
+      if (order.reference?.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
       return false;
     }
     
@@ -100,6 +110,8 @@ const Orders = () => {
         return "bg-purple-100 text-purple-800";
       case "delivered":
         return "bg-green-100 text-green-800";
+      case "paid":
+        return "bg-emerald-100 text-emerald-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
@@ -109,20 +121,49 @@ const Orders = () => {
 
   // Handle export button click
   const handleExport = () => {
-    // For demonstration, we'll just show a toast message
-    toast({
-      title: "Export Started",
-      description: "Your orders are being exported to CSV",
-    });
-    
-    // Here you'd implement the actual export functionality
-    // For now, let's just mimic the process with a timeout
-    setTimeout(() => {
+    if (sortedOrders.length === 0) {
       toast({
-        title: "Export Complete",
-        description: "Orders have been exported successfully",
+        title: "No Orders",
+        description: "There are no orders to export",
       });
-    }, 1500);
+      return;
+    }
+    
+    // Generate CSV content
+    const headers = ["Order ID", "Reference", "Date", "Customer", "Status", "Agent", "Total", "Items"];
+    const csvRows = [headers.join(",")];
+    
+    for (const order of sortedOrders) {
+      const contact = getContactById(order.contactId);
+      const contactName = contact?.fullName || contact?.company || "Unknown";
+      const date = format(new Date(order.date), "yyyy-MM-dd");
+      const row = [
+        order.id,
+        order.reference || "",
+        date,
+        contactName,
+        order.status,
+        order.agentName || "Unknown",
+        order.total.toFixed(2),
+        order.items.length
+      ].map(item => `"${item}"`).join(",");
+      
+      csvRows.push(row);
+    }
+    
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `orders_export_${format(new Date(), "yyyyMMdd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Export Complete",
+      description: `${sortedOrders.length} orders exported to CSV`,
+    });
   };
 
   return (
@@ -166,6 +207,7 @@ const Orders = () => {
               <SelectItem value="confirmed">Confirmed</SelectItem>
               <SelectItem value="shipped">Shipped</SelectItem>
               <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
@@ -194,7 +236,7 @@ const Orders = () => {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardDescription className="flex items-center gap-1">
-                      Order #{order.id.slice(0, 6).toUpperCase()}
+                      {order.reference || `Order #${order.id.slice(0, 6).toUpperCase()}`}
                     </CardDescription>
                     <Badge
                       className={getStatusColor(order.status)}
@@ -216,13 +258,17 @@ const Orders = () => {
                       <span className="text-muted-foreground">Items:</span>
                       <span>{order.items.length}</span>
                     </div>
+                    <div className="text-sm flex justify-between">
+                      <span className="text-muted-foreground">Agent:</span>
+                      <span>{order.agentName || "Unknown"}</span>
+                    </div>
                     <div className="text-sm flex justify-between font-medium">
                       <span className="text-muted-foreground">Total:</span>
                       <span>€{order.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="pt-2">
+                <CardFooter className="pt-2 flex gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
