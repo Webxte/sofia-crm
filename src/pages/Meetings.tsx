@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { Plus, Search, Filter, MessagesSquare, Calendar } from "lucide-react";
+import { Plus, Search, Calendar, MessagesSquare } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { MeetingTypeFilter } from "@/components/meetings/MeetingTypeFilter";
+import { MeetingCard } from "@/components/meetings/MeetingCard";
 
 const Meetings = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,38 +72,6 @@ const Meetings = () => {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // Get meeting type badge color
-  const getMeetingTypeColor = (type: string) => {
-    switch (type) {
-      case "meeting":
-        return "bg-blue-100 text-blue-800";
-      case "phone":
-        return "bg-green-100 text-green-800";
-      case "email":
-        return "bg-purple-100 text-purple-800";
-      case "online":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  // Get formatted meeting type
-  const getMeetingTypeText = (type: string) => {
-    switch (type) {
-      case "meeting":
-        return "In-person Meeting";
-      case "phone":
-        return "Phone Call";
-      case "email":
-        return "Email";
-      case "online":
-        return "Online Meeting";
-      default:
-        return "Other";
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -130,19 +100,7 @@ const Meetings = () => {
           />
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="meeting">In-person Meeting</SelectItem>
-              <SelectItem value="online">Online Meeting</SelectItem>
-              <SelectItem value="phone">Phone Call</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
+          <MeetingTypeFilter value={filterType} onValueChange={setFilterType} />
           <Button variant="outline" size="sm" asChild>
             <Link to="/calendar">
               <Calendar className="mr-2 h-4 w-4" /> View Calendar
@@ -163,48 +121,14 @@ const Meetings = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {sortedMeetings.map((meeting) => {
-            const contact = getContactById(meeting.contactId);
-            return (
-              <Card key={meeting.id} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <Badge
-                      className={getMeetingTypeColor(meeting.type)}
-                      variant="outline"
-                    >
-                      {getMeetingTypeText(meeting.type)}
-                    </Badge>
-                    <Badge variant={meeting.followUpScheduled ? "default" : "outline"}>
-                      {meeting.followUpScheduled ? "Follow-up Scheduled" : "No Follow-up"}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-xl">
-                    {contact?.fullName || contact?.company || "Unknown Contact"}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {format(new Date(meeting.date), "PPP")} at {meeting.time}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="line-clamp-3 text-sm text-muted-foreground">
-                    {meeting.notes}
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => navigate(`/meetings/edit/${meeting.id}`)}
-                  >
-                    View Details
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
+          {sortedMeetings.map((meeting) => (
+            <MeetingCard 
+              key={meeting.id} 
+              meeting={meeting} 
+              contact={getContactById(meeting.contactId)} 
+              onViewDetails={() => navigate(`/meetings/edit/${meeting.id}`)}
+            />
+          ))}
         </div>
       )}
     </div>
