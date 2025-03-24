@@ -1,59 +1,61 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "agent";
-}
+import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, role: "admin" | "agent") => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Check for existing user in localStorage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("crm_user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    // Set up the auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        console.log("Auth state changed:", event);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setIsLoading(false);
+      }
+    );
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // For demo purposes, we'll accept any email and password combination
-      // and assign a role based on email pattern
-      const isAdmin = email.includes("admin");
-      const user: User = {
-        id: Math.random().toString(36).substring(2, 9),
-        name: email.split("@")[0],
+      const { error } = await supabase.auth.signInWithPassword({
         email,
-        role: isAdmin ? "admin" : "agent",
-      };
+        password,
+      });
       
-      // Save to localStorage (mimicking a session)
-      localStorage.setItem("crm_user", JSON.stringify(user));
-      
-      setUser(user);
-      setIsAuthenticated(true);
+      if (error) {
+        throw error;
+      }
     } finally {
       setIsLoading(false);
     }
@@ -62,35 +64,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (name: string, email: string, password: string, role: "admin" | "agent") => {
     setIsLoading(true);
     try {
-      const user: User = {
-        id: Math.random().toString(36).substring(2, 9),
-        name,
+      // Sign up the user
+      const { error, data } = await supabase.auth.signUp({
         email,
-        role,
-      };
+        password,
+        options: {
+          data: {
+            name,
+            role,
+          },
+        },
+      });
       
-      // Save to localStorage (mimicking a session)
-      localStorage.setItem("crm_user", JSON.stringify(user));
+      if (error) {
+        throw error;
+      }
       
-      setUser(user);
-      setIsAuthenticated(true);
+      console.log("User signed up successfully:", data);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("crm_user");
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
-  const isAdmin = !!user && user.role === "admin";
+  // Determine if user is admin from metadata
+  const isAdmin = !!user && user.user_metadata?.role === "admin";
+  const isAuthenticated = !!session;
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        session,
         isAuthenticated,
         isAdmin,
         isLoading,

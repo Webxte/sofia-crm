@@ -31,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const signupSchema = z.object({
   name: z.string().min(2, {
@@ -51,6 +53,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { signup } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -67,6 +70,7 @@ const Signup = () => {
 
   const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
+    setErrorMessage("");
     
     try {
       await signup(values.name, values.email, values.password, values.role);
@@ -75,11 +79,12 @@ const Signup = () => {
         description: "You've been signed up successfully.",
       });
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setErrorMessage(error.message || "Something went wrong. Please try again.");
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -97,6 +102,14 @@ const Signup = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {errorMessage && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

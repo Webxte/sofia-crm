@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { login } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -19,14 +21,12 @@ const Login = () => {
     e.preventDefault();
     
     if (!email || !password) {
-      return toast({
-        title: "Error",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
+      setErrorMessage("Please enter both email and password");
+      return;
     }
     
     setIsLoading(true);
+    setErrorMessage("");
     
     try {
       await login(email, password);
@@ -35,11 +35,12 @@ const Login = () => {
         description: "You are now logged in",
       });
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setErrorMessage(error.message || "Invalid email or password");
       toast({
         title: "Error",
-        description: "Invalid email or password",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
     } finally {
@@ -58,6 +59,13 @@ const Login = () => {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          {errorMessage && (
+            <div className="bg-destructive/15 p-3 rounded-md flex items-center text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              {errorMessage}
+            </div>
+          )}
+        
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -95,12 +103,6 @@ const Login = () => {
           <Link to="/signup" className="underline underline-offset-4 hover:text-primary">
             Sign up
           </Link>
-        </div>
-        
-        <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>Demo Credentials:</p>
-          <p>Admin: admin@example.com / password</p>
-          <p>Agent: agent@example.com / password</p>
         </div>
       </div>
     </div>
