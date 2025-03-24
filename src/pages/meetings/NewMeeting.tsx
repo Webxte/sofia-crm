@@ -1,7 +1,7 @@
 
 import { useLocation } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import MeetingForm from "@/components/meetings/MeetingForm";
+import { Helmet } from "react-helmet-async";
 
 const NewMeeting = () => {
   const location = useLocation();
