@@ -3,8 +3,13 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 
+// Extend the User type to include the name property
+interface ExtendedUser extends User {
+  name?: string;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: ExtendedUser | null;
   session: Session | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -17,9 +22,19 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Helper function to extract user name from metadata
+  const getUserWithName = (supabaseUser: User | null): ExtendedUser | null => {
+    if (!supabaseUser) return null;
+    
+    return {
+      ...supabaseUser,
+      name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || '',
+    };
+  };
   
   useEffect(() => {
     // Set up the auth state listener first
@@ -27,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, currentSession) => {
         console.log("Auth state changed:", event);
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        setUser(getUserWithName(currentSession?.user ?? null));
         setIsLoading(false);
       }
     );
@@ -36,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
       setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+      setUser(getUserWithName(currentSession?.user ?? null));
       setIsLoading(false);
     });
 
