@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, Filter, ArrowUpDown, UserPlus, Users } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
@@ -9,6 +9,9 @@ import { useContacts } from "@/context/ContactsContext";
 import { useAuth } from "@/context/AuthContext";
 import ContactCard from "@/components/contacts/ContactCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Contact } from "@/types";
 
 // Sort options
 type SortOption = "name" | "company" | "recent";
@@ -16,9 +19,62 @@ type SortOption = "name" | "company" | "recent";
 const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
-  const { contacts, loading } = useContacts();
-  const { isAdmin } = useAuth();
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Fetch contacts from Supabase
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        setLoading(true);
+        let query = supabase.from('contacts').select('*');
+        
+        // If not admin, only fetch own contacts
+        if (!isAdmin && user) {
+          query = query.eq('agent_id', user.id);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Convert data to our Contact type
+        const formattedContacts: Contact[] = data.map((item) => ({
+          id: item.id,
+          fullName: item.full_name || undefined,
+          company: item.company || undefined,
+          email: item.email || undefined,
+          phone: item.phone || undefined,
+          mobile: item.mobile || undefined,
+          address: item.address || undefined,
+          notes: item.notes || undefined,
+          position: item.position || undefined,
+          agentId: item.agent_id || undefined,
+          agentName: item.agent_name || undefined,
+          createdAt: new Date(item.created_at),
+          updatedAt: new Date(item.updated_at),
+        }));
+        
+        setContacts(formattedContacts);
+      } catch (error) {
+        console.error("Error fetching contacts:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load contacts. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchContacts();
+  }, [isAdmin, user, toast]);
   
   // Filter contacts based on search query
   const filteredContacts = contacts.filter(contact => {

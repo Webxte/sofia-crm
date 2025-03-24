@@ -57,6 +57,217 @@ export type Database = {
         }
         Relationships: []
       }
+      meetings: {
+        Row: {
+          agent_id: string | null
+          agent_name: string | null
+          contact_id: string
+          created_at: string
+          date: string
+          follow_up_date: string | null
+          follow_up_notes: string | null
+          follow_up_scheduled: boolean
+          follow_up_time: string | null
+          id: string
+          location: string | null
+          next_steps: string[] | null
+          notes: string
+          time: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_name?: string | null
+          contact_id: string
+          created_at?: string
+          date: string
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
+          follow_up_scheduled?: boolean
+          follow_up_time?: string | null
+          id?: string
+          location?: string | null
+          next_steps?: string[] | null
+          notes: string
+          time: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          agent_name?: string | null
+          contact_id?: string
+          created_at?: string
+          date?: string
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
+          follow_up_scheduled?: boolean
+          follow_up_time?: string | null
+          id?: string
+          location?: string | null
+          next_steps?: string[] | null
+          notes?: string
+          time?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          order_id: string
+          price: number
+          product_id: string
+          quantity: number
+          subtotal: number
+          updated_at: string
+          vat: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          order_id: string
+          price: number
+          product_id: string
+          quantity: number
+          subtotal: number
+          updated_at?: string
+          vat?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          order_id?: string
+          price?: number
+          product_id?: string
+          quantity?: number
+          subtotal?: number
+          updated_at?: string
+          vat?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          agent_id: string | null
+          agent_name: string | null
+          contact_id: string
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          reference: string | null
+          status: string
+          terms_and_conditions: string | null
+          total: number
+          updated_at: string
+          vat_total: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_name?: string | null
+          contact_id: string
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          reference?: string | null
+          status: string
+          terms_and_conditions?: string | null
+          total: number
+          updated_at?: string
+          vat_total?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          agent_name?: string | null
+          contact_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          terms_and_conditions?: string | null
+          total?: number
+          updated_at?: string
+          vat_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          code: string
+          cost: number
+          created_at: string
+          description: string
+          id: string
+          price: number
+          updated_at: string
+          vat: number | null
+        }
+        Insert: {
+          code: string
+          cost: number
+          created_at?: string
+          description: string
+          id?: string
+          price: number
+          updated_at?: string
+          vat?: number | null
+        }
+        Update: {
+          code?: string
+          cost?: number
+          created_at?: string
+          description?: string
+          id?: string
+          price?: number
+          updated_at?: string
+          vat?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -80,6 +291,95 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      settings: {
+        Row: {
+          company_address: string | null
+          company_email: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string
+          default_terms_and_conditions: string | null
+          default_vat_rate: number | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          default_terms_and_conditions?: string | null
+          default_vat_rate?: number | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          default_terms_and_conditions?: string | null
+          default_vat_rate?: number | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          agent_id: string | null
+          agent_name: string | null
+          contact_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          due_time: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_name?: string | null
+          contact_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          priority: string
+          status: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          agent_name?: string | null
+          contact_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
