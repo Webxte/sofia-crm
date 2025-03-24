@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -41,34 +40,27 @@ const Tasks = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Extract contactId from query param if it exists
   const queryParams = new URLSearchParams(location.search);
   const contactId = queryParams.get("contactId");
   
-  // Filter tasks based on filters and search query
   const filteredTasks = tasks.filter(task => {
-    // Filter by contact if specified
     if (contactId && task.contactId !== contactId) {
       return false;
     }
     
-    // Filter by status
     if (filterStatus !== "all" && task.status !== filterStatus) {
       return false;
     }
     
-    // Filter by priority
     if (filterPriority !== "all" && task.priority !== filterPriority) {
       return false;
     }
     
-    // Filter by search query
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       const title = task.title.toLowerCase();
       const description = task.description?.toLowerCase() || "";
       
-      // If task has a contact, search contact details too
       let contactMatch = false;
       if (task.contactId) {
         const contact = getContactById(task.contactId);
@@ -87,21 +79,17 @@ const Tasks = () => {
     return true;
   });
   
-  // Sort tasks by due date (closest first) and then by priority (high to low)
   const sortedTasks = [...filteredTasks].sort((a, b) => {
-    // First sort by due date
     if (a.dueDate && b.dueDate) {
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     }
     if (a.dueDate) return -1;
     if (b.dueDate) return 1;
     
-    // Then sort by priority
     const priorityOrder = { high: 0, medium: 1, low: 2 };
     return priorityOrder[a.priority] - priorityOrder[b.priority];
   });
 
-  // Get priority badge color
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":

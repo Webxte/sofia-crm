@@ -1,5 +1,6 @@
 
 import { useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import MeetingForm from "@/components/meetings/MeetingForm";
 
 const NewMeeting = () => {
@@ -7,7 +8,14 @@ const NewMeeting = () => {
   const queryParams = new URLSearchParams(location.search);
   const contactId = queryParams.get("contactId");
   
-  return <MeetingForm contactId={contactId || undefined} />;
+  return (
+    <>
+      <Helmet>
+        <title>Add Meeting | CRM</title>
+      </Helmet>
+      <MeetingForm contactId={contactId || undefined} />
+    </>
+  );
 };
 
 export default NewMeeting;

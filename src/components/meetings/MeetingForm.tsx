@@ -39,7 +39,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     notes: meeting?.notes || "",
     followUpScheduled: meeting?.followUpScheduled || false,
     followUpDate: meeting?.followUpDate ? new Date(meeting.followUpDate) : null,
-    followUpNotes: meeting?.followUpNotes || "",
+    followUpTime: meeting?.followUpTime || format(new Date(), "HH:mm"),
     nextSteps: meeting?.nextSteps || [],
   };
 
@@ -62,6 +62,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
         location: data.location || "",
         followUpScheduled: data.followUpScheduled,
         followUpDate: data.followUpScheduled ? data.followUpDate : null,
+        followUpTime: data.followUpScheduled ? data.followUpTime || "" : "",
         followUpNotes: data.followUpScheduled ? data.followUpNotes || "" : "",
         nextSteps: data.nextSteps || [],
       };
@@ -104,7 +105,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold tracking-tight">
-          {isEditing ? "Edit Meeting" : "Schedule Meeting"}
+          {isEditing ? "Edit Meeting" : "Add Meeting"}
         </h1>
       </div>
 
@@ -129,7 +130,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
-              {isSubmitting ? "Saving..." : isEditing ? "Update Meeting" : "Schedule Meeting"}
+              {isSubmitting ? "Saving..." : isEditing ? "Update Meeting" : "Add Meeting"}
             </Button>
           </div>
         </form>

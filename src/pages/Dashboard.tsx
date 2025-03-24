@@ -94,7 +94,7 @@ const Dashboard = () => {
               icon={<MessagesSquare size={40} />}
               title="No upcoming meetings"
               actionLink="/meetings/new"
-              actionText="Schedule a meeting →"
+              actionText="Add a meeting →"
             />
           )}
         </DashboardCard>
@@ -143,7 +143,7 @@ const Dashboard = () => {
                 <div className="border rounded-lg p-4 hover:border-primary transition-colors">
                   <div className="flex justify-between">
                     <div>
-                      <p className="font-medium">Order #{order.id.slice(0, 6).toUpperCase()}</p>
+                      <p className="font-medium">Order #{order.reference || order.id.slice(0, 6).toUpperCase()}</p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(order.date).toLocaleDateString()}
                       </p>

@@ -1,7 +1,6 @@
 
 import { z } from "zod";
 
-// Define the schema for meeting validation
 export const meetingSchema = z.object({
   contactId: z.string({
     required_error: "Contact is required",
@@ -20,7 +19,7 @@ export const meetingSchema = z.object({
     required_error: "Meeting notes are required",
   }).min(1, "Meeting notes are required"),
   followUpScheduled: z.boolean().default(false),
-  followUpDate: z.date().optional().nullable(),
+  followUpDate: z.date().nullable().optional(),
   followUpTime: z.string().optional(),
   followUpNotes: z.string().optional(),
   nextSteps: z.array(z.string()).optional(),
