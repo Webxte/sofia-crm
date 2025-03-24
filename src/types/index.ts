@@ -1,4 +1,3 @@
-
 // Contact types
 export interface Contact {
   id: string;
@@ -10,6 +9,8 @@ export interface Contact {
   address?: string;
   notes?: string;
   position?: string;
+  agentId?: string;
+  agentName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,8 +26,11 @@ export interface Meeting {
   notes: string;
   followUpScheduled: boolean;
   followUpDate?: Date | null;
+  followUpTime?: string;
   followUpNotes?: string;
   nextSteps?: string[];
+  agentId?: string;
+  agentName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +45,8 @@ export interface Task {
   priority: "low" | "medium" | "high";
   status: "active" | "completed";
   contactId?: string;
+  agentId?: string;
+  agentName?: string;
   createdAt: Date;
   updatedAt: Date;
 }

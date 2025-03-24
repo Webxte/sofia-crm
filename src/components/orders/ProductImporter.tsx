@@ -15,7 +15,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Upload } from "lucide-react";
 
-const ProductImporter = () => {
+interface ProductImporterProps {
+  onClose?: () => void;
+}
+
+const ProductImporter = ({ onClose }: ProductImporterProps) => {
   const [open, setOpen] = useState(false);
   const [csvData, setCsvData] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,29 +41,20 @@ const ProductImporter = () => {
     try {
       // Parse CSV data
       const lines = csvData.trim().split("\n");
-      const products = lines.map(line => {
-        const [code, description, price, cost, vat] = line.split(",");
-        return {
-          code: code.trim(),
-          description: description.trim(),
-          price: parseFloat(price.trim()),
-          cost: parseFloat(cost.trim()),
-          vat: vat ? parseFloat(vat.trim()) : 0,
-        };
-      });
       
-      // Import products
-      importProducts(products);
+      // Import the raw CSV data which will be parsed in the context
+      importProducts(csvData);
       
       // Show success message
       toast({
         title: "Success",
-        description: `${products.length} products imported`,
+        description: `${lines.length} products imported`,
       });
       
       // Reset form and close dialog
       setCsvData("");
       setOpen(false);
+      if (onClose) onClose();
     } catch (error) {
       toast({
         title: "Error",
