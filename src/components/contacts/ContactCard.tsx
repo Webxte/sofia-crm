@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,22 +58,24 @@ const ContactCard = ({ contact, onScheduleMeeting, onCreateTask, onCreateOrder }
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button size="sm" variant="outline" onClick={() => onScheduleMeeting(contact.id)}>
-          <Calendar className="mr-2 h-4 w-4" />
-          Add Meeting
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => onCreateTask(contact.id)}>
-          <ListChecks className="mr-2 h-4 w-4" />
-          Create Task
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => onCreateOrder(contact.id)}>
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Create Order
-        </Button>
-        <Link to={`/contacts/edit/${contact.id}`}>
-          <Button size="sm">View Details</Button>
-        </Link>
+      <CardFooter>
+        <div className="flex flex-wrap w-full gap-2">
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onScheduleMeeting(contact.id)}>
+            <Calendar className="mr-2 h-4 w-4" />
+            Add Meeting
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onCreateTask(contact.id)}>
+            <ListChecks className="mr-2 h-4 w-4" />
+            Create Task
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onCreateOrder(contact.id)}>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Create Order
+          </Button>
+          <Link to={`/contacts/edit/${contact.id}`} className="w-full mt-2">
+            <Button size="sm" className="w-full">View Details</Button>
+          </Link>
+        </div>
       </CardFooter>
     </Card>
   );
