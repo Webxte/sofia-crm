@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Task } from "@/types";
 import { useAuth } from "./AuthContext";
@@ -165,7 +166,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       
       if (taskData.title !== undefined) updateData.title = taskData.title;
       if (taskData.description !== undefined) updateData.description = taskData.description;
-      if (taskData.dueDate !== undefined) updateData.due_date = taskData.dueDate;
+      if (taskData.dueDate !== undefined) updateData.due_date = taskData.dueDate ? format(taskData.dueDate, 'yyyy-MM-dd') : null;
       if (taskData.dueTime !== undefined) updateData.due_time = taskData.dueTime;
       if (taskData.priority !== undefined) updateData.priority = taskData.priority;
       if (taskData.status !== undefined) updateData.status = taskData.status;
@@ -196,11 +197,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
             ? {
                 ...task,
                 title: data.title,
-                description: data.description,
+                description: data.description || "",
                 dueDate: data.due_date ? new Date(data.due_date) : undefined,
-                dueTime: data.due_time,
-                priority: data.priority,
-                status: data.status,
+                dueTime: data.due_time || "",
+                priority: data.priority as "low" | "medium" | "high",
+                status: data.status as "active" | "completed",
                 contactId: data.contact_id,
                 updatedAt: new Date(data.updated_at)
               }

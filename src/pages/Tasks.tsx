@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -35,7 +36,7 @@ const Tasks = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("active");
   const [filterPriority, setFilterPriority] = useState<string>("all");
-  const { tasks, completeTask } = useTasks();
+  const { tasks, updateTask } = useTasks();
   const { getContactById } = useContacts();
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,7 +105,7 @@ const Tasks = () => {
   };
 
   const handleCompleteTask = (id: string) => {
-    completeTask(id);
+    updateTask(id, { status: "completed" });
   };
 
   return (
