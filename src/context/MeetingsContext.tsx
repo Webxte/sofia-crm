@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Meeting } from "@/types";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface MeetingsContextType {
   meetings: Meeting[];
@@ -13,7 +13,6 @@ interface MeetingsContextType {
   deleteMeeting: (id: string) => Promise<void>;
   getMeetingById: (id: string) => Meeting | undefined;
   getMeetingsByContactId: (contactId: string) => Meeting[];
-  getMeetingsByAgentId: (agentId: string) => Meeting[];
   refreshMeetings: () => Promise<void>;
 }
 
@@ -64,15 +63,15 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
       const formattedMeetings: Meeting[] = data.map(meeting => ({
         id: meeting.id,
         contactId: meeting.contact_id,
-        type: meeting.type,
+        type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",
         date: new Date(meeting.date),
         time: meeting.time,
-        location: meeting.location,
+        location: meeting.location || "",
         notes: meeting.notes,
         followUpScheduled: meeting.follow_up_scheduled,
         followUpDate: meeting.follow_up_date ? new Date(meeting.follow_up_date) : null,
-        followUpTime: meeting.follow_up_time,
-        followUpNotes: meeting.follow_up_notes,
+        followUpTime: meeting.follow_up_time || "",
+        followUpNotes: meeting.follow_up_notes || "",
         nextSteps: meeting.next_steps || [],
         agentId: meeting.agent_id,
         agentName: meeting.agent_name,
@@ -114,12 +113,12 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
       const newMeetingData = {
         contact_id: meetingData.contactId,
         type: meetingData.type,
-        date: meetingData.date,
+        date: format(meetingData.date, 'yyyy-MM-dd'), // Format date as string
         time: meetingData.time,
         location: meetingData.location,
         notes: meetingData.notes,
         follow_up_scheduled: meetingData.followUpScheduled,
-        follow_up_date: meetingData.followUpDate,
+        follow_up_date: meetingData.followUpDate ? format(meetingData.followUpDate, 'yyyy-MM-dd') : null, // Format date
         follow_up_time: meetingData.followUpTime,
         follow_up_notes: meetingData.followUpNotes,
         next_steps: meetingData.nextSteps,
@@ -146,15 +145,15 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
       const newMeeting: Meeting = {
         id: data.id,
         contactId: data.contact_id,
-        type: data.type,
+        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         date: new Date(data.date),
         time: data.time,
-        location: data.location,
+        location: data.location || "",
         notes: data.notes,
         followUpScheduled: data.follow_up_scheduled,
         followUpDate: data.follow_up_date ? new Date(data.follow_up_date) : null,
-        followUpTime: data.follow_up_time,
-        followUpNotes: data.follow_up_notes,
+        followUpTime: data.follow_up_time || "",
+        followUpNotes: data.follow_up_notes || "",
         nextSteps: data.next_steps || [],
         agentId: data.agent_id,
         agentName: data.agent_name,
@@ -162,7 +161,7 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
         updatedAt: new Date(data.updated_at),
       };
       
-      setMeetings(prevMeetings => [newMeeting, ...prevMeetings]);
+      setMeetings(prevMeetings => [...prevMeetings, newMeeting]);
       
       toast({
         title: "Success",
@@ -185,12 +184,12 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
       
       if (meetingData.contactId !== undefined) updateData.contact_id = meetingData.contactId;
       if (meetingData.type !== undefined) updateData.type = meetingData.type;
-      if (meetingData.date !== undefined) updateData.date = meetingData.date;
+      if (meetingData.date !== undefined) updateData.date = format(meetingData.date, 'yyyy-MM-dd'); // Format date
       if (meetingData.time !== undefined) updateData.time = meetingData.time;
       if (meetingData.location !== undefined) updateData.location = meetingData.location;
       if (meetingData.notes !== undefined) updateData.notes = meetingData.notes;
       if (meetingData.followUpScheduled !== undefined) updateData.follow_up_scheduled = meetingData.followUpScheduled;
-      if (meetingData.followUpDate !== undefined) updateData.follow_up_date = meetingData.followUpDate;
+      if (meetingData.followUpDate !== undefined) updateData.follow_up_date = meetingData.followUpDate ? format(meetingData.followUpDate, 'yyyy-MM-dd') : null; // Format date
       if (meetingData.followUpTime !== undefined) updateData.follow_up_time = meetingData.followUpTime;
       if (meetingData.followUpNotes !== undefined) updateData.follow_up_notes = meetingData.followUpNotes;
       if (meetingData.nextSteps !== undefined) updateData.next_steps = meetingData.nextSteps;
@@ -198,12 +197,10 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
       // Add updated_at
       updateData.updated_at = new Date().toISOString();
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('meetings')
         .update(updateData)
-        .eq('id', id)
-        .select('*')
-        .single();
+        .eq('id', id);
       
       if (error) {
         console.error('Error updating meeting:', error);
@@ -215,28 +212,8 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update the meeting in state
-      setMeetings(prevMeetings => 
-        prevMeetings.map(meeting => 
-          meeting.id === id 
-            ? {
-                ...meeting,
-                contactId: data.contact_id,
-                type: data.type,
-                date: new Date(data.date),
-                time: data.time,
-                location: data.location,
-                notes: data.notes,
-                followUpScheduled: data.follow_up_scheduled,
-                followUpDate: data.follow_up_date ? new Date(data.follow_up_date) : null,
-                followUpTime: data.follow_up_time,
-                followUpNotes: data.follow_up_notes,
-                nextSteps: data.next_steps || [],
-                updatedAt: new Date(data.updated_at)
-              }
-            : meeting
-        )
-      );
+      // Refresh meetings to get updated data
+      await refreshMeetings();
       
       toast({
         title: "Success",
@@ -294,10 +271,6 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
     return meetings.filter(meeting => meeting.contactId === contactId);
   };
 
-  const getMeetingsByAgentId = (agentId: string) => {
-    return meetings.filter(meeting => meeting.agentId === agentId);
-  };
-
   return (
     <MeetingsContext.Provider
       value={{
@@ -308,7 +281,6 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
         deleteMeeting,
         getMeetingById,
         getMeetingsByContactId,
-        getMeetingsByAgentId,
         refreshMeetings,
       }}
     >

@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Task } from "@/types";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface TasksContextType {
   tasks: Task[];
@@ -12,8 +12,7 @@ interface TasksContextType {
   updateTask: (id: string, task: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   getTaskById: (id: string) => Task | undefined;
-  completeTask: (id: string) => Promise<void>;
-  getTasksByAgentId: (agentId: string) => Task[];
+  getTasksByContactId: (contactId: string) => Task[];
   refreshTasks: () => Promise<void>;
 }
 
@@ -25,7 +24,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  // Fetch tasks when the component mounts or when user auth state changes
   useEffect(() => {
     if (isAuthenticated) {
       refreshTasks();
@@ -35,7 +33,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated]);
 
-  // Function to fetch tasks from Supabase
   const refreshTasks = async () => {
     try {
       setLoading(true);
@@ -48,7 +45,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('due_date', { ascending: true });
       
       if (error) {
         console.error('Error fetching tasks:', error);
@@ -60,13 +57,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Transform the Supabase data to match our Task type
       const formattedTasks: Task[] = data.map(task => ({
         id: task.id,
         title: task.title,
-        description: task.description,
+        description: task.description || "",
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
-        dueTime: task.due_time,
+        dueTime: task.due_time || "",
         priority: task.priority as "low" | "medium" | "high",
         status: task.status as "active" | "completed",
         contactId: task.contact_id,
@@ -100,17 +96,15 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Add agent information
       const agentData = {
         agent_id: user.id,
         agent_name: user.name || ''
       };
       
-      // Convert Task type to Supabase table format (snake_case)
       const newTaskData = {
         title: taskData.title,
         description: taskData.description,
-        due_date: taskData.dueDate,
+        due_date: taskData.dueDate ? format(taskData.dueDate, 'yyyy-MM-dd') : null,
         due_time: taskData.dueTime,
         priority: taskData.priority,
         status: taskData.status,
@@ -134,13 +128,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Transform and add the new task to state
       const newTask: Task = {
         id: data.id,
         title: data.title,
-        description: data.description,
+        description: data.description || "",
         dueDate: data.due_date ? new Date(data.due_date) : undefined,
-        dueTime: data.due_time,
+        dueTime: data.due_time || "",
         priority: data.priority as "low" | "medium" | "high",
         status: data.status as "active" | "completed",
         contactId: data.contact_id,
@@ -150,7 +143,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         updatedAt: new Date(data.updated_at),
       };
       
-      setTasks(prevTasks => [newTask, ...prevTasks]);
+      setTasks(prevTasks => [...prevTasks, newTask]);
       
       toast({
         title: "Success",
@@ -168,7 +161,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const updateTask = async (id: string, taskData: Partial<Task>) => {
     try {
-      // Convert Task type to Supabase table format (snake_case)
       const updateData: any = {};
       
       if (taskData.title !== undefined) updateData.title = taskData.title;
@@ -179,7 +171,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       if (taskData.status !== undefined) updateData.status = taskData.status;
       if (taskData.contactId !== undefined) updateData.contact_id = taskData.contactId;
       
-      // Add updated_at
       updateData.updated_at = new Date().toISOString();
       
       const { data, error } = await supabase
@@ -199,7 +190,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update the task in state
       setTasks(prevTasks => 
         prevTasks.map(task => 
           task.id === id 
@@ -249,7 +239,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Remove the task from state
       setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
       
       toast({
@@ -270,12 +259,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     return tasks.find(task => task.id === id);
   };
 
-  const completeTask = async (id: string) => {
-    await updateTask(id, { status: "completed" });
-  };
-
-  const getTasksByAgentId = (agentId: string) => {
-    return tasks.filter(task => task.agentId === agentId);
+  const getTasksByContactId = (contactId: string) => {
+    return tasks.filter(task => task.contactId === contactId);
   };
 
   return (
@@ -287,8 +272,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         updateTask,
         deleteTask,
         getTaskById,
-        completeTask,
-        getTasksByAgentId,
+        getTasksByContactId,
         refreshTasks,
       }}
     >
