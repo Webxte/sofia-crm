@@ -1,62 +1,277 @@
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Task } from "@/types";
 import { useAuth } from "./AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TasksContextType {
   tasks: Task[];
-  addTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => void;
-  updateTask: (id: string, task: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
+  loading: boolean;
+  addTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  updateTask: (id: string, task: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   getTaskById: (id: string) => Task | undefined;
-  completeTask: (id: string) => void;
+  completeTask: (id: string) => Promise<void>;
   getTasksByAgentId: (agentId: string) => Task[];
+  refreshTasks: () => Promise<void>;
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
-  const addTask = (taskData: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
-    // Add agent information if available
-    const agentData = user ? {
-      agentId: user.id,
-      agentName: user.name
-    } : {};
-    
-    const newTask: Task = {
-      ...taskData,
-      ...agentData,
-      id: Math.random().toString(36).substring(2, 9),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    setTasks(prevTasks => [...prevTasks, newTask]);
+  // Fetch tasks when the component mounts or when user auth state changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshTasks();
+    } else {
+      setTasks([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  // Function to fetch tasks from Supabase
+  const refreshTasks = async () => {
+    try {
+      setLoading(true);
+      
+      if (!isAuthenticated) {
+        setTasks([]);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load tasks",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Transform the Supabase data to match our Task type
+      const formattedTasks: Task[] = data.map(task => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        dueTime: task.due_time,
+        priority: task.priority as "low" | "medium" | "high",
+        status: task.status as "active" | "completed",
+        contactId: task.contact_id,
+        agentId: task.agent_id,
+        agentName: task.agent_name,
+        createdAt: new Date(task.created_at),
+        updatedAt: new Date(task.updated_at),
+      }));
+      
+      setTasks(formattedTasks);
+    } catch (err) {
+      console.error('Unexpected error fetching tasks:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while loading tasks",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateTask = (id: string, taskData: Partial<Task>) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === id 
-          ? { ...task, ...taskData, updatedAt: new Date() } 
-          : task
-      )
-    );
+  const addTask = async (taskData: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
+    try {
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to add tasks",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Add agent information
+      const agentData = {
+        agent_id: user.id,
+        agent_name: user.name || ''
+      };
+      
+      // Convert Task type to Supabase table format (snake_case)
+      const newTaskData = {
+        title: taskData.title,
+        description: taskData.description,
+        due_date: taskData.dueDate,
+        due_time: taskData.dueTime,
+        priority: taskData.priority,
+        status: taskData.status,
+        contact_id: taskData.contactId,
+        ...agentData
+      };
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert(newTaskData)
+        .select('*')
+        .single();
+      
+      if (error) {
+        console.error('Error adding task:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add task",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Transform and add the new task to state
+      const newTask: Task = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        dueDate: data.due_date ? new Date(data.due_date) : undefined,
+        dueTime: data.due_time,
+        priority: data.priority as "low" | "medium" | "high",
+        status: data.status as "active" | "completed",
+        contactId: data.contact_id,
+        agentId: data.agent_id,
+        agentName: data.agent_name,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+      
+      setTasks(prevTasks => [newTask, ...prevTasks]);
+      
+      toast({
+        title: "Success",
+        description: "Task added successfully",
+      });
+    } catch (err) {
+      console.error('Unexpected error adding task:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+  const updateTask = async (id: string, taskData: Partial<Task>) => {
+    try {
+      // Convert Task type to Supabase table format (snake_case)
+      const updateData: any = {};
+      
+      if (taskData.title !== undefined) updateData.title = taskData.title;
+      if (taskData.description !== undefined) updateData.description = taskData.description;
+      if (taskData.dueDate !== undefined) updateData.due_date = taskData.dueDate;
+      if (taskData.dueTime !== undefined) updateData.due_time = taskData.dueTime;
+      if (taskData.priority !== undefined) updateData.priority = taskData.priority;
+      if (taskData.status !== undefined) updateData.status = taskData.status;
+      if (taskData.contactId !== undefined) updateData.contact_id = taskData.contactId;
+      
+      // Add updated_at
+      updateData.updated_at = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', id)
+        .select('*')
+        .single();
+      
+      if (error) {
+        console.error('Error updating task:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update task",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update the task in state
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === id 
+            ? {
+                ...task,
+                title: data.title,
+                description: data.description,
+                dueDate: data.due_date ? new Date(data.due_date) : undefined,
+                dueTime: data.due_time,
+                priority: data.priority,
+                status: data.status,
+                contactId: data.contact_id,
+                updatedAt: new Date(data.updated_at)
+              }
+            : task
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: "Task updated successfully",
+      });
+    } catch (err) {
+      console.error('Unexpected error updating task:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteTask = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error deleting task:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete task",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Remove the task from state
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+      
+      toast({
+        title: "Success",
+        description: "Task deleted successfully",
+      });
+    } catch (err) {
+      console.error('Unexpected error deleting task:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
   const getTaskById = (id: string) => {
     return tasks.find(task => task.id === id);
   };
 
-  const completeTask = (id: string) => {
-    updateTask(id, { status: "completed" });
+  const completeTask = async (id: string) => {
+    await updateTask(id, { status: "completed" });
   };
 
   const getTasksByAgentId = (agentId: string) => {
@@ -67,12 +282,14 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     <TasksContext.Provider
       value={{
         tasks,
+        loading,
         addTask,
         updateTask,
         deleteTask,
         getTaskById,
         completeTask,
         getTasksByAgentId,
+        refreshTasks,
       }}
     >
       {children}
