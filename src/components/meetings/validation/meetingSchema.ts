@@ -18,9 +18,10 @@ export const meetingSchema = z.object({
   location: z.string().optional(),
   notes: z.string({
     required_error: "Meeting notes are required",
-  }),
+  }).min(1, "Meeting notes are required"),
   followUpScheduled: z.boolean().default(false),
   followUpDate: z.date().optional().nullable(),
+  followUpTime: z.string().optional(),
   followUpNotes: z.string().optional(),
   nextSteps: z.array(z.string()).optional(),
 });

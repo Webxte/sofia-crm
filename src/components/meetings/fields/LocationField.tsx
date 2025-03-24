@@ -9,15 +9,33 @@ interface LocationFieldProps {
 }
 
 export const LocationField = ({ form }: LocationFieldProps) => {
+  const meetingType = form.watch("type");
+  
+  // Generate placeholder text based on meeting type
+  const getPlaceholder = () => {
+    switch (meetingType) {
+      case "meeting":
+        return "Meeting address or venue";
+      case "online":
+        return "Zoom/Teams/Google Meet link";
+      case "phone":
+        return "Phone number or call details";
+      case "email":
+        return "Optional notes about the email";
+      default:
+        return "Location details";
+    }
+  };
+
   return (
     <FormField
       control={form.control}
       name="location"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Location (Optional)</FormLabel>
+          <FormLabel>Location {meetingType !== "meeting" && meetingType !== "online" ? "(Optional)" : ""}</FormLabel>
           <FormControl>
-            <Input placeholder="Meeting location" {...field} />
+            <Input placeholder={getPlaceholder()} {...field} />
           </FormControl>
           <FormMessage />
         </FormItem>

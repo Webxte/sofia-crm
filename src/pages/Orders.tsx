@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { ShoppingCart, Plus, Search, Filter, Download, Mail } from "lucide-react";
+import { ShoppingCart, Plus, Search, Filter, Download, Mail, List, Grid } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,14 +26,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import ProductImporter from "@/components/orders/ProductImporter";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { orders } = useOrders();
   const { getContactById } = useContacts();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -46,6 +54,11 @@ const Orders = () => {
   const filteredOrders = orders.filter(order => {
     // Filter by contact if specified
     if (contactId && order.contactId !== contactId) {
+      return false;
+    }
+    
+    // Filter by agent if not admin
+    if (!isAdmin && user && order.agentId !== user.id) {
       return false;
     }
     
@@ -166,6 +179,116 @@ const Orders = () => {
     });
   };
 
+  const renderGridView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {sortedOrders.map((order) => {
+        const contact = getContactById(order.contactId);
+        return (
+          <Card key={order.id}>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <CardDescription className="flex items-center gap-1">
+                  {order.reference || `Order #${order.id.slice(0, 6).toUpperCase()}`}
+                </CardDescription>
+                <Badge
+                  className={getStatusColor(order.status)}
+                  variant="outline"
+                >
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </Badge>
+              </div>
+              <CardTitle className="text-xl">
+                {contact?.fullName || contact?.company || "Unknown Customer"}
+              </CardTitle>
+              <CardDescription>
+                Date: {format(new Date(order.date), "PPP")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                <div className="text-sm flex justify-between">
+                  <span className="text-muted-foreground">Items:</span>
+                  <span>{order.items.length}</span>
+                </div>
+                <div className="text-sm flex justify-between">
+                  <span className="text-muted-foreground">Agent:</span>
+                  <span>{order.agentName || "Unknown"}</span>
+                </div>
+                <div className="text-sm flex justify-between font-medium">
+                  <span className="text-muted-foreground">Total:</span>
+                  <span>€{order.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="pt-2 flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => navigate(`/orders/edit/${order.id}`)}
+              >
+                View Details
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      })}
+    </div>
+  );
+
+  const renderListView = () => (
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Reference</TableHead>
+            <TableHead>Customer</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Agent</TableHead>
+            <TableHead className="text-right">Total</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedOrders.map((order) => {
+            const contact = getContactById(order.contactId);
+            return (
+              <TableRow key={order.id}>
+                <TableCell className="font-medium">
+                  {order.reference || `#${order.id.slice(0, 6).toUpperCase()}`}
+                </TableCell>
+                <TableCell>
+                  {contact?.fullName || contact?.company || "Unknown"}
+                </TableCell>
+                <TableCell>{format(new Date(order.date), "PP")}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={getStatusColor(order.status)}
+                    variant="outline"
+                  >
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>{order.agentName || "Unknown"}</TableCell>
+                <TableCell className="text-right">€{order.total.toFixed(2)}</TableCell>
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(`/orders/edit/${order.id}`)}
+                  >
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -176,12 +299,13 @@ const Orders = () => {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          {isAdmin && <ProductImporter />}
-          <Button className="sm:w-auto w-full" asChild>
-            <Link to={contactId ? `/orders/new?contactId=${contactId}` : "/orders/new"}>
-              <Plus className="mr-2 h-4 w-4" /> Create Order
-            </Link>
-          </Button>
+          {!isAdmin && (
+            <Button className="sm:w-auto w-full" asChild>
+              <Link to={contactId ? `/orders/new?contactId=${contactId}` : "/orders/new"}>
+                <Plus className="mr-2 h-4 w-4" /> Create Order
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -211,6 +335,24 @@ const Orders = () => {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex border rounded-md overflow-hidden">
+            <Button 
+              variant={viewMode === "grid" ? "default" : "ghost"} 
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="rounded-none"
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={viewMode === "list" ? "default" : "ghost"} 
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" /> Export
           </Button>
@@ -222,66 +364,13 @@ const Orders = () => {
           <EmptyState
             icon={<ShoppingCart size={40} />}
             title="No orders created"
-            description="Start creating orders to track your sales."
-            actionText="Create Order"
-            actionLink="/orders/new"
+            description={isAdmin ? "No orders have been created yet." : "Start creating orders to track your sales."}
+            actionText={!isAdmin ? "Create Order" : undefined}
+            actionLink={!isAdmin ? "/orders/new" : undefined}
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {sortedOrders.map((order) => {
-            const contact = getContactById(order.contactId);
-            return (
-              <Card key={order.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardDescription className="flex items-center gap-1">
-                      {order.reference || `Order #${order.id.slice(0, 6).toUpperCase()}`}
-                    </CardDescription>
-                    <Badge
-                      className={getStatusColor(order.status)}
-                      variant="outline"
-                    >
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-xl">
-                    {contact?.fullName || contact?.company || "Unknown Customer"}
-                  </CardTitle>
-                  <CardDescription>
-                    Date: {format(new Date(order.date), "PPP")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-1">
-                    <div className="text-sm flex justify-between">
-                      <span className="text-muted-foreground">Items:</span>
-                      <span>{order.items.length}</span>
-                    </div>
-                    <div className="text-sm flex justify-between">
-                      <span className="text-muted-foreground">Agent:</span>
-                      <span>{order.agentName || "Unknown"}</span>
-                    </div>
-                    <div className="text-sm flex justify-between font-medium">
-                      <span className="text-muted-foreground">Total:</span>
-                      <span>€{order.total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-2 flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => navigate(`/orders/edit/${order.id}`)}
-                  >
-                    View Details
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
+        viewMode === "grid" ? renderGridView() : renderListView()
       )}
     </div>
   );

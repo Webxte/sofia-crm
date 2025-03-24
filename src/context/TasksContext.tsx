@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 import { Task } from "@/types";
+import { useAuth } from "./AuthContext";
 
 interface TasksContextType {
   tasks: Task[];
@@ -9,16 +10,25 @@ interface TasksContextType {
   deleteTask: (id: string) => void;
   getTaskById: (id: string) => Task | undefined;
   completeTask: (id: string) => void;
+  getTasksByAgentId: (agentId: string) => Task[];
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const { user } = useAuth();
 
   const addTask = (taskData: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
+    // Add agent information if available
+    const agentData = user ? {
+      agentId: user.id,
+      agentName: user.name
+    } : {};
+    
     const newTask: Task = {
       ...taskData,
+      ...agentData,
       id: Math.random().toString(36).substring(2, 9),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -49,6 +59,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     updateTask(id, { status: "completed" });
   };
 
+  const getTasksByAgentId = (agentId: string) => {
+    return tasks.filter(task => task.agentId === agentId);
+  };
+
   return (
     <TasksContext.Provider
       value={{
@@ -58,6 +72,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         deleteTask,
         getTaskById,
         completeTask,
+        getTasksByAgentId,
       }}
     >
       {children}

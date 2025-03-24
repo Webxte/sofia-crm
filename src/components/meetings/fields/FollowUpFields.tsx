@@ -4,11 +4,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { MeetingFormValues } from "../validation/meetingSchema";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Clock } from "lucide-react";
 
 interface FollowUpFieldsProps {
   form: UseFormReturn<MeetingFormValues>;
@@ -79,6 +80,23 @@ export const FollowUpFields = ({ form }: FollowUpFieldsProps) => {
                     />
                   </PopoverContent>
                 </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="followUpTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Follow-up Time</FormLabel>
+                <div className="relative">
+                  <FormControl>
+                    <Input type="time" {...field} value={field.value || ""} />
+                  </FormControl>
+                  <Clock className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                </div>
                 <FormMessage />
               </FormItem>
             )}

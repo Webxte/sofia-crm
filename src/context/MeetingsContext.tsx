@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 import { Meeting } from "@/types";
+import { useAuth } from "./AuthContext";
 
 interface MeetingsContextType {
   meetings: Meeting[];
@@ -9,16 +10,25 @@ interface MeetingsContextType {
   deleteMeeting: (id: string) => void;
   getMeetingById: (id: string) => Meeting | undefined;
   getMeetingsByContactId: (contactId: string) => Meeting[];
+  getMeetingsByAgentId: (agentId: string) => Meeting[];
 }
 
 const MeetingsContext = createContext<MeetingsContextType | undefined>(undefined);
 
 export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const { user } = useAuth();
 
   const addMeeting = (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">) => {
+    // Add agent information if available
+    const agentData = user ? {
+      agentId: user.id,
+      agentName: user.name
+    } : {};
+    
     const newMeeting: Meeting = {
       ...meetingData,
+      ...agentData,
       id: Math.random().toString(36).substring(2, 9),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -49,6 +59,10 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
     return meetings.filter(meeting => meeting.contactId === contactId);
   };
 
+  const getMeetingsByAgentId = (agentId: string) => {
+    return meetings.filter(meeting => meeting.agentId === agentId);
+  };
+
   return (
     <MeetingsContext.Provider
       value={{
@@ -58,6 +72,7 @@ export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
         deleteMeeting,
         getMeetingById,
         getMeetingsByContactId,
+        getMeetingsByAgentId,
       }}
     >
       {children}

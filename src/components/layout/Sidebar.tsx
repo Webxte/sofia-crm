@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -20,6 +21,7 @@ import {
   BarChart, 
   Settings,
   Menu,
+  MessagesSquare,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -41,6 +43,11 @@ const Sidebar = ({ className }: SidebarProps) => {
       title: "Contacts",
       href: "/contacts",
       icon: Users,
+    },
+    {
+      title: "Meetings",
+      href: "/meetings",
+      icon: MessagesSquare,
     },
     {
       title: "Calendar",
@@ -78,7 +85,7 @@ const Sidebar = ({ className }: SidebarProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-4 top-4 md:hidden"
+            className="fixed left-4 top-4 z-40 md:hidden"
           >
             <Menu />
           </Button>

@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { Plus, Search, Calendar, MessagesSquare } from "lucide-react";
+import { Plus, Search, Calendar, MessagesSquare, List, Grid } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMeetings } from "@/context/MeetingsContext";
 import { useContacts } from "@/context/ContactsContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   Card,
   CardContent,
@@ -17,12 +18,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { MeetingTypeFilter } from "@/components/meetings/MeetingTypeFilter";
 import { MeetingCard } from "@/components/meetings/MeetingCard";
@@ -30,8 +32,10 @@ import { MeetingCard } from "@/components/meetings/MeetingCard";
 const Meetings = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { meetings } = useMeetings();
   const { getContactById } = useContacts();
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -43,6 +47,11 @@ const Meetings = () => {
   const filteredMeetings = meetings.filter(meeting => {
     // Filter by contact if specified
     if (contactId && meeting.contactId !== contactId) {
+      return false;
+    }
+    
+    // Filter by agent if not admin
+    if (!isAdmin && user && meeting.agentId !== user.id) {
       return false;
     }
     
@@ -72,6 +81,94 @@ const Meetings = () => {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
+  // Get meeting type label
+  const getMeetingTypeLabel = (type: string) => {
+    switch(type) {
+      case "meeting": return "In-person Meeting";
+      case "phone": return "Phone Call";
+      case "email": return "Email";
+      case "online": return "Online Meeting";
+      case "other": return "Other";
+      default: return type;
+    }
+  };
+
+  // Get meeting type badge color
+  const getMeetingTypeColor = (type: string) => {
+    switch(type) {
+      case "meeting": return "bg-blue-100 text-blue-800";
+      case "phone": return "bg-green-100 text-green-800";
+      case "email": return "bg-purple-100 text-purple-800";
+      case "online": return "bg-indigo-100 text-indigo-800";
+      case "other": return "bg-gray-100 text-gray-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const renderGridView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {sortedMeetings.map((meeting) => (
+        <MeetingCard 
+          key={meeting.id} 
+          meeting={meeting} 
+          contact={getContactById(meeting.contactId)} 
+          onViewDetails={() => navigate(`/meetings/edit/${meeting.id}`)}
+        />
+      ))}
+    </div>
+  );
+
+  const renderListView = () => (
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Contact</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Date & Time</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>Notes</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedMeetings.map((meeting) => {
+            const contact = getContactById(meeting.contactId);
+            return (
+              <TableRow key={meeting.id}>
+                <TableCell className="font-medium">
+                  {contact?.fullName || contact?.company || "Unknown"}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    className={getMeetingTypeColor(meeting.type)}
+                    variant="outline"
+                  >
+                    {getMeetingTypeLabel(meeting.type)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {format(new Date(meeting.date), "PP")} at {meeting.time}
+                </TableCell>
+                <TableCell>{meeting.location || "-"}</TableCell>
+                <TableCell className="max-w-[200px] truncate">{meeting.notes}</TableCell>
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(`/meetings/edit/${meeting.id}`)}
+                  >
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -81,11 +178,13 @@ const Meetings = () => {
             Schedule and manage your meetings
           </p>
         </div>
-        <Button className="sm:w-auto w-full" asChild>
-          <Link to={contactId ? `/meetings/new?contactId=${contactId}` : "/meetings/new"}>
-            <Plus className="mr-2 h-4 w-4" /> Add Meeting
-          </Link>
-        </Button>
+        {!isAdmin && (
+          <Button className="sm:w-auto w-full" asChild>
+            <Link to={contactId ? `/meetings/new?contactId=${contactId}` : "/meetings/new"}>
+              <Plus className="mr-2 h-4 w-4" /> Add Meeting
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -101,6 +200,24 @@ const Meetings = () => {
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <MeetingTypeFilter value={filterType} onValueChange={setFilterType} />
+          <div className="flex border rounded-md overflow-hidden">
+            <Button 
+              variant={viewMode === "grid" ? "default" : "ghost"} 
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="rounded-none"
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={viewMode === "list" ? "default" : "ghost"} 
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
           <Button variant="outline" size="sm" asChild>
             <Link to="/calendar">
               <Calendar className="mr-2 h-4 w-4" /> View Calendar
@@ -114,22 +231,13 @@ const Meetings = () => {
           <EmptyState
             icon={<MessagesSquare size={40} />}
             title="No meetings scheduled"
-            description="Add your first meeting to get started."
-            actionText="Add Meeting"
-            actionLink="/meetings/new"
+            description={isAdmin ? "No meetings have been scheduled yet." : "Add your first meeting to get started."}
+            actionText={!isAdmin ? "Add Meeting" : undefined}
+            actionLink={!isAdmin ? "/meetings/new" : undefined}
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {sortedMeetings.map((meeting) => (
-            <MeetingCard 
-              key={meeting.id} 
-              meeting={meeting} 
-              contact={getContactById(meeting.contactId)} 
-              onViewDetails={() => navigate(`/meetings/edit/${meeting.id}`)}
-            />
-          ))}
-        </div>
+        viewMode === "grid" ? renderGridView() : renderListView()
       )}
     </div>
   );

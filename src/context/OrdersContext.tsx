@@ -13,6 +13,7 @@ interface OrdersContextType {
   getOrdersByContactId: (contactId: string) => Order[];
   createOrderItem: (productId: string, quantity: number) => OrderItem | undefined;
   sendOrderEmail: (orderId: string, recipient: string, subject: string, message: string) => Promise<boolean>;
+  generateOrderReference: () => string;
 }
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -22,6 +23,27 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const { getProductById } = useProducts();
   const { user } = useAuth();
 
+  // Generate a new order reference based on agent email and a sequential number
+  const generateOrderReference = () => {
+    if (!user || !user.email) {
+      return `ORD${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    }
+    
+    // Extract first three letters from email (uppercase)
+    const prefix = user.email.substring(0, 3).toUpperCase();
+    
+    // Count existing orders from this agent to determine the sequence number
+    const agentOrders = orders.filter(order => 
+      order.agentId === user.id || 
+      (order.reference && order.reference.startsWith(prefix))
+    );
+    
+    // Generate a 5-digit sequence number, padded with leading zeros
+    const sequenceNumber = (agentOrders.length + 1).toString().padStart(5, '0');
+    
+    return `${prefix}${sequenceNumber}`;
+  };
+
   const addOrder = (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => {
     // Add agent information if available
     const agentData = user ? {
@@ -29,9 +51,13 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       agentName: user.name
     } : {};
     
+    // Generate a reference if not provided
+    const reference = orderData.reference || generateOrderReference();
+    
     const newOrder: Order = {
       ...orderData,
       ...agentData,
+      reference,
       id: Math.random().toString(36).substring(2, 9),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -110,6 +136,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         getOrdersByContactId,
         createOrderItem,
         sendOrderEmail,
+        generateOrderReference,
       }}
     >
       {children}
