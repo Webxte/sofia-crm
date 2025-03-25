@@ -27,34 +27,39 @@ interface ContactCardProps {
 }
 
 const ContactCard = ({ contact, onScheduleMeeting, onCreateTask, onCreateOrder }: ContactCardProps) => {
+  // Create display name with company first, then fullName if available
+  const displayName = contact.company || "Unnamed Company";
+  const contactPerson = contact.fullName || "";
+
   return (
     <Card className="bg-card text-card-foreground shadow-md">
       <CardHeader>
         <div className="flex items-center">
           <Avatar className="mr-4 h-10 w-10">
-            {contact.fullName ? (
-              <AvatarImage src={`https://ui-avatars.com/api/?name=${contact.fullName}`} />
+            {contact.company ? (
+              <AvatarImage src={`https://ui-avatars.com/api/?name=${contact.company}`} />
             ) : (
-              <AvatarFallback>{contact.company?.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{contact.fullName?.charAt(0) || "?"}</AvatarFallback>
             )}
           </Avatar>
           <div className="space-y-1">
-            <CardTitle className="text-lg font-semibold">{contact.fullName || contact.company || "Unnamed Contact"}</CardTitle>
-            <CardDescription>{contact.position}</CardDescription>
+            <CardTitle className="text-lg font-semibold">{displayName}</CardTitle>
+            {contactPerson && <CardDescription>{contactPerson}</CardDescription>}
+            {contact.position && <CardDescription className="text-xs">{contact.position}</CardDescription>}
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {contact.email && (
           <div className="flex items-center text-sm text-muted-foreground">
-            <Mail className="mr-2 h-4 w-4" />
-            {contact.email}
+            <Mail className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{contact.email}</span>
           </div>
         )}
         {contact.phone && (
           <div className="flex items-center text-sm text-muted-foreground">
-            <Phone className="mr-2 h-4 w-4" />
-            {contact.phone}
+            <Phone className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span>{contact.phone}</span>
           </div>
         )}
       </CardContent>

@@ -1,1 +1,19 @@
-project_id = "pxhvrmmmllcsjliupync"
+
+project_id = "CRM-app"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
+
+[functions]
+enabled = true

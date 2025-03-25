@@ -52,6 +52,11 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
     }
   };
 
+  // Create display name with company first, then contact name
+  const displayCompany = contact?.company || "Unknown Company";
+  const displayPerson = contact?.fullName ? ` (${contact.fullName})` : "";
+  const displayTitle = `${displayCompany}${displayPerson}`;
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-2">
@@ -67,7 +72,7 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
           </Badge>
         </div>
         <CardTitle className="text-xl">
-          {contact?.fullName || contact?.company || "Unknown Contact"}
+          {displayTitle}
         </CardTitle>
         <CardDescription className="flex items-center gap-1">
           <Calendar className="h-3.5 w-3.5" />
@@ -75,7 +80,7 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="line-clamp-3 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground whitespace-pre-line overflow-hidden max-h-24">
           {meeting.notes}
         </p>
       </CardContent>
