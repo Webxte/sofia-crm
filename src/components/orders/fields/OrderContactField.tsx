@@ -3,28 +3,15 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContacts } from "@/context/ContactsContext";
 import { UseFormReturn } from "react-hook-form";
+import { OrderFormValues } from "../validation/orderSchema";
 
 interface OrderContactFieldProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<OrderFormValues>;
   disabled?: boolean;
 }
 
 export const OrderContactField = ({ form, disabled }: OrderContactFieldProps) => {
   const { contacts } = useContacts();
-
-  // Sort contacts to show companies first
-  const sortedContacts = [...contacts].sort((a, b) => {
-    // If both have company names, sort alphabetically
-    if (a.company && b.company) {
-      return a.company.localeCompare(b.company);
-    }
-    // If only a has company, put a first
-    if (a.company) return -1;
-    // If only b has company, put b first
-    if (b.company) return 1;
-    // If neither has company, sort by full name
-    return (a.fullName || "").localeCompare(b.fullName || "");
-  });
 
   return (
     <FormField
@@ -32,7 +19,7 @@ export const OrderContactField = ({ form, disabled }: OrderContactFieldProps) =>
       name="contactId"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Customer/Company</FormLabel>
+          <FormLabel>Customer</FormLabel>
           <Select 
             onValueChange={field.onChange} 
             defaultValue={field.value}
@@ -40,15 +27,13 @@ export const OrderContactField = ({ form, disabled }: OrderContactFieldProps) =>
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder="Select a company or contact" />
+                <SelectValue placeholder="Select a customer" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {sortedContacts.map((contact) => (
+              {contacts.map((contact) => (
                 <SelectItem key={contact.id} value={contact.id}>
-                  {contact.company ? 
-                    `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
-                    (contact.fullName || "Unnamed Contact")}
+                  {contact.company ? `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : (contact.fullName || "Unnamed Contact")}
                 </SelectItem>
               ))}
             </SelectContent>

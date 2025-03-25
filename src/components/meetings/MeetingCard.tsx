@@ -52,7 +52,7 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
     }
   };
 
-  // Create display name with company first, then contact name
+  // Create display name with company first, then contact name if both exist
   const displayCompany = contact?.company || "Unknown Company";
   const displayPerson = contact?.fullName ? ` (${contact.fullName})` : "";
   const displayTitle = `${displayCompany}${displayPerson}`;
