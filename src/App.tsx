@@ -88,8 +88,8 @@ const App = () => (
           } />
         </Route>
 
-        {/* Redirect to login for unmatched routes */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* NotFound route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </TooltipProvider>
   </QueryClientProvider>
