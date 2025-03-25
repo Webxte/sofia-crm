@@ -1,6 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Filter, ArrowUpDown, UserPlus, Users, Grid, List } from "lucide-react";
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  ArrowUpDown, 
+  UserPlus, 
+  Users, 
+  Grid, 
+  List,
+  Calendar,
+  ListChecks,
+  ShoppingCart
+} from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
