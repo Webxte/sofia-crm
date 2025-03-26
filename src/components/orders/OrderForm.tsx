@@ -163,7 +163,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       return;
     }
 
-    const product = getProductByCode(newItem.code) || {
+    const foundProduct = getProductByCode(newItem.code) || {
       id: Math.random().toString(36).substring(2, 9),
       code: newItem.code,
       description: newItem.description,
@@ -176,14 +176,14 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
     const newOrderItem: OrderItem = {
       id: Math.random().toString(36).substring(2, 9),
-      productId: product.id,
+      productId: foundProduct.id,
       code: newItem.code,
       description: newItem.description,
       price: newItem.price,
       quantity: newItem.quantity,
       vat: newItem.vat,
       subtotal: newItem.price * newItem.quantity,
-      product: product as any
+      product: foundProduct as any
     };
 
     setOrderItems(prev => [...prev, newOrderItem]);
@@ -215,6 +215,25 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
   const removeItem = (index: number) => {
     setOrderItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // New function to update an order item
+  const updateOrderItem = (index: number, field: string, value: any) => {
+    setOrderItems(prev => {
+      const updatedItems = [...prev];
+      const item = { ...updatedItems[index] };
+      
+      // Update the specified field
+      item[field] = value;
+      
+      // Recalculate subtotal if price or quantity changes
+      if (field === 'price' || field === 'quantity') {
+        item.subtotal = item.price * item.quantity;
+      }
+      
+      updatedItems[index] = item;
+      return updatedItems;
+    });
   };
 
   const calculateSubtotal = () => {
@@ -557,19 +576,48 @@ ${settings.companyEmail}`;
                   {orderItems.map((item, index) => (
                     <tr key={index}>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {item.code}
+                        <Input 
+                          value={item.code}
+                          onChange={(e) => updateOrderItem(index, 'code', e.target.value)}
+                          className="p-1 h-7 text-sm"
+                        />
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {item.description}
+                        <Input 
+                          value={item.description}
+                          onChange={(e) => updateOrderItem(index, 'description', e.target.value)}
+                          className="p-1 h-7 text-sm"
+                        />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        €{item.price.toFixed(2)}
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01"
+                          value={item.price}
+                          onChange={(e) => updateOrderItem(index, 'price', parseFloat(e.target.value) || 0)}
+                          className="p-1 h-7 text-sm text-right"
+                        />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        {item.vat || 0}%
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01"
+                          value={item.vat || 0}
+                          onChange={(e) => updateOrderItem(index, 'vat', parseFloat(e.target.value) || 0)}
+                          className="p-1 h-7 text-sm text-right"
+                        />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        {item.quantity}
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          step="1"
+                          value={item.quantity}
+                          onChange={(e) => updateOrderItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                          className="p-1 h-7 text-sm text-right"
+                        />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
                         €{item.subtotal.toFixed(2)}
