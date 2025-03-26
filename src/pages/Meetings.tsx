@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -124,10 +125,11 @@ const Meetings = () => {
         <TableBody>
           {sortedMeetings.map((meeting) => {
             const contact = getContactById(meeting.contactId);
+            const contactName = contact?.company || contact?.fullName || "Unknown";
             return (
               <TableRow key={meeting.id}>
                 <TableCell className="font-medium">
-                  {contact?.fullName || contact?.company || "Unknown"}
+                  {contactName}
                 </TableCell>
                 <TableCell>
                   <Badge
@@ -141,7 +143,9 @@ const Meetings = () => {
                   {format(new Date(meeting.date), "PP")} at {meeting.time}
                 </TableCell>
                 <TableCell>{meeting.location || "-"}</TableCell>
-                <TableCell className="max-w-[200px] truncate">{meeting.notes}</TableCell>
+                <TableCell className="max-w-[200px] line-clamp-3 whitespace-pre-wrap">
+                  {meeting.notes}
+                </TableCell>
                 <TableCell>
                   <Button 
                     variant="ghost" 
