@@ -170,28 +170,54 @@ export const useProductsOperations = () => {
 
   const importProducts = async (csvData: string) => {
     try {
-      // Delete existing products
-      const { error: deleteError } = await supabase
-        .from('products')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-      
-      if (deleteError) {
-        console.error('Error deleting existing products:', deleteError);
-        throw new Error('Failed to delete existing products');
-      }
-      
-      // Parse and import products
+      // Parse the CSV data first
       const productsToImport = parseProductCSV(csvData);
       
-      const importPromises = productsToImport.map(productData => 
-        supabase
+      // For each product in the CSV, either update existing or insert new
+      for (const productData of productsToImport) {
+        // Check if product with this code already exists
+        const { data: existingProducts, error: lookupError } = await supabase
           .from('products')
-          .insert(productData)
-          .select('*')
-      );
+          .select('id')
+          .eq('code', productData.code);
+          
+        if (lookupError) {
+          console.error('Error looking up product:', lookupError);
+          continue;
+        }
+        
+        if (existingProducts && existingProducts.length > 0) {
+          // Update existing product
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({
+              description: productData.description,
+              price: productData.price,
+              cost: productData.cost,
+              vat: productData.vat,
+              case_quantity: productData.case_quantity,
+              first_order_commission: productData.first_order_commission,
+              next_orders_commission: productData.next_orders_commission,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingProducts[0].id);
+            
+          if (updateError) {
+            console.error('Error updating product during import:', updateError);
+          }
+        } else {
+          // Insert new product
+          const { error: insertError } = await supabase
+            .from('products')
+            .insert(productData);
+            
+          if (insertError) {
+            console.error('Error inserting product during import:', insertError);
+          }
+        }
+      }
       
-      await Promise.all(importPromises);
+      // Refresh the product list after import
       await refreshProducts();
       
       toast({
@@ -202,7 +228,7 @@ export const useProductsOperations = () => {
       console.error("Error importing products:", error);
       toast({
         title: "Error",
-        description: "Failed to import products",
+        description: "Failed to import products. Please check the CSV format.",
         variant: "destructive",
       });
       throw error;

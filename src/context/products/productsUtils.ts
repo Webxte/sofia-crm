@@ -43,12 +43,32 @@ export const parseProductCSV = (csvData: string) => {
     if (values.length >= 4) {
       const [code, description, priceStr, costStr, vatStr, caseQuantityStr, firstOrderCommissionStr, nextOrdersCommissionStr] = values;
       
+      // Parse numeric values
       const price = parseFloat(priceStr.trim());
       const cost = parseFloat(costStr.trim());
-      const vat = vatStr ? parseFloat(vatStr.trim()) : 0;
-      const caseQuantity = caseQuantityStr ? parseInt(caseQuantityStr.trim()) : null;
-      const firstOrderCommission = firstOrderCommissionStr ? parseFloat(firstOrderCommissionStr.trim()) : null;
-      const nextOrdersCommission = nextOrdersCommissionStr ? parseFloat(nextOrdersCommissionStr.trim()) : null;
+      
+      // Ensure VAT is properly parsed (default to 0 if not provided)
+      let vat = 0;
+      if (vatStr && vatStr.trim() !== '') {
+        vat = parseFloat(vatStr.trim());
+      }
+      
+      // Ensure case quantity is properly parsed (default to null if not provided)
+      let caseQuantity = null;
+      if (caseQuantityStr && caseQuantityStr.trim() !== '') {
+        caseQuantity = parseInt(caseQuantityStr.trim(), 10);
+      }
+      
+      // Parse commission values (default to null if not provided)
+      let firstOrderCommission = null;
+      if (firstOrderCommissionStr && firstOrderCommissionStr.trim() !== '') {
+        firstOrderCommission = parseFloat(firstOrderCommissionStr.trim());
+      }
+      
+      let nextOrdersCommission = null;
+      if (nextOrdersCommissionStr && nextOrdersCommissionStr.trim() !== '') {
+        nextOrdersCommission = parseFloat(nextOrdersCommissionStr.trim());
+      }
       
       if (!isNaN(price) && !isNaN(cost)) {
         products.push({
