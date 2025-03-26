@@ -15,7 +15,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, role: "admin" | "agent") => Promise<void>;
+  createUser: (name: string, email: string, password: string, role: "admin" | "agent") => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -76,26 +76,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string, role: "admin" | "agent") => {
+  const createUser = async (name: string, email: string, password: string, role: "admin" | "agent") => {
     setIsLoading(true);
     try {
-      // Sign up the user
-      const { error, data } = await supabase.auth.signUp({
+      // Create the user without signing in
+      const { error, data } = await supabase.auth.admin.createUser({
         email,
         password,
-        options: {
-          data: {
-            name,
-            role,
-          },
-        },
+        email_confirm: true,
+        user_metadata: {
+          name,
+          role,
+        }
       });
       
       if (error) {
         throw error;
       }
       
-      console.log("User signed up successfully:", data);
+      console.log("User created successfully:", data);
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin,
         isLoading,
         login,
-        signup,
+        createUser,
         logout,
       }}
     >

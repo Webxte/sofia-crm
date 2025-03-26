@@ -1,240 +1,149 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useProducts } from "@/context/ProductsContext";
-import { useOrders } from "@/context/OrdersContext";
-import { Product, OrderItem } from "@/types";
+import { FormControl } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plus, Search, Edit } from "lucide-react";
+import { Product } from "@/types";
+import { Plus, X } from "lucide-react";
+import { useOrders } from "@/context/OrdersContext";
 
 interface ProductSelectorProps {
-  onAddItem: (item: OrderItem) => void;
+  onProductSelected: (product: Product, quantity: number) => void;
+  onTabSuccess?: () => void;
 }
 
-const ProductSelector = ({ onAddItem }: ProductSelectorProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [productCode, setProductCode] = useState("");
-  const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
-  const [isManualMode, setIsManualMode] = useState(false);
-  
-  // Editable fields for manual mode
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState<number>(0);
-  
-  const { products, getProductByCode } = useProducts();
+export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSelectorProps) => {
+  const { products } = useProducts();
   const { createOrderItem } = useOrders();
+  const [code, setCode] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+  const quantityInputRef = useRef<HTMLInputElement>(null);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Update editable fields when product changes
   useEffect(() => {
-    if (product) {
-      setDescription(product.description);
-      setPrice(product.price);
+    if (code.length >= 2) {
+      const filtered = products
+        .filter((product) => product.code.toLowerCase().startsWith(code.toLowerCase()))
+        .slice(0, 10); // Limit to 10 suggestions
+      setFilteredProducts(filtered);
+      setShowSuggestions(filtered.length > 0);
     } else {
-      setDescription("");
-      setPrice(0);
+      setFilteredProducts([]);
+      setShowSuggestions(false);
     }
-  }, [product]);
+  }, [code, products]);
 
-  const handleCodeSearch = () => {
-    if (!productCode.trim()) return;
+  const handleSelectProduct = (product: Product) => {
+    setCode("");
+    setFilteredProducts([]);
+    setShowSuggestions(false);
     
-    const foundProduct = getProductByCode(productCode);
-    setProduct(foundProduct || null);
+    // If product has caseQuantity, use it as default
+    const defaultQuantity = product.caseQuantity && product.caseQuantity > 0 ? product.caseQuantity : 1;
+    onProductSelected(product, defaultQuantity);
     
-    if (!foundProduct && !isManualMode) {
-      // If product not found and not in manual mode, switch to manual mode
-      setIsManualMode(true);
-    }
-  };
-  
-  const toggleManualMode = () => {
-    setIsManualMode(!isManualMode);
-    if (!isManualMode && !product) {
-      // Clear fields when switching to manual mode without a product
-      setDescription("");
-      setPrice(0);
-    }
-  };
-
-  const handleAddItem = () => {
-    if (product || isManualMode) {
-      let item: OrderItem;
-      
-      if (product && !isManualMode) {
-        // Use existing product with system-calculated subtotal
-        item = createOrderItem(product.id, quantity) as OrderItem;
-      } else {
-        // Create a custom item with manual data
-        item = {
-          id: Math.random().toString(36).substring(2, 9),
-          productId: product?.id || Math.random().toString(36).substring(2, 9),
-          code: productCode,
-          description: description,
-          price: price,
-          quantity: quantity,
-          subtotal: price * quantity,
-          product: product || {
-            id: Math.random().toString(36).substring(2, 9),
-            code: productCode,
-            description: description,
-            price: price,
-            cost: price * 0.7, // Estimate cost as 70% of price
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        };
+    // Focus back on code input for next product
+    setTimeout(() => {
+      if (codeInputRef.current) {
+        codeInputRef.current.focus();
       }
-      
-      onAddItem(item);
-      setIsOpen(false);
-      resetForm();
+    }, 10);
+  };
+
+  const handleAddProduct = () => {
+    const product = products.find((p) => p.code.toLowerCase() === code.toLowerCase());
+    if (product) {
+      handleSelectProduct(product);
     }
   };
 
-  const resetForm = () => {
-    setProductCode("");
-    setProduct(null);
-    setQuantity(1);
-    setDescription("");
-    setPrice(0);
-    setIsManualMode(false);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Tab') {
+      if (e.currentTarget === codeInputRef.current) {
+        // If we have suggestions and Tab is pressed while in code field
+        if (filteredProducts.length > 0) {
+          e.preventDefault();
+          handleSelectProduct(filteredProducts[0]);
+        } else if (code) {
+          // Try to find exact match
+          const product = products.find((p) => p.code.toLowerCase() === code.toLowerCase());
+          if (product) {
+            e.preventDefault();
+            handleSelectProduct(product);
+          }
+        }
+      } else if (e.currentTarget === addButtonRef.current) {
+        // If Tab is pressed on the Add button
+        e.preventDefault();
+        handleAddProduct();
+        if (onTabSuccess) {
+          onTabSuccess();
+        }
+      }
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Add Item
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Product to Order</DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-6 py-4">
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <Label htmlFor="productCode" className="mb-2 block">
-                Product Code
-              </Label>
-              <Input
-                id="productCode"
-                placeholder="Enter product code"
-                value={productCode}
-                onChange={(e) => setProductCode(e.target.value)}
-              />
-            </div>
-            <Button type="button" onClick={handleCodeSearch}>
-              <Search className="mr-2 h-4 w-4" /> Search
-            </Button>
-          </div>
+    <div className="space-y-2">
+      <div className="flex items-start space-x-2 relative">
+        <div className="flex-1 relative">
+          <FormControl>
+            <Input
+              ref={codeInputRef}
+              placeholder="Enter product code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+          </FormControl>
           
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">
-              {product ? "Product found" : "Product details"}
-            </span>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={toggleManualMode}
-              className="text-xs"
-            >
-              <Edit className="mr-1 h-3 w-3" />
-              {isManualMode ? "Auto mode" : "Manual edit"}
-            </Button>
-          </div>
-          
-          <div className="border rounded-lg p-4 space-y-4">
-            <div>
-              <Label htmlFor="description" className="mb-2 block">
-                Description
-              </Label>
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={!isManualMode && !!product}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="price" className="mb-2 block">
-                Price (€)
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
-                disabled={!isManualMode && !!product}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="quantity" className="mb-2 block">
-                Quantity
-              </Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-              />
-            </div>
-            
-            <div>
-              <Label className="block text-sm text-muted-foreground">Subtotal</Label>
-              <p className="font-medium">€{((price || 0) * quantity).toFixed(2)}</p>
-            </div>
-          </div>
-
-          {products.length === 0 && !isManualMode && (
-            <div className="text-center p-4 border border-dashed rounded-lg">
-              <p className="text-muted-foreground">No products available</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Use manual mode to add product details
-              </p>
+          {showSuggestions && (
+            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-border max-h-60 overflow-y-auto">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center justify-between"
+                  onClick={() => handleSelectProduct(product)}
+                >
+                  <div>
+                    <div className="font-medium">{product.code}</div>
+                    <div className="text-sm text-muted-foreground truncate">{product.description}</div>
+                  </div>
+                  <div className="text-sm">€{product.price.toFixed(2)}</div>
+                </div>
+              ))}
             </div>
           )}
         </div>
         
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setIsOpen(false);
-              resetForm();
-            }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="button" 
-            onClick={handleAddItem}
-            disabled={(!product && !isManualMode) || (isManualMode && (!description || price <= 0)) || quantity < 1}
-          >
-            Add to Order
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <FormControl>
+          <Input
+            ref={quantityInputRef}
+            type="number"
+            min="1"
+            className="w-24"
+            placeholder="Qty"
+            value={quantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+          />
+        </FormControl>
+        
+        <Button 
+          ref={addButtonRef}
+          type="button" 
+          size="sm" 
+          onClick={handleAddProduct}
+          className="flex-shrink-0"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 };
-
-export default ProductSelector;

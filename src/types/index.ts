@@ -58,7 +58,10 @@ export interface Product {
   description: string;
   price: number;
   cost: number;
-  vat?: number; // Adding VAT field
+  vat?: number;
+  caseQuantity?: number;
+  firstOrderCommission?: number;
+  nextOrdersCommission?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,7 +74,7 @@ export interface OrderItem {
   description: string;
   price: number;
   quantity: number;
-  vat?: number; // Adding VAT field
+  vat?: number;
   subtotal: number;
   product: Product;
 }
@@ -79,16 +82,16 @@ export interface OrderItem {
 export interface Order {
   id: string;
   contactId: string;
-  agentId?: string; // Adding agent ID
-  agentName?: string; // Adding agent name
+  agentId?: string;
+  agentName?: string;
   date: Date;
   status: "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled";
   items: OrderItem[];
   total: number;
-  vatTotal?: number; // Adding VAT total
+  vatTotal?: number;
   notes?: string;
-  termsAndConditions?: string; // Adding terms and conditions
-  reference?: string; // Adding reference/order number
+  termsAndConditions?: string;
+  reference?: string;
   createdAt: Date;
   updatedAt: Date;
 }

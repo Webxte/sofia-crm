@@ -52,10 +52,10 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
     }
   };
 
-  // Create display name with company first, then contact name if both exist
+  // Prioritize company name over contact name
   const displayCompany = contact?.company || "Unknown Company";
   const displayPerson = contact?.fullName ? ` (${contact.fullName})` : "";
-  const displayTitle = `${displayCompany}${displayPerson}`;
+  const displayTitle = contact?.company ? displayCompany : (contact?.fullName || "Unknown Contact");
 
   return (
     <Card className="overflow-hidden">
@@ -80,7 +80,7 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground whitespace-pre-line overflow-hidden max-h-24">
+        <p className="text-sm text-muted-foreground whitespace-pre-line overflow-hidden max-h-36 line-clamp-3">
           {meeting.notes}
         </p>
       </CardContent>

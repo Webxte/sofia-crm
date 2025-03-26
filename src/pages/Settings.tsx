@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Settings as Cog, Upload, Save } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
@@ -11,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProductImporter from "@/components/orders/ProductImporter";
+import UserManagement from "@/components/settings/UserManagement";
 
 const Settings = () => {
   const { settings, updateSettings } = useSettings();
@@ -91,6 +91,7 @@ const Settings = () => {
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
         
         <TabsContent value="company">
@@ -228,6 +229,10 @@ const Settings = () => {
               </form>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="users">
+          <UserManagement />
         </TabsContent>
       </Tabs>
     </div>

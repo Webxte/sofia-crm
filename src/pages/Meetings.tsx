@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -32,35 +31,29 @@ import { MeetingCard } from "@/components/meetings/MeetingCard";
 const Meetings = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const { meetings } = useMeetings();
   const { getContactById } = useContacts();
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Extract contactId from query param if it exists
   const queryParams = new URLSearchParams(location.search);
   const contactId = queryParams.get("contactId");
   
-  // Filter meetings based on search query and filter type
   const filteredMeetings = meetings.filter(meeting => {
-    // Filter by contact if specified
     if (contactId && meeting.contactId !== contactId) {
       return false;
     }
     
-    // Filter by agent if not admin
     if (!isAdmin && user && meeting.agentId !== user.id) {
       return false;
     }
     
-    // Filter by type
     if (filterType !== "all" && meeting.type !== filterType) {
       return false;
     }
     
-    // Filter by search query
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       const contact = getContactById(meeting.contactId);
@@ -76,12 +69,10 @@ const Meetings = () => {
     return true;
   });
   
-  // Sort meetings by date, most recent first
   const sortedMeetings = [...filteredMeetings].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // Get meeting type label
   const getMeetingTypeLabel = (type: string) => {
     switch(type) {
       case "meeting": return "In-person Meeting";
@@ -93,7 +84,6 @@ const Meetings = () => {
     }
   };
 
-  // Get meeting type badge color
   const getMeetingTypeColor = (type: string) => {
     switch(type) {
       case "meeting": return "bg-blue-100 text-blue-800";

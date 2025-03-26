@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -36,6 +35,7 @@ const Tasks = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("active");
   const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list"); // Changed default to list view
   const { tasks, updateTask } = useTasks();
   const { getContactById } = useContacts();
   const navigate = useNavigate();
@@ -108,6 +108,76 @@ const Tasks = () => {
     updateTask(id, { status: "completed" });
   };
 
+  // Add list view rendering function
+  const renderListView = () => (
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Priority</TableHead>
+            <TableHead>Due Date</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedTasks.map((task) => {
+            const contact = task.contactId ? getContactById(task.contactId) : null;
+            const contactName = contact?.company || contact?.fullName || "None";
+            
+            return (
+              <TableRow key={task.id} className={task.status === 'completed' ? 'bg-muted/50' : ''}>
+                <TableCell className={`font-medium ${task.status === 'completed' ? 'line-through opacity-75' : ''}`}>
+                  {task.title}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    className={getPriorityColor(task.priority)}
+                    variant="outline"
+                  >
+                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {task.dueDate ? format(new Date(task.dueDate), "PPP") : "-"}
+                </TableCell>
+                <TableCell>{contactName}</TableCell>
+                <TableCell>
+                  <Badge variant={task.status === "completed" ? "outline" : "default"}>
+                    {task.status === "completed" ? "Completed" : "Active"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate(`/tasks/edit/${task.id}`)}
+                    >
+                      View
+                    </Button>
+                    {task.status === "active" && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleCompleteTask(task.id)}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Complete
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -157,6 +227,24 @@ const Tasks = () => {
               <SelectItem value="low">Low</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex border rounded-md overflow-hidden">
+            <Button 
+              variant={viewMode === "grid" ? "default" : "ghost"} 
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="rounded-none"
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={viewMode === "list" ? "default" : "ghost"} 
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -171,88 +259,7 @@ const Tasks = () => {
           />
         </div>
       ) : (
-        <div className="space-y-4">
-          {sortedTasks.map((task) => {
-            const contact = task.contactId ? getContactById(task.contactId) : null;
-            return (
-              <Card 
-                key={task.id} 
-                className={`overflow-hidden ${task.status === 'completed' ? 'bg-muted/50' : ''}`}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <Badge
-                      className={getPriorityColor(task.priority)}
-                      variant="outline"
-                    >
-                      {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/tasks/${task.id}`)}>
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/tasks/edit/${task.id}`)}>
-                          Edit Task
-                        </DropdownMenuItem>
-                        {task.status === "active" && (
-                          <DropdownMenuItem onClick={() => handleCompleteTask(task.id)}>
-                            Mark as Completed
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <CardTitle className={`text-xl ${task.status === 'completed' ? 'line-through opacity-75' : ''}`}>
-                    {task.title}
-                  </CardTitle>
-                  {task.dueDate && (
-                    <CardDescription>
-                      Due: {format(new Date(task.dueDate), "PPP")}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {task.description && (
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                      {task.description}
-                    </p>
-                  )}
-                  {contact && (
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Contact: </span>
-                      <span>
-                        {contact.fullName || contact.company || "Unnamed Contact"}
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter className="pt-2">
-                  {task.status === "active" ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleCompleteTask(task.id)}
-                    >
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Mark as Completed
-                    </Button>
-                  ) : (
-                    <Badge variant="outline" className="w-full justify-center py-1">
-                      Completed
-                    </Badge>
-                  )}
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
+        viewMode === "grid" ? renderGridView() : renderListView()
       )}
     </div>
   );

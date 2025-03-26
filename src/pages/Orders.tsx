@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -34,11 +33,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";
+import { OrderStatusChanger } from "@/components/orders/OrderStatusChanger";
 
 const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const { orders } = useOrders();
   const { getContactById } = useContacts();
   const { isAdmin, user } = useAuth();
@@ -46,32 +47,25 @@ const Orders = () => {
   const location = useLocation();
   const { toast } = useToast();
   
-  // Extract contactId from query param if it exists
   const queryParams = new URLSearchParams(location.search);
   const contactId = queryParams.get("contactId");
   
-  // Filter orders based on filters and search query
   const filteredOrders = orders.filter(order => {
-    // Filter by contact if specified
     if (contactId && order.contactId !== contactId) {
       return false;
     }
     
-    // Filter by agent if not admin
     if (!isAdmin && user && order.agentId !== user.id) {
       return false;
     }
     
-    // Filter by status
     if (filterStatus !== "all" && order.status !== filterStatus) {
       return false;
     }
     
-    // Filter by search query
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       
-      // Check contact details
       const contact = getContactById(order.contactId);
       if (contact) {
         const contactName = contact.fullName?.toLowerCase() || "";
@@ -81,7 +75,6 @@ const Orders = () => {
         }
       }
       
-      // Check products in order
       for (const item of order.items) {
         if (
           item.code.toLowerCase().includes(searchLower) ||
@@ -91,12 +84,10 @@ const Orders = () => {
         }
       }
       
-      // Check agent name
       if (order.agentName?.toLowerCase().includes(searchLower)) {
         return true;
       }
       
-      // Check reference number
       if (order.reference?.toLowerCase().includes(searchLower)) {
         return true;
       }
@@ -107,12 +98,10 @@ const Orders = () => {
     return true;
   });
   
-  // Sort orders by date, most recent first
   const sortedOrders = [...filteredOrders].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // Get status badge color
   const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
@@ -132,7 +121,6 @@ const Orders = () => {
     }
   };
 
-  // Handle export button click
   const handleExport = () => {
     if (sortedOrders.length === 0) {
       toast({
@@ -142,7 +130,6 @@ const Orders = () => {
       return;
     }
     
-    // Generate CSV content
     const headers = ["Order ID", "Reference", "Date", "Customer", "Status", "Agent", "Total", "Items"];
     const csvRows = [headers.join(",")];
     
@@ -242,7 +229,7 @@ const Orders = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Reference</TableHead>
-            <TableHead>Customer</TableHead>
+            <TableHead>Company</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Agent</TableHead>
@@ -253,33 +240,39 @@ const Orders = () => {
         <TableBody>
           {sortedOrders.map((order) => {
             const contact = getContactById(order.contactId);
+            const companyName = contact?.company || "Unknown";
+            
             return (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">
                   {order.reference || `#${order.id.slice(0, 6).toUpperCase()}`}
                 </TableCell>
                 <TableCell>
-                  {contact?.fullName || contact?.company || "Unknown"}
+                  {companyName}
                 </TableCell>
                 <TableCell>{format(new Date(order.date), "PP")}</TableCell>
                 <TableCell>
-                  <Badge
-                    className={getStatusColor(order.status)}
-                    variant="outline"
-                  >
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                  </Badge>
+                  <OrderStatusChanger 
+                    orderId={order.id} 
+                    currentStatus={order.status} 
+                  />
                 </TableCell>
                 <TableCell>{order.agentName || "Unknown"}</TableCell>
                 <TableCell className="text-right">€{order.total.toFixed(2)}</TableCell>
                 <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => navigate(`/orders/edit/${order.id}`)}
-                  >
-                    View
-                  </Button>
+                  <div className="flex items-center">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate(`/orders/edit/${order.id}`)}
+                    >
+                      View
+                    </Button>
+                    <OrderDeleteDialog 
+                      orderId={order.id} 
+                      reference={order.reference}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             );

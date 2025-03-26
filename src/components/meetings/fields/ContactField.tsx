@@ -13,13 +13,27 @@ interface ContactFieldProps {
 export const ContactField = ({ form, disabled }: ContactFieldProps) => {
   const { contacts } = useContacts();
 
+  // Sort contacts to prioritize companies
+  const sortedContacts = [...contacts].sort((a, b) => {
+    // If both have company names, sort alphabetically
+    if (a.company && b.company) {
+      return a.company.localeCompare(b.company);
+    }
+    // If only a has company, put a first
+    if (a.company) return -1;
+    // If only b has company, put b first
+    if (b.company) return 1;
+    // If neither has company, sort by full name
+    return (a.fullName || "").localeCompare(b.fullName || "");
+  });
+
   return (
     <FormField
       control={form.control}
       name="contactId"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Contact</FormLabel>
+          <FormLabel>Company/Contact</FormLabel>
           <Select 
             onValueChange={field.onChange} 
             defaultValue={field.value}
@@ -27,13 +41,15 @@ export const ContactField = ({ form, disabled }: ContactFieldProps) => {
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder="Select a contact" />
+                <SelectValue placeholder="Select a company or contact" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {contacts.map((contact) => (
+              {sortedContacts.map((contact) => (
                 <SelectItem key={contact.id} value={contact.id}>
-                  {contact.company ? `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : (contact.fullName || "Unnamed Contact")}
+                  {contact.company ? 
+                    `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
+                    (contact.fullName || "Unnamed Contact")}
                 </SelectItem>
               ))}
             </SelectContent>

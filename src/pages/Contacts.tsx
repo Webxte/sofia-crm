@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ContactDeleteDialog } from "@/components/contacts/ContactDeleteDialog";
 
 // Sort options
 type SortOption = "name" | "company" | "recent";
@@ -39,7 +40,7 @@ type ViewMode = "grid" | "list";
 const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("company");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAdmin, user } = useAuth();
@@ -208,6 +209,7 @@ const Contacts = () => {
                   >
                     View
                   </Button>
+                  <ContactDeleteDialog contact={contact} />
                 </div>
               </TableCell>
             </TableRow>
