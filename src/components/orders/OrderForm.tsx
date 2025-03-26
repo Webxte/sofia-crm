@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -134,18 +135,19 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     }
   }, [form.watch("contactId"), getContactById]);
 
-  const addItemToOrder = (product = null) => {
-    if (product) {
+  // Fix: changed parameter name from product to productToAdd to avoid conflict
+  const addItemToOrder = (productToAdd = null) => {
+    if (productToAdd) {
       const orderItem: OrderItem = {
         id: Math.random().toString(36).substring(2, 9),
-        productId: product.id,
-        code: product.code,
-        description: product.description,
-        price: product.price,
-        quantity: product.caseQuantity || 1,
-        vat: product.vat || settings.defaultVatRate,
-        subtotal: product.price * (product.caseQuantity || 1),
-        product: product as any
+        productId: productToAdd.id,
+        code: productToAdd.code,
+        description: productToAdd.description,
+        price: productToAdd.price,
+        quantity: productToAdd.caseQuantity || 1,
+        vat: productToAdd.vat || settings.defaultVatRate,
+        subtotal: productToAdd.price * (productToAdd.caseQuantity || 1),
+        product: productToAdd as any
       };
 
       setOrderItems(prev => [...prev, orderItem]);
