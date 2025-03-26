@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useProducts } from "@/context/ProductsContext";
+import { useProducts } from "@/context/products/ProductsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {

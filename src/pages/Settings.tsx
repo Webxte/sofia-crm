@@ -2,7 +2,7 @@
 import React from "react";
 import { Settings as Cog } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
-import { useProducts } from "@/context/ProductsContext";
+import { useProducts } from "@/context/products/ProductsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanySettings from "@/components/settings/CompanySettings";

@@ -1,6 +1,5 @@
-
 import { useEffect, useState, useRef } from "react";
-import { useProducts } from "@/context/ProductsContext";
+import { useProducts } from "@/context/products/ProductsContext";
 import { FormControl } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

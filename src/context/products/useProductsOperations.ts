@@ -1,77 +1,19 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+import { useState } from "react";
 import { Product } from "@/types";
-import { useAuth } from "./AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchProducts, formatProduct, parseProductCSV } from "./productsUtils";
 
-interface ProductsContextType {
-  products: Product[];
-  loading: boolean;
-  addProduct: (product: Omit<Product, "id" | "createdAt" | "updatedAt">) => Promise<void>;
-  updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
-  deleteProduct: (id: string) => Promise<void>;
-  getProductById: (id: string) => Product | undefined;
-  getProductByCode: (code: string) => Product | undefined;
-  importProducts: (csvData: string) => Promise<void>;
-  importProductsFromFile: (file: File) => Promise<void>;
-  refreshProducts: () => Promise<void>;
-}
-
-const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
-
-export const ProductsProvider = ({ children }: { children: ReactNode }) => {
+export const useProductsOperations = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      refreshProducts();
-    } else {
-      setProducts([]);
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
 
   const refreshProducts = async () => {
     try {
       setLoading(true);
-      
-      if (!isAuthenticated) {
-        setProducts([]);
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('code', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching products:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load products",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const formattedProducts: Product[] = data.map(product => ({
-        id: product.id,
-        code: product.code,
-        description: product.description,
-        price: product.price,
-        cost: product.cost,
-        vat: product.vat,
-        caseQuantity: product.case_quantity,
-        firstOrderCommission: product.first_order_commission,
-        nextOrdersCommission: product.next_orders_commission,
-        createdAt: new Date(product.created_at),
-        updatedAt: new Date(product.updated_at),
-      }));
-      
+      const formattedProducts = await fetchProducts();
       setProducts(formattedProducts);
     } catch (err) {
       console.error('Unexpected error fetching products:', err);
@@ -114,20 +56,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      const newProduct: Product = {
-        id: data.id,
-        code: data.code,
-        description: data.description,
-        price: data.price,
-        cost: data.cost,
-        vat: data.vat,
-        caseQuantity: data.case_quantity,
-        firstOrderCommission: data.first_order_commission,
-        nextOrdersCommission: data.next_orders_commission,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-      };
-      
+      const newProduct = formatProduct(data);
       setProducts(prevProducts => [...prevProducts, newProduct]);
       
       toast({
@@ -178,20 +107,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       
       setProducts(prevProducts => 
         prevProducts.map(product => 
-          product.id === id 
-            ? {
-                ...product,
-                code: data.code,
-                description: data.description,
-                price: data.price,
-                cost: data.cost,
-                vat: data.vat,
-                caseQuantity: data.case_quantity,
-                firstOrderCommission: data.first_order_commission,
-                nextOrdersCommission: data.next_orders_commission,
-                updatedAt: new Date(data.updated_at)
-              }
-            : product
+          product.id === id ? formatProduct(data) : product
         )
       );
       
@@ -254,10 +170,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const importProducts = async (csvData: string) => {
     try {
-      const lines = csvData.trim().split('\n');
-      
-      const startIndex = lines[0].toLowerCase().includes('code') ? 1 : 0;
-      
+      // Delete existing products
       const { error: deleteError } = await supabase
         .from('products')
         .delete()
@@ -268,50 +181,22 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Failed to delete existing products');
       }
       
-      const importPromises = [];
+      // Parse and import products
+      const productsToImport = parseProductCSV(csvData);
       
-      for (let i = startIndex; i < lines.length; i++) {
-        const values = lines[i].split(',');
-        
-        if (values.length >= 4) {
-          const [code, description, priceStr, costStr, vatStr, caseQuantityStr, firstOrderCommissionStr, nextOrdersCommissionStr] = values;
-          
-          const price = parseFloat(priceStr.trim());
-          const cost = parseFloat(costStr.trim());
-          const vat = vatStr ? parseFloat(vatStr.trim()) : 0;
-          const caseQuantity = caseQuantityStr ? parseInt(caseQuantityStr.trim()) : null;
-          const firstOrderCommission = firstOrderCommissionStr ? parseFloat(firstOrderCommissionStr.trim()) : null;
-          const nextOrdersCommission = nextOrdersCommissionStr ? parseFloat(nextOrdersCommissionStr.trim()) : null;
-          
-          if (!isNaN(price) && !isNaN(cost)) {
-            const productData = {
-              code: code.trim(),
-              description: description.trim(),
-              price,
-              cost,
-              vat,
-              case_quantity: caseQuantity,
-              first_order_commission: firstOrderCommission,
-              next_orders_commission: nextOrdersCommission,
-            };
-            
-            importPromises.push(
-              supabase
-                .from('products')
-                .insert(productData)
-                .select('*')
-            );
-          }
-        }
-      }
+      const importPromises = productsToImport.map(productData => 
+        supabase
+          .from('products')
+          .insert(productData)
+          .select('*')
+      );
       
       await Promise.all(importPromises);
-      
       await refreshProducts();
       
       toast({
         title: "Success",
-        description: `${importPromises.length} products imported successfully`,
+        description: `${productsToImport.length} products imported successfully`,
       });
     } catch (error) {
       console.error("Error importing products:", error);
@@ -346,30 +231,16 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  return (
-    <ProductsContext.Provider
-      value={{
-        products,
-        loading,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        getProductById,
-        getProductByCode,
-        importProducts,
-        importProductsFromFile,
-        refreshProducts,
-      }}
-    >
-      {children}
-    </ProductsContext.Provider>
-  );
-};
-
-export const useProducts = () => {
-  const context = useContext(ProductsContext);
-  if (context === undefined) {
-    throw new Error("useProducts must be used within a ProductsProvider");
-  }
-  return context;
+  return {
+    products,
+    loading,
+    refreshProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    getProductById,
+    getProductByCode,
+    importProducts,
+    importProductsFromFile,
+  };
 };
