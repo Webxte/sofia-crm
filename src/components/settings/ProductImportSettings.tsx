@@ -61,11 +61,12 @@ const ProductImportSettings = ({ importProductsFromFile }: ProductImportSettings
       // Store the name of the imported file
       setLastImportedFile(file.name);
       
+      // When a new file is uploaded, it will replace the old data
       await importProductsFromFile(file);
       
       toast({
         title: "Success",
-        description: `File "${file.name}" imported successfully`,
+        description: `File "${file.name}" imported successfully. Previous product data has been replaced.`,
       });
     } catch (error) {
       console.error("Error importing file:", error);
@@ -103,7 +104,7 @@ const ProductImportSettings = ({ importProductsFromFile }: ProductImportSettings
           <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
           <h3 className="text-lg font-medium mb-1">Drag & Drop CSV File</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Or paste your CSV data below
+            Or use the button below to select a file
           </p>
           
           {/* Hidden file input */}

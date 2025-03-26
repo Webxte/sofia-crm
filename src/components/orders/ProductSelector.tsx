@@ -23,6 +23,7 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
   const codeInputRef = useRef<HTMLInputElement>(null);
   const quantityInputRef = useRef<HTMLInputElement>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (code.length >= 2) {
@@ -37,13 +38,37 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
     }
   }, [code, products]);
 
+  useEffect(() => {
+    // Set default quantity based on first matching product's caseQuantity
+    if (filteredProducts.length > 0 && filteredProducts[0].caseQuantity) {
+      setQuantity(filteredProducts[0].caseQuantity || 1);
+    }
+  }, [filteredProducts]);
+
+  useEffect(() => {
+    // Close suggestions on click outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleSelectProduct = (product: Product) => {
     setCode("");
     setFilteredProducts([]);
     setShowSuggestions(false);
     
-    // If product has caseQuantity, use it as default
-    const defaultQuantity = product.caseQuantity && product.caseQuantity > 0 ? product.caseQuantity : 1;
+    // Always use caseQuantity from product if available
+    const defaultQuantity = product.caseQuantity && product.caseQuantity > 0 
+      ? product.caseQuantity 
+      : 1;
+    
     onProductSelected(product, defaultQuantity);
     
     // Focus back on code input for next product
@@ -116,18 +141,29 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
           </FormControl>
           
           {showSuggestions && (
-            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-border max-h-60 overflow-y-auto">
+            <div 
+              ref={suggestionsRef}
+              className="absolute z-10 top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-border max-h-64 overflow-y-auto"
+            >
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center justify-between"
+                  className="px-3 py-2 hover:bg-muted cursor-pointer flex items-center justify-between text-xs"
                   onClick={() => handleSelectProduct(product)}
                 >
-                  <div>
-                    <div className="font-medium">{product.code}</div>
-                    <div className="text-sm text-muted-foreground truncate">{product.description}</div>
+                  <div className="flex-1 truncate">
+                    <span className="font-medium mr-2">{product.code}</span>
+                    <span className="text-muted-foreground truncate">{product.description}</span>
                   </div>
-                  <div className="text-sm">€{product.price.toFixed(2)}</div>
+                  <div className="flex items-center space-x-3 text-xs whitespace-nowrap">
+                    <span>€{product.price.toFixed(2)}</span>
+                    {product.caseQuantity && (
+                      <span className="text-muted-foreground">Case: {product.caseQuantity}</span>
+                    )}
+                    {product.vat !== undefined && (
+                      <span className="text-muted-foreground">VAT: {product.vat}%</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

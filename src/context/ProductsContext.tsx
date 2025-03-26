@@ -69,6 +69,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         price: product.price,
         cost: product.cost,
         vat: product.vat,
+        caseQuantity: product.case_quantity,
+        firstOrderCommission: product.first_order_commission,
+        nextOrdersCommission: product.next_orders_commission,
         createdAt: new Date(product.created_at),
         updatedAt: new Date(product.updated_at),
       }));
@@ -95,6 +98,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         price: productData.price,
         cost: productData.cost,
         vat: productData.vat,
+        case_quantity: productData.caseQuantity,
+        first_order_commission: productData.firstOrderCommission,
+        next_orders_commission: productData.nextOrdersCommission,
       };
       
       const { data, error } = await supabase
@@ -121,6 +127,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         price: data.price,
         cost: data.cost,
         vat: data.vat,
+        caseQuantity: data.case_quantity,
+        firstOrderCommission: data.first_order_commission,
+        nextOrdersCommission: data.next_orders_commission,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -151,6 +160,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       if (productData.price !== undefined) updateData.price = productData.price;
       if (productData.cost !== undefined) updateData.cost = productData.cost;
       if (productData.vat !== undefined) updateData.vat = productData.vat;
+      if (productData.caseQuantity !== undefined) updateData.case_quantity = productData.caseQuantity;
+      if (productData.firstOrderCommission !== undefined) updateData.first_order_commission = productData.firstOrderCommission;
+      if (productData.nextOrdersCommission !== undefined) updateData.next_orders_commission = productData.nextOrdersCommission;
       
       // Add updated_at
       updateData.updated_at = new Date().toISOString();
@@ -183,6 +195,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
                 price: data.price,
                 cost: data.cost,
                 vat: data.vat,
+                caseQuantity: data.case_quantity,
+                firstOrderCommission: data.first_order_commission,
+                nextOrdersCommission: data.next_orders_commission,
                 updatedAt: new Date(data.updated_at)
               }
             : product
@@ -256,17 +271,31 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       // Skip header row if it exists
       const startIndex = lines[0].toLowerCase().includes('code') ? 1 : 0;
       
+      // First, delete all existing products to replace them with new ones
+      const { error: deleteError } = await supabase
+        .from('products')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Safe guard to not delete all if error
+      
+      if (deleteError) {
+        console.error('Error deleting existing products:', deleteError);
+        throw new Error('Failed to delete existing products');
+      }
+      
       const importPromises = [];
       
       for (let i = startIndex; i < lines.length; i++) {
         const values = lines[i].split(',');
         
         if (values.length >= 4) {
-          const [code, description, priceStr, costStr, vatStr] = values;
+          const [code, description, priceStr, costStr, vatStr, caseQuantityStr, firstOrderCommissionStr, nextOrdersCommissionStr] = values;
           
           const price = parseFloat(priceStr.trim());
           const cost = parseFloat(costStr.trim());
           const vat = vatStr ? parseFloat(vatStr.trim()) : 0;
+          const caseQuantity = caseQuantityStr ? parseInt(caseQuantityStr.trim()) : null;
+          const firstOrderCommission = firstOrderCommissionStr ? parseFloat(firstOrderCommissionStr.trim()) : null;
+          const nextOrdersCommission = nextOrdersCommissionStr ? parseFloat(nextOrdersCommissionStr.trim()) : null;
           
           if (!isNaN(price) && !isNaN(cost)) {
             const productData = {
@@ -275,6 +304,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
               price,
               cost,
               vat,
+              case_quantity: caseQuantity,
+              first_order_commission: firstOrderCommission,
+              next_orders_commission: nextOrdersCommission,
             };
             
             importPromises.push(
@@ -303,6 +335,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         description: "Failed to import products",
         variant: "destructive",
       });
+      throw error; // Re-throw to be caught by the caller
     }
   };
 
