@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Product } from "@/types";
 import { useAuth } from "./AuthContext";
@@ -26,7 +25,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  // Fetch products when the component mounts or when user auth state changes
   useEffect(() => {
     if (isAuthenticated) {
       refreshProducts();
@@ -36,7 +34,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated]);
 
-  // Function to fetch products from Supabase
   const refreshProducts = async () => {
     try {
       setLoading(true);
@@ -61,7 +58,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Transform the Supabase data to match our Product type
       const formattedProducts: Product[] = data.map(product => ({
         id: product.id,
         code: product.code,
@@ -91,7 +87,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const addProduct = async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
     try {
-      // Convert Product type to Supabase table format
       const newProductData = {
         code: productData.code,
         description: productData.description,
@@ -119,7 +114,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Transform and add the new product to state
       const newProduct: Product = {
         id: data.id,
         code: data.code,
@@ -152,7 +146,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProduct = async (id: string, productData: Partial<Product>) => {
     try {
-      // Convert Product type to Supabase table format
       const updateData: any = {};
       
       if (productData.code !== undefined) updateData.code = productData.code;
@@ -164,7 +157,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       if (productData.firstOrderCommission !== undefined) updateData.first_order_commission = productData.firstOrderCommission;
       if (productData.nextOrdersCommission !== undefined) updateData.next_orders_commission = productData.nextOrdersCommission;
       
-      // Add updated_at
       updateData.updated_at = new Date().toISOString();
       
       const { data, error } = await supabase
@@ -184,7 +176,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update the product in state
       setProducts(prevProducts => 
         prevProducts.map(product => 
           product.id === id 
@@ -235,7 +226,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Remove the product from state
       setProducts(prevProducts => prevProducts.filter(product => product.id !== id));
       
       toast({
@@ -256,7 +246,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     return products.find(product => product.id === id);
   };
 
-  // Updated to be case-insensitive
   const getProductByCode = (code: string) => {
     return products.find(product => 
       product.code.toLowerCase() === code.toLowerCase()
@@ -265,17 +254,14 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const importProducts = async (csvData: string) => {
     try {
-      // Parse CSV data (simple implementation)
       const lines = csvData.trim().split('\n');
       
-      // Skip header row if it exists
       const startIndex = lines[0].toLowerCase().includes('code') ? 1 : 0;
       
-      // First, delete all existing products to replace them with new ones
       const { error: deleteError } = await supabase
         .from('products')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Safe guard to not delete all if error
+        .neq('id', '00000000-0000-0000-0000-000000000000');
       
       if (deleteError) {
         console.error('Error deleting existing products:', deleteError);
@@ -321,7 +307,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       
       await Promise.all(importPromises);
       
-      // Refresh products to get updated list
       await refreshProducts();
       
       toast({
@@ -335,7 +320,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         description: "Failed to import products",
         variant: "destructive",
       });
-      throw error; // Re-throw to be caught by the caller
+      throw error;
     }
   };
 

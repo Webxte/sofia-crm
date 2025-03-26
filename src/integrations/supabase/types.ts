@@ -237,31 +237,40 @@ export type Database = {
       }
       products: {
         Row: {
+          case_quantity: number | null
           code: string
           cost: number
           created_at: string
           description: string
+          first_order_commission: number | null
           id: string
+          next_orders_commission: number | null
           price: number
           updated_at: string
           vat: number | null
         }
         Insert: {
+          case_quantity?: number | null
           code: string
           cost: number
           created_at?: string
           description: string
+          first_order_commission?: number | null
           id?: string
+          next_orders_commission?: number | null
           price: number
           updated_at?: string
           vat?: number | null
         }
         Update: {
+          case_quantity?: number | null
           code?: string
           cost?: number
           created_at?: string
           description?: string
+          first_order_commission?: number | null
           id?: string
+          next_orders_commission?: number | null
           price?: number
           updated_at?: string
           vat?: number | null

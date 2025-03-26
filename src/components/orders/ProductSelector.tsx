@@ -148,20 +148,17 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="px-3 py-2 hover:bg-muted cursor-pointer flex items-center justify-between text-xs"
+                  className="px-2 py-1 hover:bg-muted cursor-pointer flex items-center justify-between text-xs"
                   onClick={() => handleSelectProduct(product)}
                 >
-                  <div className="flex-1 truncate">
-                    <span className="font-medium mr-2">{product.code}</span>
+                  <div className="flex items-center space-x-2 truncate">
+                    <span className="font-medium">{product.code}</span>
                     <span className="text-muted-foreground truncate">{product.description}</span>
                   </div>
-                  <div className="flex items-center space-x-3 text-xs whitespace-nowrap">
+                  <div className="flex items-center space-x-2 text-xs whitespace-nowrap">
                     <span>€{product.price.toFixed(2)}</span>
                     {product.caseQuantity && (
-                      <span className="text-muted-foreground">Case: {product.caseQuantity}</span>
-                    )}
-                    {product.vat !== undefined && (
-                      <span className="text-muted-foreground">VAT: {product.vat}%</span>
+                      <span className="text-muted-foreground">Qty: {product.caseQuantity}</span>
                     )}
                   </div>
                 </div>
