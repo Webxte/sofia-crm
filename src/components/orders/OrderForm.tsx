@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { Order, OrderItem } from "@/types";
 import { useContacts } from "@/context/ContactsContext";
 import { useOrders } from "@/context/OrdersContext";
-import { useProducts } from "@/context/ProductsContext";
+import { useProducts } from "@/context/products/ProductsContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";

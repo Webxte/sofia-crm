@@ -4,7 +4,7 @@ import { Order, OrderItem, Product } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { useProducts } from "@/context/ProductsContext";
+import { useProducts } from "@/context/products/ProductsContext";
 import { generateOrderReference, sendOrderEmail } from "./orderUtils";
 import { format } from "date-fns";
 
