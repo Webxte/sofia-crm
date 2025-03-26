@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { ClipboardList, Plus, Search, Filter, CheckCircle2 } from "lucide-react";
+import { ClipboardList, Plus, Search, Filter, CheckCircle2, Grid as GridIcon, List as ListIcon } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Tasks = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,6 +116,76 @@ const Tasks = () => {
   const handleCompleteTask = (id: string) => {
     updateTask(id, { status: "completed" });
   };
+
+  // Add grid view rendering function
+  const renderGridView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {sortedTasks.map((task) => {
+        const contact = task.contactId ? getContactById(task.contactId) : null;
+        const contactName = contact?.company || contact?.fullName || "None";
+        
+        return (
+          <Card key={task.id} className={task.status === 'completed' ? 'opacity-70' : ''}>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <CardTitle className={`text-lg ${task.status === 'completed' ? 'line-through' : ''}`}>
+                    {task.title}
+                  </CardTitle>
+                  {contactName !== "None" && (
+                    <CardDescription>
+                      Contact: {contactName}
+                    </CardDescription>
+                  )}
+                </div>
+                <Badge
+                  className={getPriorityColor(task.priority)}
+                  variant="outline"
+                >
+                  {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pb-2">
+              {task.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {task.description}
+                </p>
+              )}
+              {task.dueDate && (
+                <div className="flex items-center mt-2 text-sm">
+                  <span className="font-medium">Due:</span>
+                  <span className="ml-2">
+                    {format(new Date(task.dueDate), "PPP")}
+                    {task.dueTime && ` at ${task.dueTime}`}
+                  </span>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="pt-1 flex justify-between">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate(`/tasks/edit/${task.id}`)}
+              >
+                View
+              </Button>
+              {task.status === "active" && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleCompleteTask(task.id)}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Complete
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        );
+      })}
+    </div>
+  );
 
   // Add list view rendering function
   const renderListView = () => (
@@ -234,7 +313,7 @@ const Tasks = () => {
               onClick={() => setViewMode("grid")}
               className="rounded-none"
             >
-              <Grid className="h-4 w-4" />
+              <GridIcon className="h-4 w-4" />
             </Button>
             <Button 
               variant={viewMode === "list" ? "default" : "ghost"} 
@@ -242,7 +321,7 @@ const Tasks = () => {
               onClick={() => setViewMode("list")}
               className="rounded-none"
             >
-              <List className="h-4 w-4" />
+              <ListIcon className="h-4 w-4" />
             </Button>
           </div>
         </div>

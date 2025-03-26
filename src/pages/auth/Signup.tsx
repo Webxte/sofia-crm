@@ -54,7 +54,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { signup } = useAuth();
+  const { createUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -73,7 +73,7 @@ const Signup = () => {
     setErrorMessage("");
     
     try {
-      await signup(values.name, values.email, values.password, values.role);
+      await createUser(values.name, values.email, values.password, values.role);
       toast({
         title: "Account created",
         description: "You've been signed up successfully.",

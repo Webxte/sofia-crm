@@ -87,6 +87,17 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
     }
   };
 
+  // Create a button-specific key handler that matches ButtonElement type
+  const handleButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      handleAddProduct();
+      if (onTabSuccess) {
+        onTabSuccess();
+      }
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-start space-x-2 relative">
@@ -139,7 +150,7 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
           onClick={handleAddProduct}
           className="flex-shrink-0"
           tabIndex={0}
-          onKeyDown={handleKeyDown}
+          onKeyDown={handleButtonKeyDown}
         >
           <Plus className="h-4 w-4" />
         </Button>
