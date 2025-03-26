@@ -27,7 +27,7 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
   useEffect(() => {
     if (code.length >= 2) {
       const filtered = products
-        .filter((product) => product.code.toLowerCase().startsWith(code.toLowerCase()))
+        .filter((product) => product.code.toLowerCase().includes(code.toLowerCase()))
         .slice(0, 10); // Limit to 10 suggestions
       setFilteredProducts(filtered);
       setShowSuggestions(filtered.length > 0);
@@ -76,12 +76,11 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
             handleSelectProduct(product);
           }
         }
-      } else if (e.currentTarget === addButtonRef.current) {
-        // If Tab is pressed on the Add button
+      } else if (e.currentTarget === quantityInputRef.current && !e.shiftKey) {
+        // If Tab is pressed on the quantity field
         e.preventDefault();
-        handleAddProduct();
-        if (onTabSuccess) {
-          onTabSuccess();
+        if (addButtonRef.current) {
+          addButtonRef.current.focus();
         }
       }
     }
@@ -89,9 +88,12 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
 
   // Create a button-specific key handler that matches ButtonElement type
   const handleButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'Tab') {
+    if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
       handleAddProduct();
+      if (codeInputRef.current) {
+        codeInputRef.current.focus();
+      }
       if (onTabSuccess) {
         onTabSuccess();
       }
@@ -109,6 +111,7 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
               value={code}
               onChange={(e) => setCode(e.target.value)}
               onKeyDown={handleKeyDown}
+              autoComplete="off"
             />
           </FormControl>
           
@@ -140,6 +143,7 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
             placeholder="Qty"
             value={quantity}
             onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            onKeyDown={handleKeyDown}
           />
         </FormControl>
         

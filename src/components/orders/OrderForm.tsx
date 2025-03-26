@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -46,8 +45,8 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ProductSelector } from "./ProductSelector";
 
-// Define the schema for order validation
 const orderSchema = z.object({
   contactId: z.string({
     required_error: "Contact is required",
@@ -109,7 +108,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     defaultValues,
   });
 
-  // Handle product code search
   useEffect(() => {
     if (newItem.code) {
       const product = getProductByCode(newItem.code);
@@ -124,7 +122,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     }
   }, [newItem.code, getProductByCode, settings.defaultVatRate]);
 
-  // When contact changes, update the email data
   useEffect(() => {
     if (form.watch("contactId")) {
       const contact = getContactById(form.watch("contactId"));
@@ -137,7 +134,24 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     }
   }, [form.watch("contactId"), getContactById]);
 
-  const addItemToOrder = () => {
+  const addItemToOrder = (product = null) => {
+    if (product) {
+      const orderItem: OrderItem = {
+        id: Math.random().toString(36).substring(2, 9),
+        productId: product.id,
+        code: product.code,
+        description: product.description,
+        price: product.price,
+        quantity: product.caseQuantity || 1,
+        vat: product.vat || settings.defaultVatRate,
+        subtotal: product.price * (product.caseQuantity || 1),
+        product: product as any
+      };
+
+      setOrderItems(prev => [...prev, orderItem]);
+      return;
+    }
+
     if (!newItem.code || !newItem.description || newItem.price <= 0 || newItem.quantity <= 0) {
       toast({
         title: "Invalid item",
@@ -172,7 +186,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
     setOrderItems(prev => [...prev, newOrderItem]);
     
-    // Reset form for next item
     setNewItem({
       code: "",
       description: "",
@@ -180,6 +193,22 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       quantity: 1,
       vat: settings.defaultVatRate
     });
+  };
+
+  const handleProductSelected = (product, quantity) => {
+    const orderItem: OrderItem = {
+      id: Math.random().toString(36).substring(2, 9),
+      productId: product.id,
+      code: product.code,
+      description: product.description,
+      price: product.price,
+      quantity: quantity,
+      vat: product.vat || settings.defaultVatRate,
+      subtotal: product.price * quantity,
+      product: product as any
+    };
+
+    setOrderItems(prev => [...prev, orderItem]);
   };
 
   const removeItem = (index: number) => {
@@ -393,7 +422,9 @@ ${settings.companyEmail}`;
                     <SelectContent>
                       {contacts.map((contact) => (
                         <SelectItem key={contact.id} value={contact.id}>
-                          {contact.fullName || contact.company || "Unnamed Contact"}
+                          {contact.company ? 
+                            `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
+                            (contact.fullName || "Unnamed Contact")}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -555,74 +586,15 @@ ${settings.companyEmail}`;
                     </tr>
                   ))}
                   
-                  {/* New item input row */}
                   <tr className="bg-muted/50">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <Input
-                        value={newItem.code}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, code: e.target.value }))}
-                        placeholder="Enter code"
-                        className="h-9"
+                    <td colSpan={7} className="px-4 py-3">
+                      <ProductSelector 
+                        onProductSelected={handleProductSelected}
+                        onTabSuccess={() => {}}
                       />
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <Input
-                        value={newItem.description}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Enter description"
-                        className="h-9"
-                      />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={newItem.price}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                        placeholder="0.00"
-                        className="h-9 text-right"
-                      />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={newItem.vat}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, vat: parseFloat(e.target.value) || 0 }))}
-                        placeholder="0"
-                        className="h-9 text-right"
-                      />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <Input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={newItem.quantity}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                        placeholder="1"
-                        className="h-9 text-right"
-                      />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                      €{(newItem.price * newItem.quantity).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={addItemToOrder}
-                        className="text-primary hover:text-primary"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
                     </td>
                   </tr>
                   
-                  {/* Summary rows */}
                   <tr className="border-t-2">
                     <td colSpan={5} className="px-4 py-3 text-sm font-medium text-right">
                       Subtotal:
@@ -709,7 +681,6 @@ ${settings.companyEmail}`;
         </form>
       </Form>
       
-      {/* Email dialog */}
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
