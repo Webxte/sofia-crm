@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Settings } from "@/types";
 import { useAuth } from "./AuthContext";
@@ -19,7 +18,7 @@ const defaultSettings: Settings = {
   companyAddress: "Your Company Address",
   companyPhone: "+1234567890",
   companyEmail: "contact@yourcompany.com",
-  defaultVatRate: 20,
+  defaultVatRate: 0,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -30,7 +29,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
 
-  // Fetch settings when the component mounts or when user auth state changes
   useEffect(() => {
     if (isAuthenticated) {
       refreshSettings();
@@ -40,7 +38,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated]);
 
-  // Function to fetch settings from Supabase
   const refreshSettings = async () => {
     try {
       setLoading(true);
@@ -67,7 +64,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (data) {
-        // Transform the Supabase data to match our Settings type
         const formattedSettings: Settings = {
           id: data.id,
           defaultTermsAndConditions: data.default_terms_and_conditions || defaultSettings.defaultTermsAndConditions,
@@ -80,7 +76,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         
         setSettings(formattedSettings);
       } else {
-        // If no settings found, create default settings
         await createDefaultSettings();
       }
     } catch (err) {
@@ -95,7 +90,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Create default settings in the database
   const createDefaultSettings = async () => {
     try {
       const settingsData = {
@@ -118,7 +112,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update settings with the newly created data
       const newSettings: Settings = {
         id: data.id,
         defaultTermsAndConditions: data.default_terms_and_conditions,
@@ -146,7 +139,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Convert Settings type to Supabase table format (snake_case)
       const updateData: any = {};
       
       if (settingsData.defaultTermsAndConditions !== undefined) 
@@ -162,7 +154,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       if (settingsData.defaultVatRate !== undefined) 
         updateData.default_vat_rate = settingsData.defaultVatRate;
       
-      // Add updated_at
       updateData.updated_at = new Date().toISOString();
       
       const { error } = await supabase
@@ -180,7 +171,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update the settings in state
       setSettings(prevSettings => ({
         ...prevSettings,
         ...settingsData

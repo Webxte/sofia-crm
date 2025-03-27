@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect } from "react";
 import { Settings as Cog } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useProducts } from "@/context/products/ProductsContext";
@@ -11,9 +10,13 @@ import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
 
 const Settings = () => {
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, refreshSettings } = useSettings();
   const { importProductsFromFile } = useProducts();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    refreshSettings();
+  }, []);
   
   const handleUpdateSettings = async (formData: Partial<typeof settings>) => {
     await updateSettings(formData);

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Save } from "lucide-react";
 import { Settings } from "@/types";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 
 interface CompanySettingsProps {
   initialSettings: Settings;
@@ -92,7 +92,11 @@ const CompanySettings = ({ initialSettings, onSubmit }: CompanySettingsProps) =>
                 step="0.01"
                 value={formData.defaultVatRate}
                 onChange={handleNumberChange}
+                placeholder="0"
               />
+              <p className="text-xs text-muted-foreground">
+                This is the default VAT rate for new products (0% recommended)
+              </p>
             </div>
           </div>
           
