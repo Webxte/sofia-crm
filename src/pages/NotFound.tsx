@@ -1,12 +1,12 @@
 
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     console.error(
@@ -14,6 +14,20 @@ const NotFound = () => {
       location.pathname
     );
   }, [location.pathname]);
+
+  // If we're still loading auth status, don't show the 404 yet
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // Check if this is post-logout navigation - if we have 'from=logout' in the URL
+  const params = new URLSearchParams(location.search);
+  const fromLogout = params.get('from') === 'logout';
+  
+  // If this is a post-logout navigation, redirect to login
+  if (fromLogout) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

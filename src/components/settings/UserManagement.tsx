@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -37,6 +39,7 @@ type FormValues = z.infer<typeof formSchema>;
 const UserManagement = () => {
   const { createUser, isAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -61,6 +64,7 @@ const UserManagement = () => {
 
     try {
       setLoading(true);
+      setErrorMessage("");
       await createUser(data.name, data.email, data.password, data.role);
       toast({
         title: "Success",
@@ -68,9 +72,12 @@ const UserManagement = () => {
       });
       form.reset();
     } catch (error: any) {
+      console.error("User creation error:", error);
+      const errorMsg = error.message || "Failed to create user. Please try again.";
+      setErrorMessage(errorMsg);
       toast({
         title: "Error",
-        description: error.message || "Failed to create user. Please try again.",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -79,7 +86,22 @@ const UserManagement = () => {
   };
 
   if (!isAdmin) {
-    return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>
+              Only administrators can access user management features.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -88,6 +110,14 @@ const UserManagement = () => {
         <CardTitle>User Management</CardTitle>
       </CardHeader>
       <CardContent>
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField

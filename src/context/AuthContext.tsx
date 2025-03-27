@@ -79,14 +79,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const createUser = async (name: string, email: string, password: string, role: "admin" | "agent") => {
     setIsLoading(true);
     try {
-      // Create the user without signing in
-      const { error, data } = await supabase.auth.admin.createUser({
+      // First use signUp instead of admin.createUser - this will work for regular users
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
-        email_confirm: true,
-        user_metadata: {
-          name,
-          role,
+        options: {
+          data: {
+            name,
+            role,
+          },
         }
       });
       
