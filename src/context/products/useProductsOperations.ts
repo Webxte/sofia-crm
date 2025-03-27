@@ -172,6 +172,7 @@ export const useProductsOperations = () => {
     try {
       // Parse the CSV data first
       const productsToImport = parseProductCSV(csvData);
+      console.log("Importing products:", productsToImport.map(p => `${p.code}: VAT=${p.vat}`));
       
       // For each product in the CSV, either update existing or insert new
       for (const productData of productsToImport) {
@@ -187,14 +188,15 @@ export const useProductsOperations = () => {
         }
         
         if (existingProducts && existingProducts.length > 0) {
-          // Update existing product
+          // Update existing product - explicitly set VAT to the provided value (which defaults to 0)
+          console.log(`Updating product ${productData.code} with VAT: ${productData.vat}`);
           const { error: updateError } = await supabase
             .from('products')
             .update({
               description: productData.description,
               price: productData.price,
               cost: productData.cost,
-              vat: productData.vat,
+              vat: productData.vat, // Ensure VAT is explicitly set
               case_quantity: productData.case_quantity,
               first_order_commission: productData.first_order_commission,
               next_orders_commission: productData.next_orders_commission,
@@ -207,6 +209,7 @@ export const useProductsOperations = () => {
           }
         } else {
           // Insert new product
+          console.log(`Inserting new product ${productData.code} with VAT: ${productData.vat}`);
           const { error: insertError } = await supabase
             .from('products')
             .insert(productData);

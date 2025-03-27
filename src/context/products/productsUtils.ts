@@ -37,6 +37,8 @@ export const parseProductCSV = (csvData: string) => {
   const startIndex = lines[0].toLowerCase().includes('code') ? 1 : 0;
   const products = [];
   
+  console.log("Processing CSV with lines:", lines.length);
+  
   for (let i = startIndex; i < lines.length; i++) {
     const values = lines[i].split(',');
     
@@ -47,11 +49,14 @@ export const parseProductCSV = (csvData: string) => {
       const price = parseFloat(priceStr.trim());
       const cost = parseFloat(costStr.trim());
       
-      // Ensure VAT is properly parsed (default to 0 if not provided)
+      // Important fix: explicitly handle VAT values - null/undefined/empty values should be stored as 0
+      // Use explicit 0 instead of null for vat field to ensure consistent behavior
       let vat = 0;
-      if (vatStr && vatStr.trim() !== '') {
-        vat = parseFloat(vatStr.trim());
+      if (vatStr !== undefined && vatStr.trim() !== '') {
+        const parsedVat = parseFloat(vatStr.trim());
+        vat = !isNaN(parsedVat) ? parsedVat : 0;
       }
+      console.log(`Product ${code}: VAT value from CSV: '${vatStr}', parsed as: ${vat}`);
       
       // Ensure case quantity is properly parsed (default to null if not provided)
       let caseQuantity = null;
@@ -76,7 +81,7 @@ export const parseProductCSV = (csvData: string) => {
           description: description.trim(),
           price,
           cost,
-          vat,
+          vat,  // Specifically use our parsed vat value, which defaults to 0
           case_quantity: caseQuantity,
           first_order_commission: firstOrderCommission,
           next_orders_commission: nextOrdersCommission,
@@ -85,5 +90,6 @@ export const parseProductCSV = (csvData: string) => {
     }
   }
   
+  console.log(`Parsed ${products.length} products from CSV`);
   return products;
 };
