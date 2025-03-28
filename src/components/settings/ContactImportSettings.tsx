@@ -16,7 +16,21 @@ const ContactImportSettings = () => {
   const [defaultSource, setDefaultSource] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+
+  // Only admins should be able to access this component
+  if (!isAdmin) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Import Contacts</CardTitle>
+          <CardDescription>
+            You need administrator access to import contacts.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;

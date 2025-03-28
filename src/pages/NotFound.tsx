@@ -1,4 +1,3 @@
-
 import { useLocation, Link, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -21,15 +20,17 @@ const NotFound = () => {
   }
 
   // If user is authenticated but somehow landed on 404, redirect to dashboard
-  if (isAuthenticated && (location.pathname === "/404" || location.pathname === "/")) {
+  if (isAuthenticated) {
+    // This ensures we properly redirect to dashboard instead of showing 404
     return <Navigate to="/dashboard" replace />;
   }
 
   // If not authenticated, redirect to login
-  if (!isAuthenticated && location.pathname !== "/login" && location.pathname !== "/signup") {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  // This shouldn't be reached, but keeping as fallback
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">

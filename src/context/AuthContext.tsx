@@ -101,6 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    setIsLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -110,8 +111,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clear local state
       setUser(null);
       setSession(null);
+
+      // This will trigger a redirect through auth state change
     } catch (error) {
       console.error("Error during logout:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

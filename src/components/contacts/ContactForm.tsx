@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { Contact } from "@/types";
 import { useContacts } from "@/context/ContactsContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -48,6 +49,10 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
   const { addContact, updateContact } = useContacts();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Use agent name as default source if creating a new contact
+  const defaultSource = !isEditing && user?.name ? user.name : contact?.source || "";
 
   const defaultValues: ContactFormValues = {
     fullName: contact?.fullName || "",
@@ -58,7 +63,7 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
     address: contact?.address || "",
     position: contact?.position || "",
     notes: contact?.notes || "",
-    source: contact?.source || "",
+    source: defaultSource,
   };
 
   const form = useForm<ContactFormValues>({
@@ -205,7 +210,7 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
             name="source"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Source/Tag</FormLabel>
+                <FormLabel>Source/Tag (Agent Name or Office)</FormLabel>
                 <FormControl>
                   <Input placeholder="Office1, Agent Name, etc." {...field} />
                 </FormControl>
