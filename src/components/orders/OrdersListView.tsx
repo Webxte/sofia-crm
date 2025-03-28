@@ -3,8 +3,10 @@ import { format } from "date-fns";
 import { Order } from "@/types";
 import { OrderStatusChanger } from "@/components/orders/OrderStatusChanger";
 import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";
+import { OrderEmailDialog } from "@/components/orders/OrderEmailDialog";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -69,6 +71,15 @@ export const OrdersListView = ({
                     >
                       View
                     </Button>
+                    <OrderEmailDialog 
+                      orderId={order.id} 
+                      orderReference={order.reference}
+                      trigger={
+                        <Button variant="ghost" size="sm">
+                          <Mail className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
                     <OrderDeleteDialog 
                       orderId={order.id} 
                       reference={order.reference}

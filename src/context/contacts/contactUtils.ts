@@ -10,7 +10,16 @@ export const getContactsByAgentId = (contacts: Contact[], agentId: string) => {
 };
 
 export const getContactsBySource = (contacts: Contact[], source: string) => {
-  return contacts.filter(contact => contact.source === source);
+  return contacts.filter(contact => {
+    // If contact has no source, it won't match
+    if (!contact.source) return false;
+    
+    // Split the source by commas to handle multiple tags
+    const contactSources = contact.source.split(',').map(s => s.trim());
+    
+    // Check if any of the contact's sources matches the requested source
+    return contactSources.includes(source);
+  });
 };
 
 export const searchContacts = (contacts: Contact[], query: string) => {
@@ -37,7 +46,13 @@ export const getAvailableSources = (contacts: Contact[]): string[] => {
   
   contacts.forEach(contact => {
     if (contact.source) {
-      sources.add(contact.source);
+      // Split the source string by commas to handle multiple tags
+      const sourceTags = contact.source.split(',').map(s => s.trim());
+      
+      // Add each individual tag to the set
+      sourceTags.forEach(tag => {
+        if (tag) sources.add(tag);
+      });
     }
   });
   

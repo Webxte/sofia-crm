@@ -41,9 +41,17 @@ export const sendOrderEmail = async (
   orderId: string, 
   recipient: string, 
   subject: string, 
-  message: string
+  message: string,
+  cc?: string[]
 ): Promise<boolean> => {
   try {
+    console.log("Sending order email with params:", {
+      orderId,
+      recipient,
+      subject,
+      cc: cc || []
+    });
+    
     // Call the edge function to send the email
     const { data, error } = await supabase.functions.invoke("send-order-email", {
       body: {
@@ -51,7 +59,8 @@ export const sendOrderEmail = async (
         recipient,
         subject,
         message,
-        includeOrderDetails: true
+        includeOrderDetails: true,
+        cc
       }
     });
 

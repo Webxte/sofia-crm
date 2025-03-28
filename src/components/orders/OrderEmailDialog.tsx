@@ -29,6 +29,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   recipient: z.string().email({ message: "Please enter a valid email address" }),
+  cc: z.string().optional().refine(val => !val || val.split(',').every(email => email.trim().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)), {
+    message: "Please enter valid email addresses separated by commas"
+  }),
   subject: z.string().min(1, { message: "Subject is required" }),
   message: z.string().min(1, { message: "Message is required" }),
 });
@@ -37,9 +40,15 @@ interface OrderEmailDialogProps {
   orderId: string;
   customerEmail?: string;
   orderReference?: string;
+  trigger?: React.ReactNode;
 }
 
-export const OrderEmailDialog = ({ orderId, customerEmail, orderReference }: OrderEmailDialogProps) => {
+export const OrderEmailDialog = ({ 
+  orderId, 
+  customerEmail, 
+  orderReference,
+  trigger 
+}: OrderEmailDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const { sendOrderEmail } = useOrders();
@@ -47,6 +56,7 @@ export const OrderEmailDialog = ({ orderId, customerEmail, orderReference }: Ord
   
   const defaultValues = {
     recipient: customerEmail || "",
+    cc: "",
     subject: `Order ${orderReference || orderId.slice(0, 8)}`,
     message: "Please find attached the details of your order. Thank you for your business.",
   };
@@ -60,11 +70,17 @@ export const OrderEmailDialog = ({ orderId, customerEmail, orderReference }: Ord
     try {
       setIsSending(true);
       
+      // Process CC email addresses
+      const ccEmails = values.cc ? 
+        values.cc.split(',').map(email => email.trim()).filter(email => email) : 
+        [];
+      
       const sent = await sendOrderEmail(
         orderId,
         values.recipient,
         values.subject,
-        values.message
+        values.message,
+        ccEmails
       );
       
       if (sent) {
@@ -96,9 +112,11 @@ export const OrderEmailDialog = ({ orderId, customerEmail, orderReference }: Ord
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Mail className="mr-2 h-4 w-4" /> Send Order Email
-        </Button>
+        {trigger || (
+          <Button variant="outline" size="sm">
+            <Mail className="mr-2 h-4 w-4" /> Send Order Email
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -117,6 +135,19 @@ export const OrderEmailDialog = ({ orderId, customerEmail, orderReference }: Ord
                   <FormLabel>Recipient Email</FormLabel>
                   <FormControl>
                     <Input placeholder="customer@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="cc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CC (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="email1@example.com, email2@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

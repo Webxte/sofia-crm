@@ -14,6 +14,7 @@ interface EmailRequest {
   subject: string;
   message: string;
   includeOrderDetails: boolean;
+  cc?: string[];
 }
 
 serve(async (req) => {
@@ -24,13 +25,14 @@ serve(async (req) => {
 
   try {
     console.log("Received order email request");
-    const { orderId, recipient, subject, message, includeOrderDetails = true } = await req.json() as EmailRequest;
+    const { orderId, recipient, subject, message, includeOrderDetails = true, cc = [] } = await req.json() as EmailRequest;
     
     console.log("Order email details:", {
       orderId,
       recipient,
       subject,
-      includeOrderDetails
+      includeOrderDetails,
+      cc
     });
     
     // Create a Supabase client with the auth context of the function
@@ -49,11 +51,16 @@ serve(async (req) => {
       .from("orders")
       .select("*, order_items(*)")
       .eq("id", orderId)
-      .single();
+      .maybeSingle();
     
     if (orderError) {
       console.error("Error fetching order:", orderError);
       throw new Error(`Error fetching order: ${orderError.message}`);
+    }
+    
+    if (!order) {
+      console.error("Order not found:", orderId);
+      throw new Error(`Order not found with ID: ${orderId}`);
     }
     
     console.log("Order fetched successfully:", order.id);
@@ -63,11 +70,16 @@ serve(async (req) => {
       .from("contacts")
       .select("*")
       .eq("id", order.contact_id)
-      .single();
+      .maybeSingle();
     
     if (contactError) {
       console.error("Error fetching contact:", contactError);
       throw new Error(`Error fetching contact: ${contactError.message}`);
+    }
+    
+    if (!contact) {
+      console.error("Contact not found for order:", order.contact_id);
+      throw new Error(`Contact not found for order with ID: ${order.contact_id}`);
     }
     
     console.log("Contact fetched successfully:", contact.id);
@@ -83,6 +95,16 @@ serve(async (req) => {
     // Office email to CC (if available)
     const officeEmail = settings?.company_email || null;
     console.log("Office email for CC:", officeEmail);
+    
+    // Prepare final CC list
+    let ccList = [...cc]; // Start with any CCs provided in the request
+    
+    // Add office email to CC if it exists and isn't already in the list
+    if (officeEmail && !ccList.includes(officeEmail)) {
+      ccList.push(officeEmail);
+    }
+    
+    console.log("Final CC list:", ccList);
     
     // Prepare email content
     let emailContent = `<h1>Order Information</h1>`;
@@ -164,17 +186,13 @@ serve(async (req) => {
       }
     }
     
-    // Prepare CC with office email if available
-    const cc = officeEmail ? [officeEmail] : undefined;
-    console.log("Sending order email with CC:", cc);
-    
     // Send email using Supabase Edge Function
     const { data: resendData, error: resendError } = await supabase.functions.invoke("send-email", {
       body: {
         to: recipient,
         subject: subject,
         html: emailContent,
-        cc: cc,
+        cc: ccList.length > 0 ? ccList : undefined,
       },
     });
     
