@@ -38,6 +38,13 @@ serve(async (req) => {
     // Set default from email if not provided
     const from = body.from || "CRM System <onboarding@resend.dev>";
     
+    console.log("Sending email with Resend API:", {
+      to: body.to,
+      subject: body.subject,
+      cc: body.cc,
+      bcc: body.bcc,
+    });
+    
     // Send email using Resend
     const { data, error } = await resend.emails.send({
       from,

@@ -103,20 +103,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
+      // First clear state so the UI updates immediately
+      setUser(null);
+      setSession(null);
+      
+      // Then sign out from supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
       }
-      
-      // Clear local state
-      setUser(null);
-      setSession(null);
-
-      // This will trigger a redirect through auth state change
     } catch (error) {
       console.error("Error during logout:", error);
     } finally {
       setIsLoading(false);
+      // Clear any cached data that might be causing issues
+      localStorage.removeItem('supabase.auth.token');
     }
   };
 

@@ -56,6 +56,17 @@ serve(async (req) => {
       throw new Error(`Error fetching contact: ${contactError.message}`);
     }
     
+    // Fetch company settings to get office email
+    const { data: settings, error: settingsError } = await supabase
+      .from("settings")
+      .select("company_email")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    
+    // Office email to CC (if available)
+    const officeEmail = settings?.company_email || null;
+    
     // Prepare email content
     let emailContent = `<h1>Order Information</h1>`;
     emailContent += `<p>${message}</p>`;
@@ -134,12 +145,17 @@ serve(async (req) => {
       }
     }
     
+    // Prepare CC with office email if available
+    const cc = officeEmail ? [officeEmail] : undefined;
+    console.log("Sending order email with CC:", cc);
+    
     // Send email using Supabase Edge Function
     const { data: resendData, error: resendError } = await supabase.functions.invoke("send-email", {
       body: {
         to: recipient,
         subject: subject,
         html: emailContent,
+        cc: cc,
       },
     });
     
