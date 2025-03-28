@@ -15,7 +15,6 @@ enabled = true
 [storage]
 enabled = true
 
-[functions]
 [functions.send-email]
 enabled = true
 

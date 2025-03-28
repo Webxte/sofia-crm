@@ -27,8 +27,18 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Received email request");
+    
     // Get request body
     const body: EmailRequest = await req.json();
+    
+    // Log the request for debugging
+    console.log("Email request details:", {
+      to: body.to,
+      subject: body.subject,
+      cc: body.cc,
+      bcc: body.bcc,
+    });
     
     // Validate required fields
     if (!body.to || !body.subject || !body.html) {

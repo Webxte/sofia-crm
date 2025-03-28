@@ -23,7 +23,15 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, recipient, subject, message, includeOrderDetails } = await req.json() as EmailRequest;
+    console.log("Received order email request");
+    const { orderId, recipient, subject, message, includeOrderDetails = true } = await req.json() as EmailRequest;
+    
+    console.log("Order email details:", {
+      orderId,
+      recipient,
+      subject,
+      includeOrderDetails
+    });
     
     // Create a Supabase client with the auth context of the function
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -34,6 +42,8 @@ serve(async (req) => {
       throw new Error("Order ID is required");
     }
 
+    console.log("Fetching order with ID:", orderId);
+    
     // Fetch order details
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -42,8 +52,11 @@ serve(async (req) => {
       .single();
     
     if (orderError) {
+      console.error("Error fetching order:", orderError);
       throw new Error(`Error fetching order: ${orderError.message}`);
     }
+    
+    console.log("Order fetched successfully:", order.id);
     
     // Fetch contact details
     const { data: contact, error: contactError } = await supabase
@@ -53,8 +66,11 @@ serve(async (req) => {
       .single();
     
     if (contactError) {
+      console.error("Error fetching contact:", contactError);
       throw new Error(`Error fetching contact: ${contactError.message}`);
     }
+    
+    console.log("Contact fetched successfully:", contact.id);
     
     // Fetch company settings to get office email
     const { data: settings, error: settingsError } = await supabase
@@ -62,7 +78,7 @@ serve(async (req) => {
       .select("company_email")
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     
     // Office email to CC (if available)
     const officeEmail = settings?.company_email || null;

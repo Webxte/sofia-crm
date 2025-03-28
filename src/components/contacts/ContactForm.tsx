@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,22 +48,27 @@ interface ContactFormProps {
 
 const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tags, setTags] = useState<string[]>(contact?.source ? contact.source.split(',').map(tag => tag.trim()) : []);
+  const [tags, setTags] = useState<string[]>(contact?.source ? contact.source.split(',').map(tag => tag.trim()).filter(Boolean) : []);
   const [tagInput, setTagInput] = useState("");
   const { addContact, updateContact } = useContacts();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Use agent name as default tag if creating a new contact
+  // User tag
   const userTag = user?.name || "";
   
   // Initialize with user tag if creating a new contact and user has a name
-  useState(() => {
-    if (!isEditing && userTag && !tags.includes(userTag)) {
-      setTags([...tags, userTag]);
+  useEffect(() => {
+    if (!isEditing && userTag && tags.length === 0) {
+      setTags([userTag]);
     }
-  });
+  }, [isEditing, userTag, tags]);
+
+  // Update the form when tags change
+  useEffect(() => {
+    form.setValue("source", tags.join(", "));
+  }, [tags]);
 
   const defaultValues: ContactFormValues = {
     fullName: contact?.fullName || "",
@@ -112,13 +117,13 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
       data.source = tags.join(", ");
       
       if (isEditing && contact) {
-        updateContact(contact.id, data);
+        await updateContact(contact.id, data);
         toast({
           title: "Success",
           description: "Contact updated successfully",
         });
       } else {
-        addContact(data);
+        await addContact(data);
         toast({
           title: "Success",
           description: "Contact created successfully",

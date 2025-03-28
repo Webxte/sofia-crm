@@ -14,10 +14,15 @@ const NotFound = () => {
     
     // After auth is loaded, redirect automatically to the appropriate page
     const redirectPath = isAuthenticated ? "/dashboard" : "/login";
-    // Use setTimeout to ensure the redirect happens after the component has fully mounted
-    setTimeout(() => {
+    
+    // Use a small timeout to ensure the component has fully mounted
+    // and any other processes have completed
+    const timer = setTimeout(() => {
+      console.log("Redirecting from 404 to:", redirectPath);
       navigate(redirectPath, { replace: true });
-    }, 100);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [isAuthenticated, isLoading, navigate]);
 
   // While we're processing or redirecting, show a loading state
