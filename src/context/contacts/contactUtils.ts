@@ -10,6 +10,8 @@ export const getContactsByAgentId = (contacts: Contact[], agentId: string) => {
 };
 
 export const getContactsBySource = (contacts: Contact[], source: string) => {
+  if (!source) return contacts;
+  
   return contacts.filter(contact => {
     // If contact has no source, it won't match
     if (!contact.source) return false;

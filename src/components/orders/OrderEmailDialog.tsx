@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
+import { useContacts } from "@/context/ContactsContext";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
@@ -51,13 +52,40 @@ export const OrderEmailDialog = ({
 }: OrderEmailDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const { sendOrderEmail } = useOrders();
+  const [loadingCustomerEmail, setLoadingCustomerEmail] = useState(false);
+  const { sendOrderEmail, getOrderById } = useOrders();
+  const { getContactById } = useContacts();
   const { toast } = useToast();
+  
+  // Fetch customer email if not provided
+  useEffect(() => {
+    const fetchCustomerEmail = async () => {
+      if (!customerEmail && open) {
+        setLoadingCustomerEmail(true);
+        // Get order details
+        const order = getOrderById(orderId);
+        if (order && order.contactId) {
+          // Get contact details
+          const contact = getContactById(order.contactId);
+          if (contact && contact.email) {
+            form.setValue("recipient", contact.email);
+          }
+        }
+        setLoadingCustomerEmail(false);
+      }
+    };
+    
+    fetchCustomerEmail();
+  }, [orderId, customerEmail, open]);
+  
+  // Get order reference
+  const order = getOrderById(orderId);
+  const reference = orderReference || order?.reference || orderId.slice(0, 8);
   
   const defaultValues = {
     recipient: customerEmail || "",
     cc: "",
-    subject: `Order ${orderReference || orderId.slice(0, 8)}`,
+    subject: `Order ${reference}`,
     message: "Please find attached the details of your order. Thank you for your business.",
   };
   
@@ -134,7 +162,11 @@ export const OrderEmailDialog = ({
                 <FormItem>
                   <FormLabel>Recipient Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="customer@example.com" {...field} />
+                    <Input 
+                      placeholder={loadingCustomerEmail ? "Loading customer email..." : "customer@example.com"} 
+                      {...field} 
+                      disabled={loadingCustomerEmail}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

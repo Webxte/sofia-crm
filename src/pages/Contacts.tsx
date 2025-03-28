@@ -73,10 +73,19 @@ const Contacts = () => {
   // Get all available sources for filtering
   const availableSources = getAvailableSources(contacts);
   
+  // Filter contacts based on selected source and search query
   const filteredContacts = contacts.filter(contact => {
     // Apply source filter if selected
-    if (selectedSource && contact.source !== selectedSource) {
-      return false;
+    if (selectedSource) {
+      if (!contact.source) return false;
+      
+      // Split the source string by commas to handle multiple tags
+      const contactSources = contact.source.split(',').map(s => s.trim());
+      
+      // Check if the contact has the selected source tag
+      if (!contactSources.includes(selectedSource)) {
+        return false;
+      }
     }
     
     // Apply search query filter
