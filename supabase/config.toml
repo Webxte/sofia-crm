@@ -16,5 +16,8 @@ enabled = true
 enabled = true
 
 [functions]
-[functions.serve]
+[functions.send-email]
+enabled = true
+
+[functions.send-order-email]
 enabled = true
