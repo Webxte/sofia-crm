@@ -48,6 +48,7 @@ const App = () => (
           }
         >
           <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
           
           {/* Contacts routes */}
           <Route path="/contacts" element={<Contacts />} />
@@ -88,7 +89,7 @@ const App = () => (
           } />
         </Route>
 
-        {/* NotFound route */}
+        {/* NotFound route - must be last */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </TooltipProvider>
