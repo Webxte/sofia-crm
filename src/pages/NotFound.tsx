@@ -20,20 +20,14 @@ const NotFound = () => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  // Check if this is post-logout navigation - if we have 'from=logout' in the URL
-  // or if it's a login redirect
-  const params = new URLSearchParams(location.search);
-  const fromLogout = params.get('from') === 'logout';
-  const fromLogin = params.get('from') === 'login';
-  
-  // Redirect based on navigation source
-  if (fromLogout || fromLogin) {
-    return <Navigate to="/login" replace />;
-  }
-
   // If user is authenticated but somehow landed on 404, redirect to dashboard
   if (isAuthenticated && (location.pathname === "/404" || location.pathname === "/")) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated && location.pathname !== "/login" && location.pathname !== "/signup") {
+    return <Navigate to="/login" replace />;
   }
 
   return (

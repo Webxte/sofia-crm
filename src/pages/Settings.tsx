@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Settings as Cog } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
@@ -7,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanySettings from "@/components/settings/CompanySettings";
 import TermsSettings from "@/components/settings/TermsSettings";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
+import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
 
 const Settings = () => {
@@ -38,7 +40,7 @@ const Settings = () => {
       <Tabs defaultValue="company">
         <TabsList className="mb-4">
           <TabsTrigger value="company">Company</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="data">Data Import</TabsTrigger>
           <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
@@ -50,10 +52,13 @@ const Settings = () => {
           />
         </TabsContent>
         
-        <TabsContent value="products">
-          <ProductImportSettings 
-            importProductsFromFile={importProductsFromFile} 
-          />
+        <TabsContent value="data">
+          <div className="space-y-6">
+            <ProductImportSettings 
+              importProductsFromFile={importProductsFromFile} 
+            />
+            <ContactImportSettings />
+          </div>
         </TabsContent>
         
         <TabsContent value="terms">

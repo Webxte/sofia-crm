@@ -110,9 +110,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clear local state
       setUser(null);
       setSession(null);
-      
-      // Navigate to login page directly instead of relying on URL params
-      window.location.href = "/login";
     } catch (error) {
       console.error("Error during logout:", error);
     }

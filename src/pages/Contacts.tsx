@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   Plus, 
   Search, 
-  Filter, 
   ArrowUpDown, 
   UserPlus, 
   Users, 
@@ -22,7 +21,6 @@ import { useContacts } from "@/context/ContactsContext";
 import { useAuth } from "@/context/AuthContext";
 import ContactCard from "@/components/contacts/ContactCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Contact } from "@/types";
 import {
@@ -43,7 +41,6 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { getAvailableSources } from "@/context/contacts/contactUtils";
-import ContactImporter from "@/components/contacts/ContactImporter";
 
 // Sort options
 type SortOption = "name" | "company" | "recent";
@@ -53,7 +50,6 @@ const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [showImporter, setShowImporter] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const { contacts, loading, refreshContacts } = useContacts();
   const { isAdmin, user } = useAuth();
@@ -72,7 +68,7 @@ const Contacts = () => {
 
   useEffect(() => {
     refreshContacts();
-  }, [refreshContacts]);
+  }, []);
   
   // Get all available sources for filtering
   const availableSources = getAvailableSources(contacts);
@@ -225,9 +221,6 @@ const Contacts = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setShowImporter(!showImporter)} variant={showImporter ? "secondary" : "outline"}>
-            Import CSV
-          </Button>
           <Button className="sm:w-auto w-full" asChild>
             <Link to="/contacts/new">
               <UserPlus className="mr-2 h-4 w-4" /> Add Contact
@@ -235,12 +228,6 @@ const Contacts = () => {
           </Button>
         </div>
       </div>
-
-      {showImporter && (
-        <div className="mb-6">
-          <ContactImporter />
-        </div>
-      )}
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative w-full sm:max-w-sm">
