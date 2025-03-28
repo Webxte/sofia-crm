@@ -19,9 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 interface OrderDeleteDialogProps {
   orderId: string;
   reference?: string;
+  trigger?: React.ReactNode;
 }
 
-export const OrderDeleteDialog = ({ orderId, reference }: OrderDeleteDialogProps) => {
+export const OrderDeleteDialog = ({ orderId, reference, trigger }: OrderDeleteDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { deleteOrder } = useOrders();
@@ -50,9 +51,11 @@ export const OrderDeleteDialog = ({ orderId, reference }: OrderDeleteDialogProps
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50">
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {trigger || (
+          <Button variant="outline" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
