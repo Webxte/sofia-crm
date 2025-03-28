@@ -12,7 +12,7 @@ export interface SupabaseContact {
   position: string | null;
   agent_id: string | null;
   agent_name: string | null;
-  source?: string | null; // Added source field
+  source: string | null; // Added source field
   created_at: string;
   updated_at: string;
 }

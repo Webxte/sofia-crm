@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,6 @@ export const useContactsOperations = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  // Function to fetch contacts from Supabase
   const refreshContacts = async () => {
     try {
       setLoading(true);
@@ -39,7 +37,6 @@ export const useContactsOperations = () => {
         return;
       }
       
-      // Transform the Supabase data to match our Contact type
       const formattedContacts: Contact[] = (data as SupabaseContact[]).map(contact => ({
         id: contact.id,
         fullName: contact.full_name,
@@ -52,7 +49,7 @@ export const useContactsOperations = () => {
         position: contact.position,
         agentId: contact.agent_id,
         agentName: contact.agent_name,
-        source: contact.source || undefined, // Handle source field
+        source: contact.source || undefined,
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
       }));
@@ -81,13 +78,11 @@ export const useContactsOperations = () => {
         return;
       }
       
-      // Add agent information
       const agentData = {
         agent_id: user.id,
         agent_name: user.name || ''
       };
       
-      // Convert Contact type to Supabase table format (snake_case)
       const newContactData = {
         full_name: contactData.fullName,
         company: contactData.company,
@@ -97,7 +92,7 @@ export const useContactsOperations = () => {
         address: contactData.address,
         notes: contactData.notes,
         position: contactData.position,
-        source: contactData.source, // Add source field
+        source: contactData.source,
         ...agentData
       };
       
@@ -117,7 +112,6 @@ export const useContactsOperations = () => {
         return;
       }
       
-      // Transform and add the new contact to state
       const newContact: Contact = {
         id: data.id,
         fullName: data.full_name,
@@ -130,7 +124,7 @@ export const useContactsOperations = () => {
         position: data.position,
         agentId: data.agent_id,
         agentName: data.agent_name,
-        source: data.source || undefined, // Handle source field
+        source: data.source || undefined,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -153,7 +147,6 @@ export const useContactsOperations = () => {
 
   const updateContact = async (id: string, contactData: Partial<Contact>) => {
     try {
-      // Convert Contact type to Supabase table format (snake_case)
       const updateData: any = {};
       
       if (contactData.fullName !== undefined) updateData.full_name = contactData.fullName;
@@ -166,7 +159,6 @@ export const useContactsOperations = () => {
       if (contactData.position !== undefined) updateData.position = contactData.position;
       if (contactData.source !== undefined) updateData.source = contactData.source;
       
-      // Add updated_at
       updateData.updated_at = new Date().toISOString();
       
       const { data, error } = await supabase
@@ -186,7 +178,6 @@ export const useContactsOperations = () => {
         return;
       }
       
-      // Update the contact in state
       setContacts(prevContacts => 
         prevContacts.map(contact => 
           contact.id === id 
@@ -200,7 +191,7 @@ export const useContactsOperations = () => {
                 address: data.address,
                 notes: data.notes,
                 position: data.position,
-                source: data.source || undefined, // Handle source field
+                source: data.source || undefined,
                 updatedAt: new Date(data.updated_at)
               }
             : contact
@@ -238,7 +229,6 @@ export const useContactsOperations = () => {
         return;
       }
       
-      // Remove the contact from state
       setContacts(prevContacts => prevContacts.filter(contact => contact.id !== id));
       
       toast({
@@ -255,7 +245,6 @@ export const useContactsOperations = () => {
     }
   };
 
-  // Import contacts from CSV file
   const importContactsFromCsv = async (file: File) => {
     if (!user) {
       toast({
@@ -269,7 +258,6 @@ export const useContactsOperations = () => {
     try {
       setLoading(true);
       
-      // Parse the CSV file
       const results = await new Promise<Papa.ParseResult<any>>((resolve, reject) => {
         Papa.parse(file, {
           header: true,
@@ -288,9 +276,7 @@ export const useContactsOperations = () => {
         return;
       }
       
-      // Map CSV fields to contact fields
       const mappedContacts = results.data.map((row: any) => {
-        // Get source from file if it exists or use filename as default
         const source = row.source || row.Source || file.name.split('.')[0];
         
         return {
@@ -308,7 +294,6 @@ export const useContactsOperations = () => {
         };
       });
       
-      // Insert the contacts into Supabase
       const { data, error } = await supabase
         .from('contacts')
         .insert(mappedContacts)
@@ -324,7 +309,6 @@ export const useContactsOperations = () => {
         return;
       }
       
-      // Transform and add the new contacts to state
       const newContacts: Contact[] = (data as SupabaseContact[]).map(contact => ({
         id: contact.id,
         fullName: contact.full_name,
@@ -337,7 +321,7 @@ export const useContactsOperations = () => {
         position: contact.position,
         agentId: contact.agent_id,
         agentName: contact.agent_name,
-        source: contact.source || undefined, // Handle source field
+        source: contact.source || undefined,
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
       }));
