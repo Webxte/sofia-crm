@@ -10,7 +10,7 @@ export interface OrdersContextType {
   getOrderById: (id: string) => Order | undefined;
   getOrdersByContactId: (contactId: string) => Order[];
   createOrderItem: (productId: string, quantity: number) => OrderItem | undefined;
-  sendOrderEmail: (orderId: string, recipient: string, subject: string, message: string) => Promise<boolean>;
+  sendOrderEmail: (orderId: string, recipient: string, subject: string, message: string, cc?: string[]) => Promise<boolean>;
   generateOrderReference: () => string;
   refreshOrders: () => Promise<void>;
 }
