@@ -20,6 +20,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 
 // Define the schema for contact validation
 const contactSchema = z.object({
@@ -46,13 +48,22 @@ interface ContactFormProps {
 
 const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tags, setTags] = useState<string[]>(contact?.source ? contact.source.split(',').map(tag => tag.trim()) : []);
+  const [tagInput, setTagInput] = useState("");
   const { addContact, updateContact } = useContacts();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Use agent name as default source if creating a new contact
-  const defaultSource = !isEditing && user?.name ? user.name : contact?.source || "";
+  // Use agent name as default tag if creating a new contact
+  const userTag = user?.name || "";
+  
+  // Initialize with user tag if creating a new contact and user has a name
+  useState(() => {
+    if (!isEditing && userTag && !tags.includes(userTag)) {
+      setTags([...tags, userTag]);
+    }
+  });
 
   const defaultValues: ContactFormValues = {
     fullName: contact?.fullName || "",
@@ -63,7 +74,7 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
     address: contact?.address || "",
     position: contact?.position || "",
     notes: contact?.notes || "",
-    source: defaultSource,
+    source: tags.join(", "),
   };
 
   const form = useForm<ContactFormValues>({
@@ -71,10 +82,35 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
     defaultValues,
   });
 
+  const addTag = () => {
+    if (tagInput.trim() !== "" && !tags.includes(tagInput.trim())) {
+      const newTags = [...tags, tagInput.trim()];
+      setTags(newTags);
+      form.setValue("source", newTags.join(", "));
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    const newTags = tags.filter(tag => tag !== tagToRemove);
+    setTags(newTags);
+    form.setValue("source", newTags.join(", "));
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === "," || e.key === " ") {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
     
     try {
+      // Ensure tags from the UI are saved to the source field
+      data.source = tags.join(", ");
+      
       if (isEditing && contact) {
         updateContact(contact.id, data);
         toast({
@@ -205,19 +241,35 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="source"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Source/Tag (Agent Name or Office)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Office1, Agent Name, etc." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-2">
+            <FormLabel>Tags (Agents, Sources, etc.)</FormLabel>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tags.map((tag, index) => (
+                <Badge key={index} variant="secondary" className="flex items-center gap-1 p-1">
+                  {tag}
+                  <button 
+                    type="button" 
+                    onClick={() => removeTag(tag)}
+                    className="rounded-full p-1 hover:bg-gray-200"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add tag (type and press Enter, comma, or space)"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagInputKeyDown}
+                className="flex-1"
+              />
+              <Button type="button" onClick={addTag} variant="secondary">
+                Add Tag
+              </Button>
+            </div>
+          </div>
 
           <FormField
             control={form.control}

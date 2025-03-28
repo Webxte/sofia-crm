@@ -13,11 +13,11 @@ const NotFound = () => {
     if (isLoading) return;
     
     // After auth is loaded, redirect automatically to the appropriate page
-    if (isAuthenticated) {
-      navigate("/dashboard", { replace: true });
-    } else {
-      navigate("/login", { replace: true });
-    }
+    const redirectPath = isAuthenticated ? "/dashboard" : "/login";
+    // Use setTimeout to ensure the redirect happens after the component has fully mounted
+    setTimeout(() => {
+      navigate(redirectPath, { replace: true });
+    }, 100);
   }, [isAuthenticated, isLoading, navigate]);
 
   // While we're processing or redirecting, show a loading state
@@ -30,7 +30,7 @@ const NotFound = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
         <h1 className="text-6xl font-bold text-gray-800 mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-6">Redirecting you...</p>
+        <p className="text-xl text-gray-600 mb-6">Page not found. Redirecting you...</p>
         <Button asChild className="bg-primary hover:bg-primary/90">
           <Link to={isAuthenticated ? "/dashboard" : "/login"}>
             {isAuthenticated ? "Go to Dashboard" : "Go to Login"}

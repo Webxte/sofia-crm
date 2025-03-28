@@ -66,6 +66,7 @@ serve(async (req) => {
     
     // Office email to CC (if available)
     const officeEmail = settings?.company_email || null;
+    console.log("Office email for CC:", officeEmail);
     
     // Prepare email content
     let emailContent = `<h1>Order Information</h1>`;
@@ -98,18 +99,20 @@ serve(async (req) => {
       `;
       
       // Add order items
-      order.order_items.forEach(item => {
-        emailContent += `
-          <tr>
-            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">
-              <strong>${item.code}</strong><br>${item.description}
-            </td>
-            <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${item.quantity}</td>
-            <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">€${item.price.toFixed(2)}</td>
-            <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">€${item.subtotal.toFixed(2)}</td>
-          </tr>
-        `;
-      });
+      if (order.order_items && Array.isArray(order.order_items)) {
+        order.order_items.forEach(item => {
+          emailContent += `
+            <tr>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">
+                <strong>${item.code || 'N/A'}</strong><br>${item.description || 'No description'}
+              </td>
+              <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${item.quantity}</td>
+              <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">€${item.price?.toFixed(2) || '0.00'}</td>
+              <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">€${item.subtotal?.toFixed(2) || '0.00'}</td>
+            </tr>
+          `;
+        });
+      }
       
       // Add order totals
       emailContent += `
@@ -117,7 +120,7 @@ serve(async (req) => {
             <tfoot>
               <tr>
                 <td colspan="3" style="padding: 8px; text-align: right; border: 1px solid #ddd;"><strong>Total:</strong></td>
-                <td style="padding: 8px; text-align: right; border: 1px solid #ddd;"><strong>€${order.total.toFixed(2)}</strong></td>
+                <td style="padding: 8px; text-align: right; border: 1px solid #ddd;"><strong>€${(order.total || 0).toFixed(2)}</strong></td>
               </tr>
             </tfoot>
           </table>
@@ -160,8 +163,11 @@ serve(async (req) => {
     });
     
     if (resendError) {
+      console.error("Error sending email:", resendError);
       throw new Error(`Error sending email: ${resendError.message}`);
     }
+    
+    console.log("Email sent successfully:", resendData);
     
     return new Response(JSON.stringify({ success: true, message: "Email sent successfully" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
