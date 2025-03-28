@@ -74,7 +74,8 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                   />
                   
                   <OrderDeleteDialog
-                    order={order}
+                    orderId={order.id}
+                    reference={order.reference}
                     trigger={
                       <Button variant="ghost" size="icon">
                         <Trash2 className="h-4 w-4 text-destructive" />
