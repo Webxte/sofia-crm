@@ -9,6 +9,8 @@ export interface ContactsContextType {
   deleteContact: (id: string) => Promise<void>;
   getContactById: (id: string) => Contact | undefined;
   getContactsByAgentId: (agentId: string) => Contact[];
+  getContactsBySource: (source: string) => Contact[];
   searchContacts: (query: string) => Contact[];
   refreshContacts: () => Promise<void>;
+  importContactsFromCsv: (file: File) => Promise<void>;
 }

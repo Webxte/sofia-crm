@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useContactsOperations } from "./useContactsOperations";
 import { ContactsContextType } from "./types";
-import { getContactById, getContactsByAgentId, searchContacts } from "./contactUtils";
+import { getContactById, getContactsByAgentId, searchContacts, getContactsBySource } from "./contactUtils";
 
 const ContactsContext = createContext<ContactsContextType | undefined>(undefined);
 
@@ -15,7 +15,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     refreshContacts, 
     addContact, 
     updateContact, 
-    deleteContact 
+    deleteContact,
+    importContactsFromCsv 
   } = useContactsOperations();
 
   // Fetch contacts when the component mounts or when user auth state changes
@@ -35,8 +36,10 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         deleteContact,
         getContactById: (id) => getContactById(contacts, id),
         getContactsByAgentId: (agentId) => getContactsByAgentId(contacts, agentId),
+        getContactsBySource: (source) => getContactsBySource(contacts, source),
         searchContacts: (query) => searchContacts(contacts, query),
         refreshContacts,
+        importContactsFromCsv,
       }}
     >
       {children}

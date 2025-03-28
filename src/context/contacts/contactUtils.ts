@@ -9,6 +9,10 @@ export const getContactsByAgentId = (contacts: Contact[], agentId: string) => {
   return contacts.filter(contact => contact.agentId === agentId);
 };
 
+export const getContactsBySource = (contacts: Contact[], source: string) => {
+  return contacts.filter(contact => contact.source === source);
+};
+
 export const searchContacts = (contacts: Contact[], query: string) => {
   if (!query) return contacts;
   
@@ -18,10 +22,24 @@ export const searchContacts = (contacts: Contact[], query: string) => {
     const company = contact.company?.toLowerCase() || '';
     const email = contact.email?.toLowerCase() || '';
     const phone = contact.phone?.toLowerCase() || '';
+    const source = contact.source?.toLowerCase() || '';
     
     return fullName.includes(searchLower) || 
            company.includes(searchLower) || 
            email.includes(searchLower) || 
-           phone.includes(searchLower);
+           phone.includes(searchLower) || 
+           source.includes(searchLower);
   });
+};
+
+export const getAvailableSources = (contacts: Contact[]): string[] => {
+  const sources = new Set<string>();
+  
+  contacts.forEach(contact => {
+    if (contact.source) {
+      sources.add(contact.source);
+    }
+  });
+  
+  return Array.from(sources).sort();
 };

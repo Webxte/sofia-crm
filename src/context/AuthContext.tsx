@@ -79,7 +79,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const createUser = async (name: string, email: string, password: string, role: "admin" | "agent") => {
     setIsLoading(true);
     try {
-      // First use signUp instead of admin.createUser - this will work for regular users
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
@@ -103,12 +102,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
+      // Use window.location for full page refresh after logout
+      // to ensure clean state
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
       }
+      
+      // Clear local state
       setUser(null);
       setSession(null);
+      
+      // Navigate to login page after logout with query param
+      window.location.href = "/login?from=logout";
     } catch (error) {
       console.error("Error during logout:", error);
     }

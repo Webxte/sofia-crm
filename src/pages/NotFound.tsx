@@ -21,12 +21,19 @@ const NotFound = () => {
   }
 
   // Check if this is post-logout navigation - if we have 'from=logout' in the URL
+  // or if it's a login redirect
   const params = new URLSearchParams(location.search);
   const fromLogout = params.get('from') === 'logout';
+  const fromLogin = params.get('from') === 'login';
   
-  // If this is a post-logout navigation, redirect to login
-  if (fromLogout) {
+  // Redirect based on navigation source
+  if (fromLogout || fromLogin) {
     return <Navigate to="/login" replace />;
+  }
+
+  // If user is authenticated but somehow landed on 404, redirect to dashboard
+  if (isAuthenticated && location.pathname === "/404") {
+    return <Navigate to="/" replace />;
   }
 
   return (

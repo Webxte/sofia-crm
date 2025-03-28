@@ -11,6 +11,7 @@ export interface Contact {
   position?: string;
   agentId?: string;
   agentName?: string;
+  source?: string; // Added source/tag field
   createdAt: Date;
   updatedAt: Date;
 }
