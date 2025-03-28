@@ -51,7 +51,7 @@ export const useContactsOperations = () => {
         position: contact.position,
         agentId: contact.agent_id,
         agentName: contact.agent_name,
-        source: contact.source,
+        source: contact.source as string | undefined, // Use type assertion
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
       }));
@@ -96,7 +96,7 @@ export const useContactsOperations = () => {
         address: contactData.address,
         notes: contactData.notes,
         position: contactData.position,
-        source: contactData.source,
+        source: contactData.source, // Add source field
         ...agentData
       };
       
@@ -129,7 +129,7 @@ export const useContactsOperations = () => {
         position: data.position,
         agentId: data.agent_id,
         agentName: data.agent_name,
-        source: data.source,
+        source: data.source as string | undefined, // Use type assertion
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -199,7 +199,7 @@ export const useContactsOperations = () => {
                 address: data.address,
                 notes: data.notes,
                 position: data.position,
-                source: data.source,
+                source: data.source as string | undefined, // Use type assertion
                 updatedAt: new Date(data.updated_at)
               }
             : contact
@@ -336,7 +336,7 @@ export const useContactsOperations = () => {
         position: contact.position,
         agentId: contact.agent_id,
         agentName: contact.agent_name,
-        source: contact.source,
+        source: contact.source as string | undefined, // Use type assertion
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
       }));

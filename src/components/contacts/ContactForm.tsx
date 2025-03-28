@@ -30,6 +30,7 @@ const contactSchema = z.object({
   address: z.string().optional(),
   position: z.string().optional(),
   notes: z.string().optional(),
+  source: z.string().optional(),
 }).refine(data => data.fullName || data.company, {
   message: "Either full name or company is required",
   path: ["fullName"],
@@ -57,6 +58,7 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
     address: contact?.address || "",
     position: contact?.position || "",
     notes: contact?.notes || "",
+    source: contact?.source || "",
   };
 
   const form = useForm<ContactFormValues>({
@@ -197,6 +199,20 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="source"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Source/Tag</FormLabel>
+                <FormControl>
+                  <Input placeholder="Office1, Agent Name, etc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
