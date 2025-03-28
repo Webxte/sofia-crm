@@ -102,8 +102,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      // Use window.location for full page refresh after logout
-      // to ensure clean state
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
@@ -113,8 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setSession(null);
       
-      // Navigate to login page after logout with query param
-      window.location.href = "/login?from=logout";
+      // Navigate to login page directly instead of relying on URL params
+      window.location.href = "/login";
     } catch (error) {
       console.error("Error during logout:", error);
     }

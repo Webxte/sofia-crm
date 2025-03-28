@@ -32,8 +32,8 @@ const NotFound = () => {
   }
 
   // If user is authenticated but somehow landed on 404, redirect to dashboard
-  if (isAuthenticated && location.pathname === "/404") {
-    return <Navigate to="/" replace />;
+  if (isAuthenticated && (location.pathname === "/404" || location.pathname === "/")) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -45,7 +45,7 @@ const NotFound = () => {
           The page you are looking for doesn't exist or has been moved.
         </p>
         <Button asChild className="bg-primary hover:bg-primary/90">
-          <Link to={isAuthenticated ? "/" : "/login"}>
+          <Link to={isAuthenticated ? "/dashboard" : "/login"}>
             {isAuthenticated ? "Return to Dashboard" : "Go to Login"}
           </Link>
         </Button>

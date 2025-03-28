@@ -51,7 +51,7 @@ type ViewMode = "grid" | "list";
 
 const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("company");
+  const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showImporter, setShowImporter] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
@@ -59,6 +59,16 @@ const Contacts = () => {
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Get initial source from user's name if available
+  useEffect(() => {
+    if (user?.name && !selectedSource) {
+      // Don't auto-select source for admins
+      if (!isAdmin) {
+        setSelectedSource(user.name);
+      }
+    }
+  }, [user, isAdmin]);
 
   useEffect(() => {
     refreshContacts();
@@ -74,15 +84,19 @@ const Contacts = () => {
     }
     
     // Apply search query filter
+    if (searchQuery.trim() === "") return true;
+    
     const searchLower = searchQuery.toLowerCase();
     const name = contact.fullName?.toLowerCase() || "";
     const company = contact.company?.toLowerCase() || "";
     const email = contact.email?.toLowerCase() || "";
+    const position = contact.position?.toLowerCase() || "";
     const source = contact.source?.toLowerCase() || "";
     
     return name.includes(searchLower) || 
            company.includes(searchLower) || 
            email.includes(searchLower) ||
+           position.includes(searchLower) ||
            source.includes(searchLower);
   });
   
@@ -148,7 +162,7 @@ const Contacts = () => {
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Position</TableHead>
-            <TableHead>Source/Tag</TableHead> {/* Added Source column */}
+            <TableHead>Source/Tag</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -160,7 +174,7 @@ const Contacts = () => {
               <TableCell>{contact.email || "-"}</TableCell>
               <TableCell>{contact.phone || contact.mobile || "-"}</TableCell>
               <TableCell>{contact.position || "-"}</TableCell>
-              <TableCell>{contact.source || "-"}</TableCell> {/* Display source */}
+              <TableCell>{contact.source || "-"}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
@@ -207,7 +221,7 @@ const Contacts = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Contacts</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your contacts and their information
+            {selectedSource ? `Viewing contacts for: ${selectedSource}` : 'Manage your contacts and their information'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -243,10 +257,10 @@ const Contacts = () => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => setSortBy(sortBy === "company" ? "name" : "company")}
+            onClick={() => setSortBy(sortBy === "company" ? "name" : (sortBy === "name" ? "recent" : "company"))}
           >
             <ArrowUpDown className="mr-2 h-4 w-4" />
-            Sort by {sortBy === "company" ? "Name" : "Company"}
+            Sort by {sortBy === "company" ? "Name" : sortBy === "name" ? "Recent" : "Company"}
           </Button>
           <div className="flex border rounded-md overflow-hidden">
             <Button 
@@ -276,7 +290,7 @@ const Contacts = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Filter by Source</DropdownMenuLabel>
+              <DropdownMenuLabel>Filter by Source/Agent</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
                 checked={selectedSource === null}
@@ -307,7 +321,7 @@ const Contacts = () => {
           <EmptyState
             icon={<Users size={40} />}
             title="No contacts found"
-            description="Get started by creating your first contact."
+            description={selectedSource ? `No contacts found with source: ${selectedSource}` : "Get started by creating your first contact."}
             actionText="Add Contact"
             actionLink="/contacts/new"
           />
