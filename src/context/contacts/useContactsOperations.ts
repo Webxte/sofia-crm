@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { getContactsBySource } from "./contactUtils";
+import { SupabaseContact } from "./types/supabaseTypes";
 import Papa from "papaparse";
 
 export const useContactsOperations = () => {
@@ -39,7 +40,7 @@ export const useContactsOperations = () => {
       }
       
       // Transform the Supabase data to match our Contact type
-      const formattedContacts: Contact[] = data.map(contact => ({
+      const formattedContacts: Contact[] = (data as SupabaseContact[]).map(contact => ({
         id: contact.id,
         fullName: contact.full_name,
         company: contact.company,
@@ -51,7 +52,7 @@ export const useContactsOperations = () => {
         position: contact.position,
         agentId: contact.agent_id,
         agentName: contact.agent_name,
-        source: contact.source as string | undefined, // Use type assertion
+        source: contact.source || undefined, // Handle source field
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
       }));
@@ -129,7 +130,7 @@ export const useContactsOperations = () => {
         position: data.position,
         agentId: data.agent_id,
         agentName: data.agent_name,
-        source: data.source as string | undefined, // Use type assertion
+        source: data.source || undefined, // Handle source field
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -199,7 +200,7 @@ export const useContactsOperations = () => {
                 address: data.address,
                 notes: data.notes,
                 position: data.position,
-                source: data.source as string | undefined, // Use type assertion
+                source: data.source || undefined, // Handle source field
                 updatedAt: new Date(data.updated_at)
               }
             : contact
@@ -324,7 +325,7 @@ export const useContactsOperations = () => {
       }
       
       // Transform and add the new contacts to state
-      const newContacts: Contact[] = data.map(contact => ({
+      const newContacts: Contact[] = (data as SupabaseContact[]).map(contact => ({
         id: contact.id,
         fullName: contact.full_name,
         company: contact.company,
@@ -336,7 +337,7 @@ export const useContactsOperations = () => {
         position: contact.position,
         agentId: contact.agent_id,
         agentName: contact.agent_name,
-        source: contact.source as string | undefined, // Use type assertion
+        source: contact.source || undefined, // Handle source field
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
       }));

@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Calendar, ListChecks, ShoppingCart } from "lucide-react";
+import { Mail, Phone, Calendar, ListChecks, ShoppingCart, Tag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ContactCardProps {
   contact: {
@@ -18,6 +19,7 @@ interface ContactCardProps {
     position?: string;
     agentId?: string;
     agentName?: string;
+    source?: string;
     createdAt: Date;
     updatedAt: Date;
   };
@@ -46,6 +48,12 @@ const ContactCard = ({ contact, onScheduleMeeting, onCreateTask, onCreateOrder }
             <CardTitle className="text-lg font-semibold">{displayName}</CardTitle>
             {contactPerson && <CardDescription>{contactPerson}</CardDescription>}
             {contact.position && <CardDescription className="text-xs">{contact.position}</CardDescription>}
+            {contact.source && (
+              <Badge variant="outline" className="mt-1 flex items-center gap-1 text-xs">
+                <Tag className="h-3 w-3" />
+                {contact.source}
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -11,7 +12,8 @@ import {
   List,
   Calendar,
   ListChecks,
-  ShoppingCart
+  ShoppingCart,
+  Tag
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ContactDeleteDialog } from "@/components/contacts/ContactDeleteDialog";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuCheckboxItem, 
+  DropdownMenuTrigger, 
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { getAvailableSources } from "@/context/contacts/contactUtils";
+import ContactImporter from "@/components/contacts/ContactImporter";
 
 // Sort options
 type SortOption = "name" | "company" | "recent";
@@ -41,69 +53,37 @@ const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("company");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [showImporter, setShowImporter] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const { contacts, loading, refreshContacts } = useContacts();
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        setLoading(true);
-        let query = supabase.from('contacts').select('*');
-        
-        if (!isAdmin && user) {
-          query = query.eq('agent_id', user.id);
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) {
-          throw error;
-        }
-        
-        const formattedContacts: Contact[] = data.map((item) => ({
-          id: item.id,
-          fullName: item.full_name || undefined,
-          company: item.company || undefined,
-          email: item.email || undefined,
-          phone: item.phone || undefined,
-          mobile: item.mobile || undefined,
-          address: item.address || undefined,
-          notes: item.notes || undefined,
-          position: item.position || undefined,
-          agentId: item.agent_id || undefined,
-          agentName: item.agent_name || undefined,
-          createdAt: new Date(item.created_at),
-          updatedAt: new Date(item.updated_at),
-        }));
-        
-        setContacts(formattedContacts);
-      } catch (error) {
-        console.error("Error fetching contacts:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load contacts. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchContacts();
-  }, [isAdmin, user, toast]);
+    refreshContacts();
+  }, [refreshContacts]);
+  
+  // Get all available sources for filtering
+  const availableSources = getAvailableSources(contacts);
   
   const filteredContacts = contacts.filter(contact => {
+    // Apply source filter if selected
+    if (selectedSource && contact.source !== selectedSource) {
+      return false;
+    }
+    
+    // Apply search query filter
     const searchLower = searchQuery.toLowerCase();
     const name = contact.fullName?.toLowerCase() || "";
     const company = contact.company?.toLowerCase() || "";
     const email = contact.email?.toLowerCase() || "";
+    const source = contact.source?.toLowerCase() || "";
     
     return name.includes(searchLower) || 
            company.includes(searchLower) || 
-           email.includes(searchLower);
+           email.includes(searchLower) ||
+           source.includes(searchLower);
   });
   
   const sortedContacts = [...filteredContacts].sort((a, b) => {
@@ -168,6 +148,7 @@ const Contacts = () => {
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Position</TableHead>
+            <TableHead>Source/Tag</TableHead> {/* Added Source column */}
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -179,6 +160,7 @@ const Contacts = () => {
               <TableCell>{contact.email || "-"}</TableCell>
               <TableCell>{contact.phone || contact.mobile || "-"}</TableCell>
               <TableCell>{contact.position || "-"}</TableCell>
+              <TableCell>{contact.source || "-"}</TableCell> {/* Display source */}
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
@@ -228,12 +210,23 @@ const Contacts = () => {
             Manage your contacts and their information
           </p>
         </div>
-        <Button className="sm:w-auto w-full" asChild>
-          <Link to="/contacts/new">
-            <UserPlus className="mr-2 h-4 w-4" /> Add Contact
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowImporter(!showImporter)} variant={showImporter ? "secondary" : "outline"}>
+            Import CSV
+          </Button>
+          <Button className="sm:w-auto w-full" asChild>
+            <Link to="/contacts/new">
+              <UserPlus className="mr-2 h-4 w-4" /> Add Contact
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      {showImporter && (
+        <div className="mb-6">
+          <ContactImporter />
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative w-full sm:max-w-sm">
@@ -273,9 +266,35 @@ const Contacts = () => {
               <List className="h-4 w-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" /> Filter
-          </Button>
+
+          {/* Source/Tag Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Tag className="mr-2 h-4 w-4" />
+                {selectedSource || "All Sources"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Filter by Source</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={selectedSource === null}
+                onSelect={() => setSelectedSource(null)}
+              >
+                All Sources
+              </DropdownMenuCheckboxItem>
+              {availableSources.map(source => (
+                <DropdownMenuCheckboxItem
+                  key={source}
+                  checked={selectedSource === source}
+                  onSelect={() => setSelectedSource(source)}
+                >
+                  {source}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
