@@ -51,7 +51,7 @@ serve(async (req) => {
       .from("orders")
       .select("*, order_items(*)")
       .eq("id", orderId)
-      .single();
+      .maybeSingle();
     
     if (orderError) {
       console.error("Error fetching order:", orderError);
@@ -70,7 +70,7 @@ serve(async (req) => {
       .from("contacts")
       .select("*")
       .eq("id", order.contact_id)
-      .single();
+      .maybeSingle();
     
     if (contactError) {
       console.error("Error fetching contact:", contactError);

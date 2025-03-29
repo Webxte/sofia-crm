@@ -59,6 +59,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                     variant="ghost"
                     size="icon"
                     onClick={() => navigate(`/orders/${order.id}`)}
+                    title="View Details"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -68,7 +69,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                     customerEmail=""
                     orderReference={order.reference}
                     trigger={
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" title="Send Email">
                         <Mail className="h-4 w-4" />
                       </Button>
                     }
@@ -78,7 +79,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                     orderId={order.id}
                     reference={order.reference}
                     trigger={
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" title="Delete Order">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     }
