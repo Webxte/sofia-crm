@@ -1,99 +1,83 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ContactsProvider } from './context/ContactsContext';
+import { MeetingsProvider } from './context/MeetingsContext';
+import { TasksProvider } from './context/TasksContext';
+import { ProductsProvider } from './context/products/ProductsContext';
+import { OrdersProvider } from './context/OrdersContext';
+import { SettingsProvider } from './context/SettingsContext';
+import Dashboard from './pages/Dashboard';
+import Contacts from './pages/Contacts';
+import Meetings from './pages/Meetings';
+import Tasks from './pages/Tasks';
+import Products from './pages/Products';
+import Orders from './pages/Orders';
+import Settings from './pages/Settings';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ContactDetails from './pages/contacts/ContactDetails';
+import EditContact from './pages/contacts/EditContact';
+import NewContact from './pages/contacts/NewContact';
+import MeetingDetails from './pages/meetings/MeetingDetails';
+import EditMeeting from './pages/meetings/EditMeeting';
+import NewMeeting from './pages/meetings/NewMeeting';
+import TaskDetails from './pages/tasks/TaskDetails';
+import EditTask from './pages/tasks/EditTask';
+import NewTask from './pages/tasks/NewTask';
+import ProductDetails from './pages/products/ProductDetails';
+import EditProduct from './pages/products/EditProduct';
+import NewProduct from './pages/products/NewProduct';
+import OrderDetails from './pages/orders/OrderDetails';
+import EditOrder from './pages/orders/EditOrder';
+import NewOrder from './pages/orders/NewOrder';
+import { Toaster } from "@/components/ui/toaster"
+import { ProtectedRoute } from './components/ProtectedRoute';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./components/layout/Layout";
-import Dashboard from "./pages/Dashboard";
-import Contacts from "./pages/Contacts";
-import NewContact from "./pages/contacts/NewContact";
-import EditContact from "./pages/contacts/EditContact";
-import Meetings from "./pages/Meetings";
-import NewMeeting from "./pages/meetings/NewMeeting";
-import EditMeeting from "./pages/meetings/EditMeeting";
-import Tasks from "./pages/Tasks";
-import NewTask from "./pages/tasks/NewTask";
-import EditTask from "./pages/tasks/EditTask";
-import Orders from "./pages/Orders";
-import NewOrder from "./pages/orders/NewOrder";
-import EditOrder from "./pages/orders/EditOrder";
-import Calendar from "./pages/Calendar";
-import Profile from "./pages/Profile";
-import Reports from "./pages/Reports";
-import NotFound from "./pages/NotFound";
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
-import Settings from "./pages/Settings";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        {/* Auth routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        
-        {/* Protected routes */}
-        <Route 
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Navigate to="/" replace />} />
-          
-          {/* Contacts routes */}
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/contacts/new" element={<NewContact />} />
-          <Route path="/contacts/edit/:id" element={<EditContact />} />
-          <Route path="/contacts/:id" element={<Navigate to="/contacts/edit/:id" replace />} />
-          
-          {/* Meetings routes */}
-          <Route path="/meetings" element={<Meetings />} />
-          <Route path="/meetings/new" element={<NewMeeting />} />
-          <Route path="/meetings/edit/:id" element={<EditMeeting />} />
-          <Route path="/meetings/:id" element={<Navigate to="/meetings/edit/:id" replace />} />
-          
-          {/* Tasks routes */}
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/tasks/new" element={<NewTask />} />
-          <Route path="/tasks/edit/:id" element={<EditTask />} />
-          <Route path="/tasks/:id" element={<Navigate to="/tasks/edit/:id" replace />} />
-          
-          {/* Orders routes */}
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/orders/new" element={<NewOrder />} />
-          <Route path="/orders/edit/:id" element={<EditOrder />} />
-          <Route path="/orders/:id" element={<Navigate to="/orders/edit/:id" replace />} />
-          
-          {/* Calendar route */}
-          <Route path="/calendar" element={<Calendar />} />
-          
-          {/* User routes */}
-          <Route path="/profile" element={<Profile />} />
-          
-          {/* Admin routes */}
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={
-            <ProtectedRoute requireAdmin>
-              <Settings />
-            </ProtectedRoute>
-          } />
-        </Route>
-
-        {/* NotFound route - must be last */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+// Make sure OrdersProvider is properly included in the component hierarchy:
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <ContactsProvider>
+          <MeetingsProvider>
+            <TasksProvider>
+              <ProductsProvider>
+                <OrdersProvider>
+                  <SettingsProvider>
+                    <Toaster />
+                    <Routes>
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                      <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                      <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetails /></ProtectedRoute>} />
+                      <Route path="/contacts/:id/edit" element={<ProtectedRoute><EditContact /></ProtectedRoute>} />
+                      <Route path="/contacts/new" element={<ProtectedRoute><NewContact /></ProtectedRoute>} />
+                      <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
+                      <Route path="/meetings/:id" element={<ProtectedRoute><MeetingDetails /></ProtectedRoute>} />
+                      <Route path="/meetings/:id/edit" element={<ProtectedRoute><EditMeeting /></ProtectedRoute>} />
+                      <Route path="/meetings/new" element={<ProtectedRoute><NewMeeting /></ProtectedRoute>} />
+                      <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+                      <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
+                      <Route path="/tasks/:id/edit" element={<ProtectedRoute><EditTask /></ProtectedRoute>} />
+                      <Route path="/tasks/new" element={<ProtectedRoute><NewTask /></ProtectedRoute>} />
+                      <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+                      <Route path="/products/:id" element={<ProtectedRoute><ProductDetails /></ProtectedRoute>} />
+                      <Route path="/products/:id/edit" element={<ProtectedRoute><EditProduct /></ProtectedRoute>} />
+                      <Route path="/products/new" element={<ProtectedRoute><NewProduct /></ProtectedRoute>} />
+                      <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                      <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
+                      <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
+                      <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
+                      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                    </Routes>
+                  </SettingsProvider>
+                </OrdersProvider>
+              </ProductsProvider>
+            </TasksProvider>
+          </ContactsProvider>
+        </AuthProvider>
+      </BrowserRouter>
+  );
+}

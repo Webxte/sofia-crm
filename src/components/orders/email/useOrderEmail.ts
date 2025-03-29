@@ -16,12 +16,12 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   const [open, setOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [loadingCustomerEmail, setLoadingCustomerEmail] = useState(false);
-  const { sendOrderEmail, getOrderById } = useOrders();
+  const { orders, sendOrderEmail } = useOrders();
   const { getContactById } = useContacts();
   const { toast } = useToast();
   
   // Get order and contact information
-  const order = getOrderById(orderId);
+  const order = orders.find(o => o.id === orderId);
   const reference = orderReference || order?.reference || orderId.slice(0, 8);
   const contact = order ? getContactById(order.contactId) : null;
   const contactName = contact?.fullName || contact?.company || "Customer";
@@ -39,10 +39,8 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
     const fetchCustomerEmail = async () => {
       if (!customerEmail && open) {
         setLoadingCustomerEmail(true);
-        // Get order details
-        const order = getOrderById(orderId);
+        // If order exists and we have a contact with email
         if (order && order.contactId) {
-          // Get contact details
           const contact = getContactById(order.contactId);
           if (contact && contact.email) {
             setDefaultValues(prev => ({
@@ -56,7 +54,7 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
     };
     
     fetchCustomerEmail();
-  }, [orderId, customerEmail, open, getOrderById, getContactById]);
+  }, [orderId, customerEmail, open, order, getContactById]);
   
   // Set default values
   const [formValues, setDefaultValues] = useState(defaultValues);

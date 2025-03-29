@@ -49,9 +49,9 @@ serve(async (req) => {
     // Fetch order details
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("*, order_items(*)")
+      .select("*")
       .eq("id", orderId)
-      .maybeSingle();
+      .single();
     
     if (orderError) {
       console.error("Error fetching order:", orderError);
@@ -65,12 +65,22 @@ serve(async (req) => {
     
     console.log("Order fetched successfully:", order.id);
     
+    // Fetch order items
+    const { data: orderItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", orderId);
+      
+    if (itemsError) {
+      console.error("Error fetching order items:", itemsError);
+    }
+    
     // Fetch contact details
     const { data: contact, error: contactError } = await supabase
       .from("contacts")
       .select("*")
       .eq("id", order.contact_id)
-      .maybeSingle();
+      .single();
     
     if (contactError) {
       console.error("Error fetching contact:", contactError);
@@ -90,7 +100,7 @@ serve(async (req) => {
       .select("company_email")
       .order("created_at", { ascending: false })
       .limit(1)
-      .maybeSingle();
+      .single();
     
     // Office email to CC (if available)
     const officeEmail = settings?.company_email || null;
@@ -137,8 +147,8 @@ serve(async (req) => {
       `;
       
       // Add order items
-      if (order.order_items && Array.isArray(order.order_items)) {
-        order.order_items.forEach(item => {
+      if (orderItems && Array.isArray(orderItems)) {
+        orderItems.forEach(item => {
           emailContent += `
             <tr>
               <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">

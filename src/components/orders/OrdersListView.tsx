@@ -15,7 +15,7 @@ import { Eye, Trash2, Mail } from "lucide-react";
 import { Order } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";
-import { OrderEmailDialog } from "@/components/orders/OrderEmailDialog";
+import { OrderEmailDialog } from "@/components/orders/email/OrderEmailDialog";
 import { format } from "date-fns";
 
 interface OrdersListViewProps {

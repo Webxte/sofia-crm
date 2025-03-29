@@ -10,6 +10,10 @@ import {
 import { useOrderEmail } from "./useOrderEmail";
 import { EmailForm } from "./EmailForm";
 
+// Helper imports
+import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
+
 interface OrderEmailDialogProps {
   orderId: string;
   customerEmail?: string;
@@ -63,7 +67,3 @@ export const OrderEmailDialog = ({
     </Dialog>
   );
 };
-
-// Helper imports
-import { Button } from "@/components/ui/button";
-import { Mail } from "lucide-react";
