@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -76,8 +77,9 @@ export default function App() {
                 </OrdersProvider>
               </ProductsProvider>
             </TasksProvider>
-          </ContactsProvider>
-        </AuthProvider>
-      </BrowserRouter>
+          </MeetingsProvider>
+        </ContactsProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
