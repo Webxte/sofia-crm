@@ -2,7 +2,7 @@
 import { Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
-import { OrderEmailDialog } from "./OrderEmailDialog";
+import { OrderEmailDialog } from "./email/OrderEmailDialog";
 import { useContacts } from "@/context/ContactsContext";
 
 interface EmailOrderButtonProps {

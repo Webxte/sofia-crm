@@ -4,7 +4,7 @@ import { useOrders } from "@/context/OrdersContext";
 import OrderForm from "@/components/orders/OrderForm";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
-import { OrderEmailDialog } from "@/components/orders/OrderEmailDialog";
+import { OrderEmailDialog } from "@/components/orders/email/OrderEmailDialog";
 import { useContacts } from "@/context/ContactsContext";
 
 const EditOrder = () => {
