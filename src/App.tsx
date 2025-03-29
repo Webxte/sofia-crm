@@ -19,6 +19,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import OrderDetails from './pages/orders/OrderDetails';
 import EditOrder from './pages/orders/EditOrder';
 import NewOrder from './pages/orders/NewOrder';
+import Layout from './components/layout/Layout';
 
 // Removed BrowserRouter as it's already in main.tsx
 export default function App() {
@@ -34,24 +35,26 @@ export default function App() {
                   <Routes>
                     <Route path="/login" element={<div>Login Page</div>} />
                     <Route path="/register" element={<div>Register Page</div>} />
-                    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                    <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
-                    <Route path="/contacts/:id" element={<ProtectedRoute><div>Contact Details</div></ProtectedRoute>} />
-                    <Route path="/contacts/:id/edit" element={<ProtectedRoute><div>Edit Contact</div></ProtectedRoute>} />
-                    <Route path="/contacts/new" element={<ProtectedRoute><div>New Contact</div></ProtectedRoute>} />
-                    <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
-                    <Route path="/meetings/:id" element={<ProtectedRoute><div>Meeting Details</div></ProtectedRoute>} />
-                    <Route path="/meetings/:id/edit" element={<ProtectedRoute><div>Edit Meeting</div></ProtectedRoute>} />
-                    <Route path="/meetings/new" element={<ProtectedRoute><div>New Meeting</div></ProtectedRoute>} />
-                    <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-                    <Route path="/tasks/:id" element={<ProtectedRoute><div>Task Details</div></ProtectedRoute>} />
-                    <Route path="/tasks/:id/edit" element={<ProtectedRoute><div>Edit Task</div></ProtectedRoute>} />
-                    <Route path="/tasks/new" element={<ProtectedRoute><div>New Task</div></ProtectedRoute>} />
-                    <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-                    <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
-                    <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
-                    <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
-                    <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                      <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                      <Route path="/contacts/:id" element={<ProtectedRoute><div>Contact Details</div></ProtectedRoute>} />
+                      <Route path="/contacts/:id/edit" element={<ProtectedRoute><div>Edit Contact</div></ProtectedRoute>} />
+                      <Route path="/contacts/new" element={<ProtectedRoute><div>New Contact</div></ProtectedRoute>} />
+                      <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
+                      <Route path="/meetings/:id" element={<ProtectedRoute><div>Meeting Details</div></ProtectedRoute>} />
+                      <Route path="/meetings/:id/edit" element={<ProtectedRoute><div>Edit Meeting</div></ProtectedRoute>} />
+                      <Route path="/meetings/new" element={<ProtectedRoute><div>New Meeting</div></ProtectedRoute>} />
+                      <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+                      <Route path="/tasks/:id" element={<ProtectedRoute><div>Task Details</div></ProtectedRoute>} />
+                      <Route path="/tasks/:id/edit" element={<ProtectedRoute><div>Edit Task</div></ProtectedRoute>} />
+                      <Route path="/tasks/new" element={<ProtectedRoute><div>New Task</div></ProtectedRoute>} />
+                      <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                      <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
+                      <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
+                      <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
+                      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                    </Route>
                   </Routes>
                 </SettingsProvider>
               </OrdersProvider>

@@ -46,12 +46,12 @@ serve(async (req) => {
 
     console.log("Fetching order with ID:", orderId);
     
-    // Fetch order details
+    // Fetch order details - Using .maybeSingle() instead of .single() to avoid errors
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .select("*")
       .eq("id", orderId)
-      .single();
+      .maybeSingle();
     
     if (orderError) {
       console.error("Error fetching order:", orderError);
@@ -75,12 +75,12 @@ serve(async (req) => {
       console.error("Error fetching order items:", itemsError);
     }
     
-    // Fetch contact details
+    // Fetch contact details - Using .maybeSingle() instead of .single()
     const { data: contact, error: contactError } = await supabase
       .from("contacts")
       .select("*")
       .eq("id", order.contact_id)
-      .single();
+      .maybeSingle();
     
     if (contactError) {
       console.error("Error fetching contact:", contactError);
@@ -100,7 +100,7 @@ serve(async (req) => {
       .select("company_email")
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     
     // Office email to CC (if available)
     const officeEmail = settings?.company_email || null;
