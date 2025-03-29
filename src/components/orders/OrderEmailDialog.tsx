@@ -78,15 +78,37 @@ export const OrderEmailDialog = ({
     fetchCustomerEmail();
   }, [orderId, customerEmail, open]);
   
-  // Get order reference
+  // Get order reference and generate pre-populated email content
   const order = getOrderById(orderId);
   const reference = orderReference || order?.reference || orderId.slice(0, 8);
+  const contact = order ? getContactById(order.contactId) : null;
+  const contactName = contact?.fullName || contact?.company || "Customer";
+  
+  // Generate default message with order details
+  const generateDefaultMessage = () => {
+    if (!order) return "Please find attached the details of your order. Thank you for your business.";
+    
+    let message = `Dear ${contactName},\n\n`;
+    message += `Your order (Ref: ${reference}) from ${format(new Date(order.date), 'MMMM do, yyyy')} has been processed.\n\n`;
+    message += "Order Details:\n";
+    
+    if (order.items && order.items.length > 0) {
+      order.items.forEach(item => {
+        message += `${item.quantity} x ${item.code || ''} ${item.description}: ${formatCurrency(item.subtotal || 0)}\n`;
+      });
+    }
+    
+    message += `\nTotal: ${formatCurrency(order.total)}\n\n`;
+    message += "Thank you for your business.";
+    
+    return message;
+  };
   
   const defaultValues = {
     recipient: customerEmail || "",
     cc: "",
-    subject: `Order ${reference}`,
-    message: "Please find attached the details of your order. Thank you for your business.",
+    subject: `Order Confirmation - Ref: ${reference}`,
+    message: generateDefaultMessage(),
   };
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -205,7 +227,7 @@ export const OrderEmailDialog = ({
                 <FormItem>
                   <FormLabel>Message</FormLabel>
                   <FormControl>
-                    <Textarea rows={5} {...field} />
+                    <Textarea rows={10} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -225,3 +247,7 @@ export const OrderEmailDialog = ({
     </Dialog>
   );
 };
+
+// Helper import
+import { format } from "date-fns";
+import { formatCurrency } from "@/utils/formatting";

@@ -18,6 +18,11 @@ export const EmailOrderButton = ({ order }: EmailOrderButtonProps) => {
       orderId={order.id} 
       customerEmail={contact?.email} 
       orderReference={order.reference}
+      trigger={
+        <Button variant="outline" size="sm" className="w-full">
+          <Mail className="mr-2 h-4 w-4" /> Email
+        </Button>
+      }
     />
   );
 };

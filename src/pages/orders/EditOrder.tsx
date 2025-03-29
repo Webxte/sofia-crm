@@ -2,10 +2,15 @@
 import { useParams, Navigate } from "react-router-dom";
 import { useOrders } from "@/context/OrdersContext";
 import OrderForm from "@/components/orders/OrderForm";
+import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
+import { OrderEmailDialog } from "@/components/orders/OrderEmailDialog";
+import { useContacts } from "@/context/ContactsContext";
 
 const EditOrder = () => {
   const { id } = useParams();
   const { getOrderById } = useOrders();
+  const { getContactById } = useContacts();
   
   const order = id ? getOrderById(id) : undefined;
   
@@ -13,7 +18,26 @@ const EditOrder = () => {
     return <Navigate to="/orders" replace />;
   }
   
-  return <OrderForm order={order} isEditing />;
+  const contact = order ? getContactById(order.contactId) : null;
+  
+  return (
+    <div>
+      <div className="mb-4 flex justify-between items-center">
+        <h2 className="text-2xl font-bold">{order.reference || `Order #${order.id.slice(0, 8)}`}</h2>
+        <OrderEmailDialog
+          orderId={order.id}
+          customerEmail={contact?.email}
+          orderReference={order.reference}
+          trigger={
+            <Button variant="outline" size="sm">
+              <Mail className="mr-2 h-4 w-4" /> Send Order Email
+            </Button>
+          }
+        />
+      </div>
+      <OrderForm order={order} isEditing />
+    </div>
+  );
 };
 
 export default EditOrder;

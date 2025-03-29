@@ -1,19 +1,13 @@
 
-import { format } from "date-fns";
-import { Order } from "@/types";
-import { OrderStatusChanger } from "@/components/orders/OrderStatusChanger";
-import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { OrderStatusBadge } from "./OrderStatusBadge";
+import { formatCurrency } from "@/utils/formatting";
+import { EmailOrderButton } from "./EmailOrderButton";
+import { Order } from "@/types";
+import { format } from "date-fns";
+import { Eye } from "lucide-react";
 
 interface OrdersGridViewProps {
   orders: Order[];
@@ -21,68 +15,51 @@ interface OrdersGridViewProps {
   companyNameMap: Record<string, string>;
 }
 
-export const OrdersGridView = ({
-  orders,
-  getStatusColor,
-  companyNameMap
-}: OrdersGridViewProps) => {
+export const OrdersGridView = ({ orders, getStatusColor, companyNameMap }: OrdersGridViewProps) => {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {orders.map((order) => {
-        const companyName = companyNameMap[order.contactId] || "Unknown";
-        
-        return (
-          <Card key={order.id}>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <CardDescription className="flex items-center gap-1">
-                  {order.reference || `Order #${order.id.slice(0, 6).toUpperCase()}`}
-                </CardDescription>
-                <Badge
-                  className={getStatusColor(order.status)}
-                  variant="outline"
-                >
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </Badge>
-              </div>
-              <CardTitle className="text-xl">
-                {companyName}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {orders.map((order) => (
+        <Card key={order.id} className="overflow-hidden">
+          <div className={`h-2 ${getStatusColor(order.status)}`} />
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-lg font-medium">
+                {order.reference || `Order #${order.id.slice(0, 8)}`}
               </CardTitle>
-              <CardDescription>
-                Date: {format(new Date(order.date), "PPP")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                <div className="text-sm flex justify-between">
-                  <span className="text-muted-foreground">Items:</span>
-                  <span>{order.items.length}</span>
-                </div>
-                <div className="text-sm flex justify-between">
-                  <span className="text-muted-foreground">Agent:</span>
-                  <span>{order.agentName || "Unknown"}</span>
-                </div>
-                <div className="text-sm flex justify-between font-medium">
-                  <span className="text-muted-foreground">Total:</span>
-                  <span>€{order.total.toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="pt-2 flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <OrderStatusBadge status={order.status} />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {format(new Date(order.date), "MMM d, yyyy")}
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium">Customer</p>
+              <p className="text-sm">{companyNameMap[order.contactId] || "Unknown"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Amount</p>
+              <p className="text-lg font-semibold">
+                {formatCurrency(order.total)}
+              </p>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full"
-                onClick={() => navigate(`/orders/edit/${order.id}`)}
+                onClick={() => navigate(`/orders/${order.id}`)}
               >
-                View Details
+                <Eye className="mr-2 h-4 w-4" /> View Details
               </Button>
-            </CardFooter>
-          </Card>
-        );
-      })}
+              
+              <EmailOrderButton order={order} />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

@@ -52,6 +52,12 @@ export const sendOrderEmail = async (
       cc: cc || []
     });
     
+    // Make sure we have valid data
+    if (!orderId || !recipient || !subject) {
+      console.error("Missing required parameters for sending email");
+      return false;
+    }
+    
     // Call the edge function to send the email
     const { data, error } = await supabase.functions.invoke("send-order-email", {
       body: {
@@ -60,7 +66,7 @@ export const sendOrderEmail = async (
         subject,
         message,
         includeOrderDetails: true,
-        cc
+        cc: cc || []
       }
     });
 

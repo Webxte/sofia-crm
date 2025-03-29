@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { OrderStatusChanger } from "@/components/orders/OrderStatusChanger";
 import { Eye, Trash2, Mail } from "lucide-react";
 import { Order } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";
-import { format } from "date-fns";
 import { OrderEmailDialog } from "@/components/orders/OrderEmailDialog";
+import { format } from "date-fns";
 
 interface OrdersListViewProps {
   orders: Order[];
@@ -47,7 +48,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
               <TableCell>{format(new Date(order.date), 'MMM d, yyyy')}</TableCell>
               <TableCell>{companyNameMap[order.contactId] || 'Unknown Customer'}</TableCell>
               <TableCell>
-                <OrderStatusBadge status={order.status} />
+                <OrderStatusChanger orderId={order.id} currentStatus={order.status} />
               </TableCell>
               <TableCell className="text-right">
                 {formatCurrency(order.total)}

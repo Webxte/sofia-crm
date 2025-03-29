@@ -40,6 +40,13 @@ serve(async (req) => {
       bcc: body.bcc,
     });
     
+    // Check for Resend API key
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("Missing RESEND_API_KEY environment variable");
+      throw new Error("Email service is not properly configured. Please set the RESEND_API_KEY.");
+    }
+    
     // Validate required fields
     if (!body.to || !body.subject || !body.html) {
       throw new Error("Missing required fields: to, subject, html");

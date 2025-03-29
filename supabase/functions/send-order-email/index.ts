@@ -32,7 +32,7 @@ serve(async (req) => {
       recipient,
       subject,
       includeOrderDetails,
-      cc
+      cc: cc || []
     });
     
     // Create a Supabase client with the auth context of the function
@@ -51,7 +51,7 @@ serve(async (req) => {
       .from("orders")
       .select("*, order_items(*)")
       .eq("id", orderId)
-      .maybeSingle();
+      .single();
     
     if (orderError) {
       console.error("Error fetching order:", orderError);
@@ -70,7 +70,7 @@ serve(async (req) => {
       .from("contacts")
       .select("*")
       .eq("id", order.contact_id)
-      .maybeSingle();
+      .single();
     
     if (contactError) {
       console.error("Error fetching contact:", contactError);
@@ -185,6 +185,8 @@ serve(async (req) => {
         `;
       }
     }
+    
+    console.log("Preparing to send email via send-email function");
     
     // Send email using Supabase Edge Function
     const { data: resendData, error: resendError } = await supabase.functions.invoke("send-email", {
