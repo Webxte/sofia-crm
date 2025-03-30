@@ -75,8 +75,8 @@ const Contacts = () => {
   
   // Filter contacts based on selected source and search query
   const filteredContacts = contacts.filter(contact => {
-    // Apply source filter if selected
-    if (selectedSource) {
+    // Apply source filter if selected (but not if user is admin and has explicitly selected "All Sources")
+    if (selectedSource && !(isAdmin && selectedSource === null)) {
       if (!contact.source) return false;
       
       // Split the source string by commas to handle multiple tags
@@ -84,6 +84,15 @@ const Contacts = () => {
       
       // Check if the contact has the selected source tag
       if (!contactSources.includes(selectedSource)) {
+        return false;
+      }
+    }
+    
+    // Admins can see all contacts when no filter is applied
+    // Non-admins can only see their own contacts (by agent name) unless explicitly filtered
+    if (!isAdmin && !selectedSource) {
+      // If not an admin and no source selected, only show user's contacts
+      if (user?.name && contact.agentName !== user.name) {
         return false;
       }
     }

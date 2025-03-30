@@ -14,6 +14,7 @@ import Meetings from './pages/Meetings';
 import Tasks from './pages/Tasks';
 import Orders from './pages/Orders';
 import Settings from './pages/Settings';
+import Reports from './pages/Reports';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import { Toaster } from "@/components/ui/toaster";
@@ -58,6 +59,7 @@ export default function App() {
                       <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
                       <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
                       <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
+                      <Route path="/reports" element={<ProtectedRoute requireAdmin={true}><Reports /></ProtectedRoute>} />
                       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                     </Route>
                     <Route path="*" element={<NotFound />} />

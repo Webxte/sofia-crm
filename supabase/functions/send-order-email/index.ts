@@ -46,7 +46,7 @@ serve(async (req) => {
 
     console.log("Fetching order with ID:", orderId);
     
-    // Fetch order details - Using .maybeSingle() instead of .single() to avoid errors
+    // Fetch order details - Using .maybeSingle() to avoid errors
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .select("*")
@@ -75,7 +75,7 @@ serve(async (req) => {
       console.error("Error fetching order items:", itemsError);
     }
     
-    // Fetch contact details - Using .maybeSingle() instead of .single()
+    // Fetch contact details - Using .maybeSingle()
     const { data: contact, error: contactError } = await supabase
       .from("contacts")
       .select("*")
