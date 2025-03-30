@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, isAdmin, user } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   // This effect ensures we have a valid user session

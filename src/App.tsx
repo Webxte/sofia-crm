@@ -14,12 +14,16 @@ import Meetings from './pages/Meetings';
 import Tasks from './pages/Tasks';
 import Orders from './pages/Orders';
 import Settings from './pages/Settings';
+import Login from './pages/auth/Login';
+import Signup from './pages/auth/Signup';
 import { Toaster } from "@/components/ui/toaster";
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import OrderDetails from './pages/orders/OrderDetails';
 import EditOrder from './pages/orders/EditOrder';
 import NewOrder from './pages/orders/NewOrder';
 import Layout from './components/layout/Layout';
+import NotFound from './pages/NotFound';
+import Calendar from './pages/Calendar';
 
 // Removed BrowserRouter as it's already in main.tsx
 export default function App() {
@@ -33,8 +37,8 @@ export default function App() {
                 <SettingsProvider>
                   <Toaster />
                   <Routes>
-                    <Route path="/login" element={<div>Login Page</div>} />
-                    <Route path="/register" element={<div>Register Page</div>} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Signup />} />
                     <Route path="/" element={<Layout />}>
                       <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                       <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
@@ -45,6 +49,7 @@ export default function App() {
                       <Route path="/meetings/:id" element={<ProtectedRoute><div>Meeting Details</div></ProtectedRoute>} />
                       <Route path="/meetings/:id/edit" element={<ProtectedRoute><div>Edit Meeting</div></ProtectedRoute>} />
                       <Route path="/meetings/new" element={<ProtectedRoute><div>New Meeting</div></ProtectedRoute>} />
+                      <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
                       <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
                       <Route path="/tasks/:id" element={<ProtectedRoute><div>Task Details</div></ProtectedRoute>} />
                       <Route path="/tasks/:id/edit" element={<ProtectedRoute><div>Edit Task</div></ProtectedRoute>} />
@@ -55,6 +60,7 @@ export default function App() {
                       <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
                       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                     </Route>
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </SettingsProvider>
               </OrdersProvider>
