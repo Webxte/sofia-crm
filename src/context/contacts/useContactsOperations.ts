@@ -1,359 +1,137 @@
-import { useState } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
-import { getContactsBySource } from "./contactUtils";
-import { SupabaseContact } from "./types/supabaseTypes";
-import Papa from "papaparse";
+import { processContacts, createContact, updateContact, deleteContact } from "./contactUtils";
+import { useAuth } from "../AuthContext";
 
 export const useContactsOperations = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { user, isAdmin } = useAuth();
 
-  const refreshContacts = async () => {
+  // Fetch contacts
+  const fetchContacts = useCallback(async () => {
     try {
       setLoading(true);
       
-      if (!isAuthenticated) {
-        setContacts([]);
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching contacts:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load contacts",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const formattedContacts: Contact[] = (data as SupabaseContact[]).map(contact => ({
-        id: contact.id,
-        fullName: contact.full_name,
-        company: contact.company,
-        email: contact.email,
-        phone: contact.phone,
-        mobile: contact.mobile,
-        address: contact.address,
-        notes: contact.notes,
-        position: contact.position,
-        agentId: contact.agent_id,
-        agentName: contact.agent_name,
-        source: contact.source || undefined,
-        createdAt: new Date(contact.created_at),
-        updatedAt: new Date(contact.updated_at),
-      }));
-      
-      setContacts(formattedContacts);
-    } catch (err) {
-      console.error('Unexpected error fetching contacts:', err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while loading contacts",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addContact = async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
-    try {
+      // If not logged in, return empty array
       if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to add contacts",
-          variant: "destructive",
-        });
-        return;
+        setContacts([]);
+        return [];
       }
       
-      const agentData = {
-        agent_id: user.id,
-        agent_name: user.name || ''
-      };
+      const query = supabase.from("contacts").select("*");
       
-      const newContactData = {
-        full_name: contactData.fullName,
-        company: contactData.company,
-        email: contactData.email,
-        phone: contactData.phone,
-        mobile: contactData.mobile,
-        address: contactData.address,
-        notes: contactData.notes,
-        position: contactData.position,
-        source: contactData.source,
-        ...agentData
-      };
+      // Only apply the filter for non-admin users
+      // Admins can see all contacts
+      if (!isAdmin) {
+        query.eq("agent_name", user.name);
+      }
       
-      const { data, error } = await supabase
-        .from('contacts')
-        .insert(newContactData)
-        .select('*')
-        .single();
+      const { data, error } = await query;
       
       if (error) {
-        console.error('Error adding contact:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add contact",
-          variant: "destructive",
-        });
-        return;
+        console.error("Error fetching contacts:", error);
+        return [];
       }
       
-      const newContact: Contact = {
-        id: data.id,
-        fullName: data.full_name,
-        company: data.company,
-        email: data.email,
-        phone: data.phone,
-        mobile: data.mobile,
-        address: data.address,
-        notes: data.notes,
-        position: data.position,
-        agentId: data.agent_id,
-        agentName: data.agent_name,
-        source: data.source || undefined,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-      };
-      
-      setContacts(prevContacts => [newContact, ...prevContacts]);
-      
-      toast({
-        title: "Success",
-        description: "Contact added successfully",
-      });
-    } catch (err) {
-      console.error('Unexpected error adding contact:', err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateContact = async (id: string, contactData: Partial<Contact>) => {
-    try {
-      const updateData: any = {};
-      
-      if (contactData.fullName !== undefined) updateData.full_name = contactData.fullName;
-      if (contactData.company !== undefined) updateData.company = contactData.company;
-      if (contactData.email !== undefined) updateData.email = contactData.email;
-      if (contactData.phone !== undefined) updateData.phone = contactData.phone;
-      if (contactData.mobile !== undefined) updateData.mobile = contactData.mobile;
-      if (contactData.address !== undefined) updateData.address = contactData.address;
-      if (contactData.notes !== undefined) updateData.notes = contactData.notes;
-      if (contactData.position !== undefined) updateData.position = contactData.position;
-      if (contactData.source !== undefined) updateData.source = contactData.source;
-      
-      updateData.updated_at = new Date().toISOString();
-      
-      const { data, error } = await supabase
-        .from('contacts')
-        .update(updateData)
-        .eq('id', id)
-        .select('*')
-        .single();
-      
-      if (error) {
-        console.error('Error updating contact:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update contact",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setContacts(prevContacts => 
-        prevContacts.map(contact => 
-          contact.id === id 
-            ? {
-                ...contact,
-                fullName: data.full_name,
-                company: data.company,
-                email: data.email,
-                phone: data.phone,
-                mobile: data.mobile,
-                address: data.address,
-                notes: data.notes,
-                position: data.position,
-                source: data.source || undefined,
-                updatedAt: new Date(data.updated_at)
-              }
-            : contact
-        )
-      );
-      
-      toast({
-        title: "Success",
-        description: "Contact updated successfully",
-      });
-    } catch (err) {
-      console.error('Unexpected error updating contact:', err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteContact = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('contacts')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error deleting contact:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete contact",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setContacts(prevContacts => prevContacts.filter(contact => contact.id !== id));
-      
-      toast({
-        title: "Success",
-        description: "Contact deleted successfully",
-      });
-    } catch (err) {
-      console.error('Unexpected error deleting contact:', err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const importContactsFromCsv = async (file: File) => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to import contacts",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const results = await new Promise<Papa.ParseResult<any>>((resolve, reject) => {
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          complete: resolve,
-          error: reject,
-        });
-      });
-      
-      if (!results.data || results.data.length === 0) {
-        toast({
-          title: "Error",
-          description: "The CSV file is empty or invalid",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const mappedContacts = results.data.map((row: any) => {
-        const source = row.source || row.Source || file.name.split('.')[0];
-        
-        return {
-          full_name: row.name || row.fullName || row.full_name || row["full name"] || row.Name || row["Full Name"] || '',
-          company: row.company || row.Company || row.organization || row.Organization || '',
-          email: row.email || row.Email || '',
-          phone: row.phone || row.Phone || row.telephone || row.Telephone || '',
-          mobile: row.mobile || row.Mobile || row.cell || row.Cell || '',
-          address: row.address || row.Address || '',
-          notes: row.notes || row.Notes || '',
-          position: row.position || row.Position || row.title || row.Title || '',
-          source: source,
-          agent_id: user.id,
-          agent_name: user.name || '',
-        };
-      });
-      
-      const { data, error } = await supabase
-        .from('contacts')
-        .insert(mappedContacts)
-        .select('*');
-      
-      if (error) {
-        console.error('Error importing contacts:', error);
-        toast({
-          title: "Error",
-          description: "Failed to import contacts",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const newContacts: Contact[] = (data as SupabaseContact[]).map(contact => ({
-        id: contact.id,
-        fullName: contact.full_name,
-        company: contact.company,
-        email: contact.email,
-        phone: contact.phone,
-        mobile: contact.mobile,
-        address: contact.address,
-        notes: contact.notes,
-        position: contact.position,
-        agentId: contact.agent_id,
-        agentName: contact.agent_name,
-        source: contact.source || undefined,
-        createdAt: new Date(contact.created_at),
-        updatedAt: new Date(contact.updated_at),
-      }));
-      
-      setContacts(prevContacts => [...newContacts, ...prevContacts]);
-      
-      toast({
-        title: "Success",
-        description: `${newContacts.length} contacts imported successfully`,
-      });
-    } catch (err) {
-      console.error('Unexpected error importing contacts:', err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while importing contacts",
-        variant: "destructive",
-      });
+      const processedContacts = processContacts(data || []);
+      setContacts(processedContacts);
+      return processedContacts;
+    } catch (error) {
+      console.error("Error in fetchContacts:", error);
+      return [];
     } finally {
       setLoading(false);
+    }
+  }, [user, isAdmin]);
+
+  // Refresh contacts on mount and when dependencies change
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
+
+  // Add a new contact
+  const addContact = async (contactData: Omit<Contact, "id">): Promise<Contact | null> => {
+    try {
+      const contact = await createContact(contactData);
+      if (contact) {
+        setContacts(prevContacts => [...prevContacts, contact]);
+      }
+      return contact;
+    } catch (error) {
+      console.error("Error adding contact:", error);
+      return null;
+    }
+  };
+
+  // Update an existing contact
+  const updateContactById = async (id: string, contactData: Partial<Contact>): Promise<Contact | null> => {
+    try {
+      const updatedContact = await updateContact(id, contactData);
+      if (updatedContact) {
+        setContacts(prevContacts =>
+          prevContacts.map(contact => (contact.id === id ? updatedContact : contact))
+        );
+      }
+      return updatedContact;
+    } catch (error) {
+      console.error("Error updating contact:", error);
+      return null;
+    }
+  };
+
+  // Delete a contact
+  const deleteContactById = async (id: string): Promise<boolean> => {
+    try {
+      const success = await deleteContact(id);
+      if (success) {
+        setContacts(prevContacts => prevContacts.filter(contact => contact.id !== id));
+      }
+      return success;
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      return false;
+    }
+  };
+
+  // Get a contact by ID
+  const getContactById = useCallback((id: string): Contact | undefined => {
+    return contacts.find(contact => contact.id === id);
+  }, [contacts]);
+
+  // Import contacts
+  const importContacts = async (newContacts: Omit<Contact, "id">[]): Promise<number> => {
+    try {
+      let importedCount = 0;
+      
+      for (const contactData of newContacts) {
+        const contact = await createContact(contactData);
+        if (contact) {
+          importedCount++;
+        }
+      }
+      
+      // Refresh contacts after import
+      await fetchContacts();
+      
+      return importedCount;
+    } catch (error) {
+      console.error("Error importing contacts:", error);
+      return 0;
     }
   };
 
   return {
     contacts,
-    setContacts,
     loading,
-    setLoading,
-    refreshContacts,
+    fetchContacts,
+    refreshContacts: fetchContacts,
     addContact,
-    updateContact,
-    deleteContact,
-    importContactsFromCsv,
-    getContactsBySource
+    updateContact: updateContactById,
+    deleteContact: deleteContactById,
+    getContactById,
+    importContacts,
   };
 };
