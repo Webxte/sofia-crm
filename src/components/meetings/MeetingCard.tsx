@@ -12,14 +12,17 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface MeetingCardProps {
   meeting: Meeting;
   contact?: Contact;
-  onViewDetails: () => void;
+  onViewDetails?: () => void;
 }
 
 export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProps) => {
+  const navigate = useNavigate();
+  
   // Get meeting type badge color
   const getMeetingTypeColor = (type: string) => {
     switch (type) {
@@ -56,6 +59,14 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
   const displayCompany = contact?.company || "Unknown Company";
   const displayPerson = contact?.fullName ? ` (${contact.fullName})` : "";
   const displayTitle = contact?.company ? displayCompany : (contact?.fullName || "Unknown Contact");
+  
+  const handleViewDetails = () => {
+    if (onViewDetails) {
+      onViewDetails();
+    } else {
+      navigate(`/meetings/${meeting.id}`);
+    }
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -89,7 +100,7 @@ export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProp
           variant="outline" 
           size="sm" 
           className="w-full"
-          onClick={onViewDetails}
+          onClick={handleViewDetails}
         >
           View Details
         </Button>

@@ -64,18 +64,18 @@ const Sidebar = ({ className }: SidebarProps) => {
       href: "/orders",
       icon: ShoppingCart,
     },
-    {
-      title: "Reports",
-      href: "/reports",
-      icon: BarChart,
-    },
     ...(isAdmin ? [
       {
-        title: "Settings",
-        href: "/settings",
-        icon: Settings,
+        title: "Reports",
+        href: "/reports",
+        icon: BarChart,
       }
     ] : []),
+    {
+      title: "Settings",
+      href: "/settings",
+      icon: Settings,
+    },
   ];
 
   return (
