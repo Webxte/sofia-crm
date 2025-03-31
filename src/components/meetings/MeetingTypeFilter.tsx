@@ -11,11 +11,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface MeetingTypeFilterProps {
-  value: string;
-  onValueChange: (value: string) => void;
+  selectedType?: string; // Changed from 'value' to 'selectedType'
+  onSelectType?: (value: string) => void; // Changed from 'onValueChange' to 'onSelectType'
+  value?: string; // Keep old prop for backwards compatibility
+  onValueChange?: (value: string) => void; // Keep old prop for backwards compatibility
 }
 
-export const MeetingTypeFilter = ({ value, onValueChange }: MeetingTypeFilterProps) => {
+export const MeetingTypeFilter = ({ 
+  selectedType, 
+  onSelectType, 
+  value, 
+  onValueChange 
+}: MeetingTypeFilterProps) => {
+  // Use either the new prop names or fall back to the old ones
+  const actualValue = selectedType || value || "all";
+  const handleValueChange = onSelectType || onValueChange || (() => {});
+
   const types = [
     {
       id: "all",
@@ -50,15 +61,15 @@ export const MeetingTypeFilter = ({ value, onValueChange }: MeetingTypeFilterPro
   ];
 
   // Find the currently selected type for display
-  const selectedType = types.find((type) => type.id === value) || types[0];
-  const Icon = selectedType.icon;
+  const selectedTypeObj = types.find((type) => type.id === actualValue) || types[0];
+  const Icon = selectedTypeObj.icon;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-9">
           <Icon className="mr-1 h-4 w-4" />
-          {selectedType.name}
+          {selectedTypeObj.name}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
@@ -69,12 +80,12 @@ export const MeetingTypeFilter = ({ value, onValueChange }: MeetingTypeFilterPro
             return (
               <DropdownMenuItem
                 key={type.id}
-                onClick={() => onValueChange(type.id)}
+                onClick={() => handleValueChange(type.id)}
                 className="cursor-pointer"
               >
                 <TypeIcon className="mr-2 h-4 w-4" />
                 <span>{type.name}</span>
-                {value === type.id && (
+                {actualValue === type.id && (
                   <Check className="ml-auto h-4 w-4" />
                 )}
               </DropdownMenuItem>

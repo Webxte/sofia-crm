@@ -86,8 +86,8 @@ const Meetings = () => {
           <div className="flex gap-2 w-full md:w-auto">
             <div className="w-full md:w-40">
               <MeetingTypeFilter
-                selectedType={selectedMeetingType}
-                onSelectType={setSelectedMeetingType}
+                value={selectedMeetingType} // Using the prop name expected by the component
+                onValueChange={setSelectedMeetingType} // Using the prop name expected by the component
               />
             </div>
             <div className="w-full md:w-40">
@@ -116,7 +116,7 @@ const Meetings = () => {
                 {sortedMeetings.map((meeting) => (
                   <div 
                     key={meeting.id} 
-                    className="border rounded-lg p-3 hover:border-primary transition-colors"
+                    className="border rounded-lg p-3 hover:border-primary transition-colors cursor-pointer"
                     onClick={() => handleViewMeeting(meeting.id)}
                   >
                     <div className="flex justify-between items-start">
