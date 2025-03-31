@@ -65,9 +65,9 @@ const Contacts = () => {
     return Array.from(allSources).sort();
   }, [contacts]);
 
-  // Find the agent's source to set as default
+  // Find and set the agent's name as the default source filter
   useEffect(() => {
-    if (user && user.name && !selectedSource) {
+    if (user && user.name && !selectedSource && !isAdmin) {
       // Find the agent's name in sources
       const agentSourceExists = sources.some(source => 
         source.toLowerCase() === user.name?.toLowerCase()
@@ -83,7 +83,7 @@ const Contacts = () => {
         }
       }
     }
-  }, [user, sources, selectedSource]);
+  }, [user, sources, selectedSource, isAdmin]);
   
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -92,6 +92,8 @@ const Contacts = () => {
   };
   
   const filteredContacts = contacts.filter(contact => {
+    // If admin, show all contacts based on selected source
+    // If not admin, only show contacts where agent is the user or has the selected source
     const shouldShowContact = isAdmin || 
       !selectedSource || 
       (contact.agentName === user?.name || (selectedSource && contact.source?.includes(selectedSource)));

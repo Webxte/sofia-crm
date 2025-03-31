@@ -47,6 +47,8 @@ serve(async (req) => {
       throw new Error("Email service is not properly configured. Please set the RESEND_API_KEY.");
     }
     
+    console.log("Using RESEND_API_KEY:", resendApiKey.substring(0, 5) + "...");
+    
     // Validate required fields
     if (!body.to || !body.subject || !body.html) {
       throw new Error("Missing required fields: to, subject, html");
@@ -56,6 +58,7 @@ serve(async (req) => {
     const from = body.from || "CRM System <onboarding@resend.dev>";
     
     console.log("Sending email with Resend API:", {
+      from,
       to: body.to,
       subject: body.subject,
       cc: body.cc,

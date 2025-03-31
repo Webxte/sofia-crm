@@ -109,7 +109,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         due_time: taskData.dueTime,
         priority: taskData.priority,
         status: taskData.status,
-        contact_id: taskData.contactId,
+        contact_id: taskData.contactId === "none" ? null : taskData.contactId,
         ...agentData
       };
       
@@ -170,16 +170,18 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       if (taskData.dueTime !== undefined) updateData.due_time = taskData.dueTime;
       if (taskData.priority !== undefined) updateData.priority = taskData.priority;
       if (taskData.status !== undefined) updateData.status = taskData.status;
-      if (taskData.contactId !== undefined) updateData.contact_id = taskData.contactId;
+      if (taskData.contactId !== undefined) {
+        updateData.contact_id = taskData.contactId === "none" ? null : taskData.contactId;
+      }
       
       updateData.updated_at = new Date().toISOString();
+      
+      console.log('Updating task with ID:', id, 'Data:', updateData);
       
       const { data, error } = await supabase
         .from('tasks')
         .update(updateData)
-        .eq('id', id)
-        .select('*')
-        .single();
+        .eq('id', id);
       
       if (error) {
         console.error('Error updating task:', error);
@@ -191,19 +193,33 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
+      // Since we're not using .select() we don't get data back, so let's fetch it
+      const { data: updatedTask, error: fetchError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) {
+        console.error('Error fetching updated task:', fetchError);
+        // Refresh all tasks as a fallback
+        await refreshTasks();
+        return;
+      }
+      
       setTasks(prevTasks => 
         prevTasks.map(task => 
           task.id === id 
             ? {
                 ...task,
-                title: data.title,
-                description: data.description || "",
-                dueDate: data.due_date ? new Date(data.due_date) : undefined,
-                dueTime: data.due_time || "",
-                priority: data.priority as "low" | "medium" | "high",
-                status: data.status as "active" | "completed",
-                contactId: data.contact_id,
-                updatedAt: new Date(data.updated_at)
+                title: updatedTask.title,
+                description: updatedTask.description || "",
+                dueDate: updatedTask.due_date ? new Date(updatedTask.due_date) : undefined,
+                dueTime: updatedTask.due_time || "",
+                priority: updatedTask.priority as "low" | "medium" | "high",
+                status: updatedTask.status as "active" | "completed",
+                contactId: updatedTask.contact_id,
+                updatedAt: new Date(updatedTask.updated_at)
               }
             : task
         )

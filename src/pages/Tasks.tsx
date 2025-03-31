@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { useTasks } from '@/context/TasksContext';
 import { useContacts } from '@/context/ContactsContext';
+import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/tasks/TaskCard';
-import { Plus, CheckSquare, ListTodo } from 'lucide-react';
+import { Plus, CheckSquare, ListTodo, RefreshCcw, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Input } from '@/components/ui/input';
 import { 
@@ -19,8 +20,9 @@ import { Badge } from '@/components/ui/badge';
 import { Helmet } from 'react-helmet-async';
 
 const Tasks = () => {
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, deleteTask } = useTasks();
   const { getContactById } = useContacts();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,6 +72,10 @@ const Tasks = () => {
 
   const handleCompleteTask = async (taskId: string) => {
     await updateTask(taskId, { status: 'completed' });
+  };
+
+  const handleReactivateTask = async (taskId: string) => {
+    await updateTask(taskId, { status: 'active' });
   };
   
   // Count tasks by status
@@ -175,12 +181,17 @@ const Tasks = () => {
                           Contact: {contactName}
                         </p>
                       )}
+                      {isAdmin && task.agentName && (
+                        <p className="text-xs text-muted-foreground">
+                          Agent: {task.agentName}
+                        </p>
+                      )}
                       {task.description && (
                         <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {task.status !== 'completed' && (
+                      {task.status === 'active' ? (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -190,6 +201,16 @@ const Tasks = () => {
                           <CheckSquare className="h-4 w-4 mr-1" />
                           Complete
                         </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReactivateTask(task.id)}
+                          className="flex items-center text-blue-600 hover:text-blue-700"
+                        >
+                          <RefreshCcw className="h-4 w-4 mr-1" />
+                          Reactivate
+                        </Button>
                       )}
                       <Button
                         variant="outline"
@@ -198,6 +219,14 @@ const Tasks = () => {
                       >
                         <ListTodo className="h-4 w-4 mr-1" />
                         View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteTask(task.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

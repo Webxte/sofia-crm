@@ -23,6 +23,20 @@ interface TaskContactFieldProps {
 export const TaskContactField = ({ field, disabled = false }: TaskContactFieldProps) => {
   const { contacts } = useContacts();
   
+  // Sort contacts to prioritize companies
+  const sortedContacts = [...contacts].sort((a, b) => {
+    // If both have company names, sort alphabetically
+    if (a.company && b.company) {
+      return a.company.localeCompare(b.company);
+    }
+    // If only a has company, put a first
+    if (a.company) return -1;
+    // If only b has company, put b first
+    if (b.company) return 1;
+    // If neither has company, sort by full name
+    return (a.fullName || "").localeCompare(b.fullName || "");
+  });
+  
   return (
     <FormItem>
       <FormLabel>Related Contact (Optional)</FormLabel>
@@ -38,9 +52,11 @@ export const TaskContactField = ({ field, disabled = false }: TaskContactFieldPr
         </FormControl>
         <SelectContent>
           <SelectItem value="none">None</SelectItem>
-          {contacts.map((contact) => (
+          {sortedContacts.map((contact) => (
             <SelectItem key={contact.id} value={contact.id}>
-              {contact.fullName || contact.company || "Unnamed Contact"}
+              {contact.company ? 
+                `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
+                (contact.fullName || "Unnamed Contact")}
             </SelectItem>
           ))}
         </SelectContent>

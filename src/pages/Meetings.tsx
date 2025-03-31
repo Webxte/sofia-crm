@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
+import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MeetingCard } from '@/components/meetings/MeetingCard';
 import { MeetingTypeFilter } from '@/components/meetings/MeetingTypeFilter';
@@ -34,6 +35,7 @@ import {
 const Meetings = () => {
   const { meetings, deleteMeeting } = useMeetings();
   const { getContactById } = useContacts();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,7 +134,7 @@ const Meetings = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="grid" className="w-full">
+        <Tabs defaultValue="list" className="w-full">
           <TabsList className="grid w-full md:w-60 grid-cols-2">
             <TabsTrigger value="list">List</TabsTrigger>
             <TabsTrigger value="grid">Grid</TabsTrigger>
@@ -153,6 +155,11 @@ const Meetings = () => {
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(meeting.date), 'PPP')} at {meeting.time}
                         </p>
+                        {isAdmin && meeting.agentName && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Agent: {meeting.agentName}
+                          </p>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm" onClick={(e) => {
