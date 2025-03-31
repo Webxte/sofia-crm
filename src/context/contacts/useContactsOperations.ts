@@ -25,7 +25,7 @@ const processContacts = (data: any[]): Contact[] => {
 };
 
 // Create, Update, Delete functions for contacts
-const createContact = async (contactData: Omit<Contact, "id">): Promise<Contact | null> => {
+const createContact = async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">): Promise<Contact | null> => {
   const { data, error } = await supabase.from('contacts').insert([{
     full_name: contactData.fullName,
     email: contactData.email,
@@ -125,9 +125,81 @@ const deleteContact = async (id: string): Promise<boolean> => {
 };
 
 // Import contacts from CSV
-const importContactsFromCsv = async (file: File, mappings?: Record<string, string>): Promise<void> => {
-  // This would be implemented with CSV parsing and batch insert
-  console.log("Import functionality to be implemented", file, mappings);
+const importContactsFromCsv = async (file: File): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = async (event) => {
+      try {
+        if (!event.target || !event.target.result) {
+          reject(new Error("Failed to read file"));
+          return;
+        }
+        
+        const csvData = event.target.result as string;
+        const lines = csvData.split("\n");
+        
+        // Extract headers and parse data
+        const headers = lines[0].split(",").map(header => header.trim().toLowerCase());
+        
+        const contacts = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const values = line.split(",");
+          const contact: Record<string, any> = {};
+          
+          for (let j = 0; j < headers.length; j++) {
+            contact[headers[j]] = values[j]?.trim() || null;
+          }
+          
+          // Map CSV fields to database columns
+          const contactData = {
+            full_name: contact.fullname || contact.full_name || contact.name || null,
+            email: contact.email || null,
+            phone: contact.phone || null,
+            mobile: contact.mobile || contact.cell || null,
+            address: contact.address || null,
+            company: contact.company || contact.organization || null,
+            position: contact.position || contact.title || contact.job_title || null,
+            notes: contact.notes || null,
+            source: contact.source || "CSV Import",
+            // Will be added by RLS or the server function
+          };
+          
+          contacts.push(contactData);
+        }
+        
+        // Batch insert to Supabase
+        if (contacts.length > 0) {
+          const { error } = await supabase
+            .from('contacts')
+            .insert(contacts);
+          
+          if (error) {
+            console.error('Error importing contacts:', error);
+            reject(error);
+            return;
+          }
+          
+          resolve();
+        } else {
+          reject(new Error("No valid contacts found in CSV"));
+        }
+      } catch (error) {
+        console.error('Error processing CSV:', error);
+        reject(error);
+      }
+    };
+    
+    reader.onerror = () => {
+      reject(new Error("Error reading file"));
+    };
+    
+    reader.readAsText(file);
+  });
 };
 
 export const useContactsOperations = () => {
@@ -167,7 +239,7 @@ export const useContactsOperations = () => {
     return await fetchContacts();
   }, [fetchContacts]);
   
-  const addContact = useCallback(async (contactData: Omit<Contact, "id">) => {
+  const addContact = useCallback(async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
     try {
       const newContact = await createContact(contactData);
       if (newContact) {

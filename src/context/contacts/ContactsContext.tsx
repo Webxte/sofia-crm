@@ -1,20 +1,25 @@
 
-import { createContext, useContext, useEffect, ReactNode } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useContactsOperations } from "./useContactsOperations";
+import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { Contact } from "@/types";
-import { getContactById, getContactsByAgentId, getContactsBySource, searchContacts } from "./contactUtils";
+import { useContactsOperations } from "./useContactsOperations";
+import { 
+  getContactById, 
+  getContactsByAgentId, 
+  getContactsBySource, 
+  searchContacts 
+} from "./contactUtils";
+import { useAuth } from "@/context/AuthContext";
 
 interface ContactsContextType {
   contacts: Contact[];
   loading: boolean;
-  addContact: (contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) => Promise<void>;
-  updateContact: (id: string, contact: Partial<Contact>) => Promise<void>;
-  deleteContact: (id: string) => Promise<void>;
   getContactById: (id: string) => Contact | undefined;
   getContactsByAgentId: (agentId: string) => Contact[];
   getContactsBySource: (source: string) => Contact[];
   searchContacts: (query: string) => Contact[];
+  addContact: (contactData: Omit<Contact, "id">) => Promise<Contact | null>;
+  updateContact: (id: string, contactData: Partial<Contact>) => Promise<Contact | null>;
+  deleteContact: (id: string) => Promise<boolean>;
   refreshContacts: () => Promise<void>;
   importContactsFromCsv: (file: File) => Promise<void>;
 }
@@ -26,56 +31,34 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const { 
     contacts, 
     loading, 
+    fetchContacts, 
     refreshContacts, 
-    addContact: addContactOp, 
-    updateContact: updateContactOp, 
-    deleteContact: deleteContactOp,
-    importContactsFromCsv: importContactsOp 
+    addContact, 
+    updateContact, 
+    deleteContact,
+    importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when the component mounts or when user auth state changes
+  // Fetch contacts when the component mounts and when authentication state changes
   useEffect(() => {
     if (isAuthenticated) {
-      refreshContacts();
+      fetchContacts();
     }
-  }, [isAuthenticated, refreshContacts]);
-
-  // Wrapper functions to adapt return types
-  const addContact = async (contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
-    // Add createdAt and updatedAt to make it compatible with the expected type
-    const contactWithDates = {
-      ...contact,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    await addContactOp(contactWithDates);
-  };
-
-  const updateContact = async (id: string, contact: Partial<Contact>) => {
-    await updateContactOp(id, contact);
-  };
-
-  const deleteContact = async (id: string) => {
-    await deleteContactOp(id);
-  };
-
-  const importContactsFromCsv = async (file: File) => {
-    await importContactsOp(file);
-  };
+  }, [isAuthenticated, fetchContacts]);
 
   return (
     <ContactsContext.Provider
       value={{
         contacts,
         loading,
+        getContactById: (id: string) => getContactById(contacts, id),
+        getContactsByAgentId: (agentId: string) => getContactsByAgentId(contacts, agentId),
+        getContactsBySource: (source: string) => getContactsBySource(contacts, source),
+        searchContacts: (query: string) => searchContacts(contacts, query),
         addContact,
         updateContact,
         deleteContact,
-        getContactById: (id) => getContactById(contacts, id),
-        getContactsByAgentId: (agentId) => getContactsByAgentId(contacts, agentId),
-        getContactsBySource: (source) => getContactsBySource(contacts, source),
-        searchContacts: (query) => searchContacts(contacts, query),
-        refreshContacts: async () => { await refreshContacts(); },
+        refreshContacts,
         importContactsFromCsv,
       }}
     >
@@ -86,7 +69,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
 
 export const useContacts = () => {
   const context = useContext(ContactsContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useContacts must be used within a ContactsProvider");
   }
   return context;

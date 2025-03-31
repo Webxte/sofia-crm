@@ -38,7 +38,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     location: meeting?.location || "",
     notes: meeting?.notes || "",
     followUpScheduled: meeting?.followUpScheduled || false,
-    followUpDate: meeting?.followUpDate ? new Date(meeting.followUpDate) : null,
+    followUpDate: meeting?.followUpDate ? new Date(meeting.followUpDate) : new Date(),
     followUpTime: meeting?.followUpTime || format(new Date(), "HH:mm"),
     nextSteps: meeting?.nextSteps || [],
   };
@@ -68,13 +68,13 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
       };
       
       if (isEditing && meeting) {
-        updateMeeting(meeting.id, meetingData);
+        await updateMeeting(meeting.id, meetingData);
         toast({
           title: "Success",
           description: "Meeting updated successfully",
         });
       } else {
-        addMeeting(meetingData);
+        await addMeeting(meetingData);
         toast({
           title: "Success",
           description: "Meeting created successfully",

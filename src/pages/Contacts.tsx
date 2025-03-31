@@ -26,9 +26,19 @@ import {
   Users, 
   PlusCircle,
   Search,
-  RefreshCw
+  RefreshCw,
+  List,
+  Grid as GridIcon
 } from "lucide-react";
 import ContactImporter from "@/components/contacts/ContactImporter";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Contacts = () => {
   const navigate = useNavigate();
@@ -38,6 +48,7 @@ const Contacts = () => {
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
@@ -138,6 +149,92 @@ const Contacts = () => {
     navigate(`/orders/new?contactId=${contactId}`);
   };
   
+  const renderListView = () => (
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Company</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Source</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredContacts.map((contact) => (
+            <TableRow key={contact.id}>
+              <TableCell className="font-medium">{contact.fullName || "-"}</TableCell>
+              <TableCell>{contact.company || "-"}</TableCell>
+              <TableCell>{contact.email || "-"}</TableCell>
+              <TableCell>{contact.phone || "-"}</TableCell>
+              <TableCell>{contact.source || "-"}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(`/contacts/${contact.id}`)}
+                  >
+                    View
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleScheduleMeeting(contact.id)}
+                  >
+                    Meeting
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleCreateTask(contact.id)}
+                  >
+                    Task
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleCreateOrder(contact.id)}
+                  >
+                    Order
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  const renderGridView = () => (
+    <div className="space-y-6">
+      {sortedGroups.map(group => (
+        <Card key={group}>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm text-muted-foreground">{group}</CardTitle>
+            <CardDescription>
+              {groupedContacts[group].length} contact{groupedContacts[group].length !== 1 ? 's' : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+            {groupedContacts[group].map(contact => (
+              <ContactCard 
+                key={contact.id} 
+                contact={contact} 
+                onScheduleMeeting={handleScheduleMeeting}
+                onCreateTask={handleCreateTask}
+                onCreateOrder={handleCreateOrder}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -157,13 +254,15 @@ const Contacts = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowImporter(true)}
-          >
-            Import
-          </Button>
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowImporter(true)}
+            >
+              Import
+            </Button>
+          )}
           <Button 
             onClick={() => navigate("/contacts/new")}
             size="sm"
@@ -174,7 +273,7 @@ const Contacts = () => {
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col sm:flex-row gap-2 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -200,6 +299,24 @@ const Contacts = () => {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex border rounded-md overflow-hidden">
+          <Button 
+            variant={viewMode === "grid" ? "default" : "ghost"} 
+            size="sm"
+            onClick={() => setViewMode("grid")}
+            className="rounded-none"
+          >
+            <GridIcon className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant={viewMode === "list" ? "default" : "ghost"} 
+            size="sm"
+            onClick={() => setViewMode("list")}
+            className="rounded-none"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
       {filteredContacts.length === 0 ? (
@@ -215,32 +332,10 @@ const Contacts = () => {
           actionLink="/contacts/new"
         />
       ) : (
-        <div className="space-y-6">
-          {sortedGroups.map(group => (
-            <Card key={group}>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm text-muted-foreground">{group}</CardTitle>
-                <CardDescription>
-                  {groupedContacts[group].length} contact{groupedContacts[group].length !== 1 ? 's' : ''}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-2">
-                {groupedContacts[group].map(contact => (
-                  <ContactCard 
-                    key={contact.id} 
-                    contact={contact} 
-                    onScheduleMeeting={handleScheduleMeeting}
-                    onCreateTask={handleCreateTask}
-                    onCreateOrder={handleCreateOrder}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        viewMode === "grid" ? renderGridView() : renderListView()
       )}
       
-      {showImporter && (
+      {isAdmin && showImporter && (
         <ContactImporter 
           open={showImporter} 
           onOpenChange={setShowImporter} 
