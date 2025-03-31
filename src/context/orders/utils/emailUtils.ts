@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const sendOrderEmail = async (
   orderId: string, 
@@ -13,6 +14,7 @@ export const sendOrderEmail = async (
       orderId,
       recipient,
       subject,
+      message,
       cc: cc || []
     });
     
@@ -45,4 +47,46 @@ export const sendOrderEmail = async (
     console.error("Unexpected error sending order email:", error);
     return false;
   }
+};
+
+// Export a React hook for easier access to the email functionality
+export const useOrderEmail = () => {
+  const { toast } = useToast();
+  
+  const sendEmail = async (
+    orderId: string,
+    recipient: string,
+    subject: string,
+    message: string,
+    cc?: string[]
+  ) => {
+    try {
+      const success = await sendOrderEmail(orderId, recipient, subject, message, cc);
+      
+      if (success) {
+        toast({
+          title: "Email Sent",
+          description: "The order email was sent successfully",
+        });
+        return true;
+      } else {
+        toast({
+          title: "Email Failed",
+          description: "Failed to send the order email. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in sendEmail:", error);
+      toast({
+        title: "Email Error",
+        description: "An unexpected error occurred while sending the email",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+  
+  return { sendEmail };
 };

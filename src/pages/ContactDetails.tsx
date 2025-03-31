@@ -1,16 +1,28 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useContacts } from '@/context/ContactsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Edit, Trash, Calendar, ListTodo } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Calendar, ListTodo } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ContactDetails = () => {
   const { id } = useParams();
-  const { getContactById } = useContacts();
+  const navigate = useNavigate();
+  const { getContactById, deleteContact } = useContacts();
   
   const contact = id ? getContactById(id) : undefined;
   
@@ -25,10 +37,17 @@ const ContactDetails = () => {
     );
   }
   
+  const handleDelete = async () => {
+    if (id) {
+      await deleteContact(id);
+      navigate('/contacts');
+    }
+  };
+  
   return (
     <>
       <Helmet>
-        <title>{contact.fullName || 'Contact'} | CRM</title>
+        <title>{contact.company || contact.fullName || 'Contact'} | CRM</title>
       </Helmet>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -38,7 +57,7 @@ const ContactDetails = () => {
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold">{contact.fullName}</h1>
+            <h1 className="text-2xl font-bold">{contact.company || contact.fullName}</h1>
           </div>
           <div className="flex space-x-2">
             <Button asChild variant="outline" className="flex items-center space-x-1">
@@ -59,6 +78,31 @@ const ContactDetails = () => {
                 Edit
               </Link>
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="text-red-500 hover:text-red-700">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this contact and all related data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
         <Card>

@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useContacts } from "@/context/ContactsContext";
 
 interface MeetingCardProps {
   meeting: Meeting;
@@ -20,8 +21,12 @@ interface MeetingCardProps {
   onViewDetails?: () => void;
 }
 
-export const MeetingCard = ({ meeting, contact, onViewDetails }: MeetingCardProps) => {
+export const MeetingCard = ({ meeting, contact: propContact, onViewDetails }: MeetingCardProps) => {
   const navigate = useNavigate();
+  const { getContactById } = useContacts();
+  
+  // If contact is not provided as a prop, fetch it from context
+  const contact = propContact || (meeting.contactId ? getContactById(meeting.contactId) : undefined);
   
   // Get meeting type badge color
   const getMeetingTypeColor = (type: string) => {

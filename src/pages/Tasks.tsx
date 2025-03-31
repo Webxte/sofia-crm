@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTasks } from '@/context/TasksContext';
-import { Task } from '@/types';
+import { useContacts } from '@/context/ContactsContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, ListFilter } from 'lucide-react';
 import { TaskCard } from '@/components/tasks/TaskCard';
+import { Plus, CheckSquare, ListTodo } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
+import { Input } from '@/components/ui/input';
 import { 
   Select, 
   SelectContent, 
@@ -14,56 +15,106 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Helmet } from 'react-helmet-async';
 
 const Tasks = () => {
-  const { tasks } = useTasks();
+  const { tasks, updateTask } = useTasks();
+  const { getContactById } = useContacts();
   const navigate = useNavigate();
   
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
-  const filteredTasks = tasks
-    .filter(task => {
-      if (filterStatus === 'all') return true;
-      return task.status === filterStatus;
-    })
-    .filter(task => {
-      if (filterPriority === 'all') return true;
-      return task.priority === filterPriority;
-    })
-    .filter(task => {
-      if (!searchQuery) return true;
-      return (
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    });
-
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('active'); // Default to active tasks only
+  
+  // Filter tasks based on search query, priority, and status
+  const filteredTasks = tasks.filter(task => {
+    // Filter by status
+    if (statusFilter !== 'all' && task.status !== statusFilter) {
+      return false;
+    }
+    
+    // Filter by priority
+    if (priorityFilter !== 'all' && task.priority !== priorityFilter) {
+      return false;
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesTitle = task.title.toLowerCase().includes(query);
+      const matchesDescription = task.description?.toLowerCase().includes(query) || false;
+      return matchesTitle || matchesDescription;
+    }
+    
+    return true;
+  });
+  
+  // Sort tasks by due date (closest first)
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    // Tasks without due dates go to the end
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    
+    // Sort by due date
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  });
+  
   const handleCreateTask = () => {
     navigate('/tasks/new');
   };
-
+  
   const handleViewTask = (taskId: string) => {
     navigate(`/tasks/${taskId}`);
   };
 
+  const handleCompleteTask = async (taskId: string) => {
+    await updateTask(taskId, { status: 'completed' });
+  };
+  
+  // Count tasks by status
+  const activeTasks = tasks.filter(task => task.status === 'active').length;
+  const completedTasks = tasks.filter(task => task.status === 'completed').length;
+  
   return (
     <>
       <Helmet>
         <title>Tasks | CRM</title>
       </Helmet>
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
-            <p className="text-muted-foreground">Manage your tasks and to-dos</p>
+            <p className="text-muted-foreground">
+              Manage your tasks and follow-ups
+            </p>
           </div>
           <Button onClick={handleCreateTask}>
             <Plus className="mr-2 h-4 w-4" /> Add Task
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant={statusFilter === 'active' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('active')}
+          >
+            Active ({activeTasks})
+          </Button>
+          <Button
+            variant={statusFilter === 'completed' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('completed')}
+          >
+            Completed ({completedTasks})
+          </Button>
+          <Button
+            variant={statusFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('all')}
+          >
+            All ({activeTasks + completedTasks})
           </Button>
         </div>
 
@@ -76,85 +127,93 @@ const Tasks = () => {
               className="w-full"
             />
           </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <div className="w-full md:w-32">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full md:w-32">
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priorities</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          
+          <div className="w-full md:w-40">
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <Tabs defaultValue="list" className="w-full">
-          <TabsList className="grid w-full md:w-60 grid-cols-2">
-            <TabsTrigger value="list">List</TabsTrigger>
-            <TabsTrigger value="grid">Grid</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="list" className="mt-4">
-            {filteredTasks.length > 0 ? (
-              <div className="space-y-4">
-                {filteredTasks.map((task) => (
-                  <TaskCard 
-                    key={task.id} 
-                    task={task} 
-                    onViewDetails={() => handleViewTask(task.id)} 
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<ListFilter size={40} />}
-                title="No tasks found"
-                description="Try changing your filters or create a new task."
-                actionText="Create Task"
-                actionLink="/tasks/new"
-              />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="grid" className="mt-4">
-            {filteredTasks.length > 0 ? (
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredTasks.map((task) => (
-                  <TaskCard 
-                    key={task.id} 
-                    task={task} 
-                    onViewDetails={() => handleViewTask(task.id)} 
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<ListFilter size={40} />}
-                title="No tasks found"
-                description="Try changing your filters or create a new task."
-                actionText="Create Task"
-                actionLink="/tasks/new"
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+        {sortedTasks.length > 0 ? (
+          <div className="space-y-4">
+            {sortedTasks.map((task) => {
+              const contact = task.contactId ? getContactById(task.contactId) : undefined;
+              const contactName = contact ? (contact.company || contact.fullName || '') : '';
+              
+              return (
+                <div
+                  key={task.id}
+                  className="border rounded-lg p-4 hover:border-primary transition-colors"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">{task.title}</h3>
+                        <Badge variant={task.priority === 'high' ? 'destructive' : (task.priority === 'medium' ? 'outline' : 'secondary')}>
+                          {task.priority}
+                        </Badge>
+                        {task.status === 'completed' && (
+                          <Badge className="bg-green-500">Completed</Badge>
+                        )}
+                      </div>
+                      {task.dueDate && (
+                        <p className="text-sm text-muted-foreground">
+                          Due: {new Date(task.dueDate).toLocaleDateString()} {task.dueTime && `at ${task.dueTime}`}
+                        </p>
+                      )}
+                      {contactName && (
+                        <p className="text-sm text-muted-foreground">
+                          Contact: {contactName}
+                        </p>
+                      )}
+                      {task.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {task.status !== 'completed' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCompleteTask(task.id)}
+                          className="flex items-center text-green-600 hover:text-green-700"
+                        >
+                          <CheckSquare className="h-4 w-4 mr-1" />
+                          Complete
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewTask(task.id)}
+                      >
+                        <ListTodo className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={<ListTodo size={40} />}
+            title="No tasks found"
+            description="Try changing your search filters or create a new task"
+            actionText="Create Task"
+            actionLink="/tasks/new"
+          />
+        )}
       </div>
     </>
   );

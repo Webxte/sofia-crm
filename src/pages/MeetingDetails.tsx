@@ -1,20 +1,35 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMeetings } from '@/context/MeetingsContext';
+import { useContacts } from '@/context/ContactsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Edit, Calendar } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import { Badge } from '@/components/ui/badge';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const MeetingDetails = () => {
   const { id } = useParams();
-  const { getMeetingById } = useMeetings();
+  const navigate = useNavigate();
+  const { getMeetingById, deleteMeeting } = useMeetings();
+  const { getContactById } = useContacts();
   
   const meeting = id ? getMeetingById(id) : undefined;
+  const contact = meeting?.contactId ? getContactById(meeting.contactId) : undefined;
   
   if (!meeting) {
     return (
@@ -27,13 +42,18 @@ const MeetingDetails = () => {
     );
   }
   
-  // Create a friendly description for the meeting title since it doesn't exist as a property
-  const meetingTitle = `Meeting with contact${meeting.contactId ? '' : ' (No contact specified)'}`;
+  const handleDelete = async () => {
+    await deleteMeeting(meeting.id);
+    navigate('/meetings');
+  };
+  
+  // Create a friendly description for the meeting title using contact information
+  const meetingTitle = contact ? (contact.company || contact.fullName || 'Unknown Contact') : 'Meeting (No contact specified)';
   
   return (
     <>
       <Helmet>
-        <title>{meetingTitle || 'Meeting'} | CRM</title>
+        <title>{meetingTitle} | Meeting | CRM</title>
       </Helmet>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -44,7 +64,7 @@ const MeetingDetails = () => {
               </Link>
             </Button>
             <h1 className="text-2xl font-bold">{meetingTitle}</h1>
-            <Badge variant={meeting.type === 'meeting' ? 'default' : 'outline'}>
+            <Badge variant="outline">
               {meeting.type === 'meeting' ? 'In Person' : meeting.type.charAt(0).toUpperCase() + meeting.type.slice(1)}
             </Badge>
           </div>
@@ -55,6 +75,32 @@ const MeetingDetails = () => {
                 Edit
               </Link>
             </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="text-red-500 hover:text-red-700">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this meeting and all related data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
         <Card>
@@ -101,6 +147,13 @@ const MeetingDetails = () => {
                       <p className="font-medium">Required</p>
                     </div>
                     
+                    {meeting.followUpDate && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Follow Up Date</p>
+                        <p className="font-medium">{format(new Date(meeting.followUpDate), 'PPP')}</p>
+                      </div>
+                    )}
+                    
                     {meeting.followUpTime && (
                       <div>
                         <p className="text-sm text-muted-foreground">Follow Up Time</p>
@@ -118,6 +171,13 @@ const MeetingDetails = () => {
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Notes</p>
                 <p className="text-sm">{meeting.notes}</p>
+              </div>
+            )}
+            
+            {meeting.followUpNotes && (
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground mb-2">Follow Up Notes</p>
+                <p className="text-sm">{meeting.followUpNotes}</p>
               </div>
             )}
           </CardContent>

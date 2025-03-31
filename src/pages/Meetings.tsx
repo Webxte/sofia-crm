@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { useMeetings } from '@/context/MeetingsContext';
+import { useContacts } from '@/context/ContactsContext';
 import { useNavigate } from 'react-router-dom';
 import { MeetingCard } from '@/components/meetings/MeetingCard';
 import { MeetingTypeFilter } from '@/components/meetings/MeetingTypeFilter';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, MessagesSquare } from 'lucide-react';
+import { Plus, Calendar, MessagesSquare, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import {
   Select,
@@ -18,14 +19,27 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Meetings = () => {
-  const { meetings } = useMeetings();
+  const { meetings, deleteMeeting } = useMeetings();
+  const { getContactById } = useContacts();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMeetingType, setSelectedMeetingType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
+  const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
 
   // Filter meetings based on search and meeting type
   const filteredMeetings = meetings
@@ -58,6 +72,20 @@ const Meetings = () => {
     navigate(`/meetings/${meetingId}`);
   };
 
+  const handleDeleteConfirm = async () => {
+    if (meetingToDelete) {
+      await deleteMeeting(meetingToDelete);
+      setMeetingToDelete(null);
+    }
+  };
+
+  // Helper function to get contact display name
+  const getContactName = (contactId: string) => {
+    const contact = getContactById(contactId);
+    if (!contact) return "Unknown Contact";
+    return contact.company || contact.fullName || "Unknown Contact";
+  };
+
   return (
     <>
       <Helmet>
@@ -86,8 +114,8 @@ const Meetings = () => {
           <div className="flex gap-2 w-full md:w-auto">
             <div className="w-full md:w-40">
               <MeetingTypeFilter
-                value={selectedMeetingType} // Using the prop name expected by the component
-                onValueChange={setSelectedMeetingType} // Using the prop name expected by the component
+                value={selectedMeetingType}
+                onValueChange={setSelectedMeetingType}
               />
             </div>
             <div className="w-full md:w-40">
@@ -121,17 +149,53 @@ const Meetings = () => {
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium">{meeting.type.charAt(0).toUpperCase() + meeting.type.slice(1)}</p>
+                        <p className="font-medium">{getContactName(meeting.contactId)}</p>
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(meeting.date), 'PPP')} at {meeting.time}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewMeeting(meeting.id);
-                      }}>
-                        View
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewMeeting(meeting.id);
+                        }}>
+                          View
+                        </Button>
+                        <AlertDialog open={meetingToDelete === meeting.id} onOpenChange={(open) => {
+                          if (!open) setMeetingToDelete(null);
+                        }}>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-500 hover:text-red-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMeetingToDelete(meeting.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete this meeting and all related data.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={handleDeleteConfirm}
+                                className="bg-red-500 hover:bg-red-600"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -64,6 +64,26 @@ const Contacts = () => {
     
     return Array.from(allSources).sort();
   }, [contacts]);
+
+  // Find the agent's source to set as default
+  useEffect(() => {
+    if (user && user.name && !selectedSource) {
+      // Find the agent's name in sources
+      const agentSourceExists = sources.some(source => 
+        source.toLowerCase() === user.name?.toLowerCase()
+      );
+      
+      if (agentSourceExists) {
+        // Find the exact match case from the sources
+        const agentSource = sources.find(source => 
+          source.toLowerCase() === user.name?.toLowerCase()
+        );
+        if (agentSource) {
+          setSelectedSource(agentSource);
+        }
+      }
+    }
+  }, [user, sources, selectedSource]);
   
   const handleRefresh = async () => {
     setIsRefreshing(true);

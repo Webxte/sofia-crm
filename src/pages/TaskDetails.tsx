@@ -1,14 +1,25 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTasks } from '@/context/TasksContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Edit, Calendar, CheckSquare } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, CheckSquare, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Helmet } from 'react-helmet-async';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const getPriorityColor = (priority: string) => {
   switch (priority.toLowerCase()) {
@@ -25,7 +36,8 @@ const getPriorityColor = (priority: string) => {
 
 const TaskDetails = () => {
   const { id } = useParams();
-  const { getTaskById, updateTask } = useTasks();
+  const navigate = useNavigate();
+  const { getTaskById, updateTask, deleteTask } = useTasks();
   
   const task = id ? getTaskById(id) : undefined;
   
@@ -40,8 +52,14 @@ const TaskDetails = () => {
     );
   }
   
-  const handleCompleteTask = () => {
-    if (id) updateTask(id, { status: "completed" });
+  const handleCompleteTask = async () => {
+    if (id) await updateTask(id, { status: "completed" });
+    navigate('/tasks');
+  };
+  
+  const handleDeleteTask = async () => {
+    if (id) await deleteTask(id);
+    navigate('/tasks');
   };
   
   const isCompleted = task.status === "completed";
@@ -81,6 +99,31 @@ const TaskDetails = () => {
                 Edit
               </Link>
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="text-red-500 hover:text-red-700">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this task and all related data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDeleteTask}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
         <Card>
