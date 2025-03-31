@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Helmet } from "react-helmet-async";
 import TaskForm from "@/components/tasks/TaskForm";
 import { useLocation } from "react-router-dom";
 
@@ -9,7 +10,12 @@ const NewTask = () => {
   const contactId = queryParams.get("contactId");
 
   return (
-    <TaskForm contactId={contactId || undefined} />
+    <>
+      <Helmet>
+        <title>Add Task | CRM</title>
+      </Helmet>
+      <TaskForm contactId={contactId || undefined} />
+    </>
   );
 };
 
