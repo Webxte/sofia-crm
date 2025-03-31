@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -126,7 +125,6 @@ const Contacts = () => {
   
   const sortedGroups = Object.keys(groupedContacts).sort();
   
-  // Handlers for ContactCard required props
   const handleScheduleMeeting = (contactId: string) => {
     navigate(`/meetings/new?contactId=${contactId}`);
   };
@@ -186,14 +184,14 @@ const Contacts = () => {
           />
         </div>
         <Select 
-          value={selectedSource || ""} 
-          onValueChange={(value) => setSelectedSource(value || null)}
+          value={selectedSource || "all"} 
+          onValueChange={(value) => setSelectedSource(value === "all" ? null : value)}
         >
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="All Sources" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Sources</SelectItem>
+            <SelectItem value="all">All Sources</SelectItem>
             {sources.map(source => (
               <SelectItem key={source} value={source}>
                 {source}
