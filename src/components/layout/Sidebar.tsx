@@ -64,19 +64,23 @@ const Sidebar = ({ className }: SidebarProps) => {
       href: "/orders",
       icon: ShoppingCart,
     },
-    ...(isAdmin ? [
-      {
-        title: "Reports",
-        href: "/reports",
-        icon: BarChart,
-      }
-    ] : []),
+    {
+      title: "Reports",
+      href: "/reports",
+      icon: BarChart,
+    },
     {
       title: "Settings",
       href: "/settings",
       icon: Settings,
+      adminOnly: true, // Mark this item as admin only
     },
   ];
+
+  // Filter items based on user role
+  const filteredMenuItems = menuItems.filter(item => 
+    !item.adminOnly || (item.adminOnly && isAdmin)
+  );
 
   return (
     <>
@@ -98,7 +102,7 @@ const Sidebar = ({ className }: SidebarProps) => {
             </SheetDescription>
           </SheetHeader>
           <div className="py-4">
-            {menuItems.map((item) => (
+            {filteredMenuItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
@@ -121,7 +125,7 @@ const Sidebar = ({ className }: SidebarProps) => {
       <div className={cn("hidden md:flex flex-col w-64 border-r px-2 py-4", className)}>
         <div className="mb-4 font-bold">CRM</div>
         <div className="flex flex-col space-y-1">
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <Link
               key={item.href}
               to={item.href}

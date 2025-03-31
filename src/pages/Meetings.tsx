@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
@@ -42,8 +41,8 @@ const Meetings = () => {
   const [selectedMeetingType, setSelectedMeetingType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
 
-  // Filter meetings based on search and meeting type
   const filteredMeetings = meetings
     .filter(meeting => {
       if (selectedMeetingType === 'all') return true;
@@ -54,7 +53,6 @@ const Meetings = () => {
       return meeting.notes?.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
-  // Sort meetings based on selected sort option
   const sortedMeetings = [...filteredMeetings].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
@@ -81,7 +79,6 @@ const Meetings = () => {
     }
   };
 
-  // Helper function to get contact display name
   const getContactName = (contactId: string) => {
     const contact = getContactById(contactId);
     if (!contact) return "Unknown Contact";
@@ -134,7 +131,7 @@ const Meetings = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="list" className="w-full">
+        <Tabs defaultValue={viewMode} className="w-full">
           <TabsList className="grid w-full md:w-60 grid-cols-2">
             <TabsTrigger value="list">List</TabsTrigger>
             <TabsTrigger value="grid">Grid</TabsTrigger>

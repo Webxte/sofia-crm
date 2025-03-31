@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Card, 
@@ -93,50 +92,46 @@ const Contacts = () => {
   };
   
   const filteredContacts = contacts.filter(contact => {
-    // For admin users or when showAllContacts is true, just apply source filter if selected
-    if (isAdmin || showAllContacts) {
-      if (selectedSource && contact.source) {
-        const contactSources = contact.source.split(',').map(s => s.trim());
-        if (!contactSources.includes(selectedSource)) {
-          return false;
-        }
-      }
-    } else {
-      // For regular agents, only show contacts where:
-      // 1. The agent is listed as the agent, OR
-      // 2. The agent's name is in the source
-      if (!selectedSource) {
-        // If no source is selected, only show contacts where agent is the user
-        if (contact.agentName !== user?.name) {
-          return false;
-        }
-      } else {
-        // If source is selected, check if contact has that source
-        if (contact.source) {
-          const contactSources = contact.source.split(',').map(s => s.trim());
-          if (!contactSources.includes(selectedSource)) {
-            return false;
-          }
-        } else {
-          // No source on contact, check if agent matches
-          if (contact.agentName !== user?.name) {
-            return false;
-          }
-        }
-      }
-    }
-    
+    // First apply search filter regardless of other filters
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      return (
+      const matchesSearch = (
         (contact.fullName?.toLowerCase().includes(query)) ||
         (contact.email?.toLowerCase().includes(query)) ||
         (contact.company?.toLowerCase().includes(query)) ||
         (contact.phone?.toLowerCase().includes(query))
       );
+      
+      if (!matchesSearch) return false;
     }
     
-    return true;
+    // For admin users - show all contacts regardless of source
+    if (isAdmin) {
+      if (selectedSource && contact.source) {
+        const contactSources = contact.source.split(',').map(s => s.trim());
+        return contactSources.includes(selectedSource);
+      }
+      return true;
+    }
+    
+    // For agents with showAllContacts enabled - show all contacts
+    if (showAllContacts) {
+      if (selectedSource && contact.source) {
+        const contactSources = contact.source.split(',').map(s => s.trim());
+        return contactSources.includes(selectedSource);
+      }
+      return true;
+    }
+    
+    // For agents with specific source selected
+    if (selectedSource) {
+      if (!contact.source) return false;
+      const contactSources = contact.source.split(',').map(s => s.trim());
+      return contactSources.includes(selectedSource);
+    }
+    
+    // Default for agents - show only contacts where agent is assigned
+    return contact.agentName === user?.name;
   });
 
   const groupedContacts = React.useMemo(() => {
@@ -331,7 +326,8 @@ const Contacts = () => {
                 onChange={(e) => {
                   setShowAllContacts(e.target.checked);
                   if (e.target.checked) {
-                    setSelectedSource(null);
+                    // Don't reset the source when showing all contacts
+                    // This allows filtering by source while viewing all contacts
                   }
                 }}
                 className="rounded border-gray-300 text-primary focus:ring-primary"

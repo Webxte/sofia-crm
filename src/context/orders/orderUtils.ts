@@ -15,45 +15,36 @@ export const generateOrderReference = (
   userEmail?: string | null, 
   userId?: string | null
 ): string => {
-  const today = new Date();
-  const month = (today.getMonth() + 1).toString().padStart(2, '0');
-  const day = today.getDate().toString().padStart(2, '0');
-  
-  // Try to extract initials from email or use first chars from userId
+  // Get prefix from email (first 3 letters) or use ORD as default
   let prefix = 'ORD';
   if (userEmail) {
-    const emailParts = userEmail.split('@');
-    if (emailParts.length > 0) {
-      const namePart = emailParts[0];
-      if (namePart.length >= 3) {
-        prefix = namePart.substring(0, 3).toUpperCase();
-      }
+    const emailName = userEmail.split('@')[0];
+    if (emailName.length >= 3) {
+      prefix = emailName.substring(0, 3).toUpperCase();
     }
-  } else if (userId) {
-    prefix = userId.substring(0, 3).toUpperCase();
   }
-  
-  // Count existing orders today to increment the number
-  const todayString = `${today.getFullYear()}-${month}-${day}`;
-  let orderNumber = 1;
+
+  // Find the highest sequence number for this prefix
+  let maxSequence = 0;
   
   orders.forEach(order => {
-    if (
-      order.reference && 
-      order.reference.includes(`${month}-${day}`) && 
-      order.reference.startsWith(prefix)
-    ) {
+    if (order.reference && order.reference.startsWith(prefix)) {
       const parts = order.reference.split('-');
-      if (parts.length === 3) {
-        const existingNumber = parseInt(parts[2]);
-        if (!isNaN(existingNumber) && existingNumber >= orderNumber) {
-          orderNumber = existingNumber + 1;
+      if (parts.length === 2) {
+        const sequenceStr = parts[1];
+        const sequence = parseInt(sequenceStr, 10);
+        if (!isNaN(sequence) && sequence > maxSequence) {
+          maxSequence = sequence;
         }
       }
     }
   });
   
-  return `${prefix}-${month}-${day}-${orderNumber.toString().padStart(3, '0')}`;
+  // Format the new sequence number with leading zeros (5 digits)
+  const nextSequence = maxSequence + 1;
+  const sequenceStr = nextSequence.toString().padStart(5, '0');
+  
+  return `${prefix}-${sequenceStr}`;
 };
 
 export const sendOrderEmail = async (
