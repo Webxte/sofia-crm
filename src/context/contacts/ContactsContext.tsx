@@ -42,7 +42,13 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
 
   // Wrapper functions to adapt return types
   const addContact = async (contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
-    await addContactOp(contact);
+    // Add createdAt and updatedAt to make it compatible with the expected type
+    const contactWithDates = {
+      ...contact,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await addContactOp(contactWithDates);
   };
 
   const updateContact = async (id: string, contact: Partial<Contact>) => {

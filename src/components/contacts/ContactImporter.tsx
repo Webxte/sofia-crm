@@ -8,8 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-const ContactImporter = () => {
+interface ContactImporterProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const ContactImporter = ({ open, onOpenChange }: ContactImporterProps) => {
   const { importContactsFromCsv } = useContacts();
   const [isUploading, setIsUploading] = useState(false);
   const [lastImported, setLastImported] = useState<string | null>(null);
@@ -83,6 +95,8 @@ const ContactImporter = () => {
           ? `Contacts tagged with source: ${defaultSource}`
           : "Contacts have been imported with their specified sources",
       });
+      
+      onOpenChange(false); // Close the dialog after successful import
     } catch (error) {
       console.error('Error importing file:', error);
       toast({
@@ -102,14 +116,15 @@ const ContactImporter = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Import Contacts</CardTitle>
-        <CardDescription>
-          Import contacts from a CSV file. All contacts will be accessible to everyone, but can be filtered by source/agent tag.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Import Contacts</DialogTitle>
+          <DialogDescription>
+            Import contacts from a CSV file. All contacts will be accessible to everyone, but can be filtered by source/agent tag.
+          </DialogDescription>
+        </DialogHeader>
+        
         <div className="mb-4">
           <Label htmlFor="default-source">Default Source/Agent Tag</Label>
           <div className="flex gap-2 mt-1">
@@ -176,8 +191,8 @@ const ContactImporter = () => {
             </span>
           </p>
         </div>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 };
 

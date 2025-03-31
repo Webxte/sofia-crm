@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Card, 
@@ -125,6 +126,19 @@ const Contacts = () => {
   
   const sortedGroups = Object.keys(groupedContacts).sort();
   
+  // Handlers for ContactCard required props
+  const handleScheduleMeeting = (contactId: string) => {
+    navigate(`/meetings/new?contactId=${contactId}`);
+  };
+
+  const handleCreateTask = (contactId: string) => {
+    navigate(`/tasks/new?contactId=${contactId}`);
+  };
+
+  const handleCreateOrder = (contactId: string) => {
+    navigate(`/orders/new?contactId=${contactId}`);
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -213,7 +227,13 @@ const Contacts = () => {
               </CardHeader>
               <CardContent className="grid gap-2">
                 {groupedContacts[group].map(contact => (
-                  <ContactCard key={contact.id} contact={contact} />
+                  <ContactCard 
+                    key={contact.id} 
+                    contact={contact} 
+                    onScheduleMeeting={handleScheduleMeeting}
+                    onCreateTask={handleCreateTask}
+                    onCreateOrder={handleCreateOrder}
+                  />
                 ))}
               </CardContent>
             </Card>
@@ -221,10 +241,12 @@ const Contacts = () => {
         </div>
       )}
       
-      <ContactImporter 
-        open={showImporter} 
-        onOpenChange={setShowImporter} 
-      />
+      {showImporter && (
+        <ContactImporter 
+          open={showImporter} 
+          onOpenChange={setShowImporter} 
+        />
+      )}
     </div>
   );
 };
