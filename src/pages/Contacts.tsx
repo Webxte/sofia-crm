@@ -49,6 +49,7 @@ const Contacts = () => {
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [showAllContacts, setShowAllContacts] = useState(false);
   
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
@@ -67,7 +68,7 @@ const Contacts = () => {
 
   // Find and set the agent's name as the default source filter
   useEffect(() => {
-    if (user && user.name && !selectedSource && !isAdmin) {
+    if (user && user.name && !selectedSource && !isAdmin && !showAllContacts) {
       // Find the agent's name in sources
       const agentSourceExists = sources.some(source => 
         source.toLowerCase() === user.name?.toLowerCase()
@@ -83,7 +84,7 @@ const Contacts = () => {
         }
       }
     }
-  }, [user, sources, selectedSource, isAdmin]);
+  }, [user, sources, selectedSource, isAdmin, showAllContacts]);
   
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -92,21 +93,36 @@ const Contacts = () => {
   };
   
   const filteredContacts = contacts.filter(contact => {
-    // If admin, show all contacts based on selected source
-    // If not admin, only show contacts where agent is the user or has the selected source
-    const shouldShowContact = isAdmin || 
-      !selectedSource || 
-      (contact.agentName === user?.name || (selectedSource && contact.source?.includes(selectedSource)));
-    
-    if (!shouldShowContact) {
-      return false;
-    }
-    
-    if (selectedSource) {
-      if (!contact.source) return false;
-      const contactSources = contact.source.split(',').map(s => s.trim());
-      if (!contactSources.includes(selectedSource)) {
-        return false;
+    // For admin users or when showAllContacts is true, just apply source filter if selected
+    if (isAdmin || showAllContacts) {
+      if (selectedSource && contact.source) {
+        const contactSources = contact.source.split(',').map(s => s.trim());
+        if (!contactSources.includes(selectedSource)) {
+          return false;
+        }
+      }
+    } else {
+      // For regular agents, only show contacts where:
+      // 1. The agent is listed as the agent, OR
+      // 2. The agent's name is in the source
+      if (!selectedSource) {
+        // If no source is selected, only show contacts where agent is the user
+        if (contact.agentName !== user?.name) {
+          return false;
+        }
+      } else {
+        // If source is selected, check if contact has that source
+        if (contact.source) {
+          const contactSources = contact.source.split(',').map(s => s.trim());
+          if (!contactSources.includes(selectedSource)) {
+            return false;
+          }
+        } else {
+          // No source on contact, check if agent matches
+          if (contact.agentName !== user?.name) {
+            return false;
+          }
+        }
       }
     }
     
@@ -305,22 +321,43 @@ const Contacts = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Select 
-          value={selectedSource || "all"} 
-          onValueChange={(value) => setSelectedSource(value === "all" ? null : value)}
-        >
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="All Sources" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sources</SelectItem>
-            {sources.map(source => (
-              <SelectItem key={source} value={source}>
-                {source}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 items-center">
+          {!isAdmin && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="showAllContacts"
+                checked={showAllContacts}
+                onChange={(e) => {
+                  setShowAllContacts(e.target.checked);
+                  if (e.target.checked) {
+                    setSelectedSource(null);
+                  }
+                }}
+                className="rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="showAllContacts" className="text-sm">
+                Show all contacts
+              </label>
+            </div>
+          )}
+          <Select 
+            value={selectedSource || "all"} 
+            onValueChange={(value) => setSelectedSource(value === "all" ? null : value)}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="All Sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sources</SelectItem>
+              {sources.map(source => (
+                <SelectItem key={source} value={source}>
+                  {source}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex border rounded-md overflow-hidden">
           <Button 
             variant={viewMode === "grid" ? "default" : "ghost"} 

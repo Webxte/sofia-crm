@@ -87,13 +87,19 @@ serve(async (req) => {
     if (includeOrderDetails) {
       // Generate order items table
       let itemsHtml = "";
+      let totalVat = 0;
+      
       for (const item of order.order_items) {
+        const vatAmount = item.vat ? (item.subtotal * item.vat / 100) : 0;
+        totalVat += vatAmount;
+        
         itemsHtml += `
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;">${item.code}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">${item.description}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">€${item.price.toFixed(2)}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${item.vat ? `${item.vat}%` : '0%'}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">€${item.subtotal.toFixed(2)}</td>
           </tr>
         `;
@@ -121,6 +127,7 @@ serve(async (req) => {
                 <th style="padding: 8px; border: 1px solid #ddd;">Description</th>
                 <th style="padding: 8px; border: 1px solid #ddd;">Qty</th>
                 <th style="padding: 8px; border: 1px solid #ddd;">Price</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">VAT %</th>
                 <th style="padding: 8px; border: 1px solid #ddd;">Subtotal</th>
               </tr>
             </thead>
@@ -128,8 +135,16 @@ serve(async (req) => {
               ${itemsHtml}
             </tbody>
             <tfoot>
+              <tr style="background-color: #f9f9f9;">
+                <td colspan="5" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Subtotal:</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>€${(order.total - (order.vat_total || 0)).toFixed(2)}</strong></td>
+              </tr>
+              <tr style="background-color: #f9f9f9;">
+                <td colspan="5" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>VAT:</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>€${(order.vat_total || totalVat).toFixed(2)}</strong></td>
+              </tr>
               <tr style="background-color: #f2f2f2;">
-                <td colspan="4" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Total:</strong></td>
+                <td colspan="5" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Total:</strong></td>
                 <td style="padding: 8px; border: 1px solid #ddd;"><strong>€${order.total.toFixed(2)}</strong></td>
               </tr>
             </tfoot>
@@ -174,28 +189,36 @@ serve(async (req) => {
     `;
     
     // Send email
-    const { data, error } = await resend.emails.send({
-      from: "CRM System <onboarding@resend.dev>",
-      to: recipient,
-      subject: subject,
-      html: emailContent,
-      cc: cc,
-    });
+    console.log("Sending email to:", recipient);
+    console.log("CC recipients:", cc);
     
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-    
-    console.log("Email sent successfully:", data);
-    
-    return new Response(
-      JSON.stringify({ success: true, message: "Email sent successfully", data }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+    try {
+      const { data, error } = await resend.emails.send({
+        from: "CRM System <onboarding@resend.dev>",
+        to: recipient,
+        subject: subject,
+        html: emailContent,
+        cc: cc.length > 0 ? cc : undefined,
+      });
+      
+      if (error) {
+        console.error("Resend API error:", error);
+        throw new Error(`Failed to send email: ${error.message}`);
       }
-    );
+      
+      console.log("Email sent successfully:", data);
+      
+      return new Response(
+        JSON.stringify({ success: true, message: "Email sent successfully", data }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    } catch (sendError) {
+      console.error("Error sending email:", sendError);
+      throw new Error(`Failed to send email: ${sendError.message}`);
+    }
     
   } catch (error) {
     console.error("Error in send-order-email function:", error);

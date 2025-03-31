@@ -25,7 +25,7 @@ export const TaskContactField = ({ field, disabled = false }: TaskContactFieldPr
   
   // Sort contacts to prioritize companies
   const sortedContacts = [...contacts].sort((a, b) => {
-    // If both have company names, sort alphabetically
+    // If both have company names, sort alphabetically by company
     if (a.company && b.company) {
       return a.company.localeCompare(b.company);
     }
