@@ -27,10 +27,13 @@ const MeetingDetails = () => {
     );
   }
   
+  // Create a friendly description for the meeting title since it doesn't exist as a property
+  const meetingTitle = `Meeting with contact${meeting.contactId ? '' : ' (No contact specified)'}`;
+  
   return (
     <>
       <Helmet>
-        <title>{meeting.title || 'Meeting'} | CRM</title>
+        <title>{meetingTitle || 'Meeting'} | CRM</title>
       </Helmet>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -40,9 +43,9 @@ const MeetingDetails = () => {
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold">{meeting.title}</h1>
-            <Badge variant={meeting.type === 'in-person' ? 'default' : 'outline'}>
-              {meeting.type === 'in-person' ? 'In Person' : 'Virtual'}
+            <h1 className="text-2xl font-bold">{meetingTitle}</h1>
+            <Badge variant={meeting.type === 'meeting' ? 'default' : 'outline'}>
+              {meeting.type === 'meeting' ? 'In Person' : meeting.type.charAt(0).toUpperCase() + meeting.type.slice(1)}
             </Badge>
           </div>
           <div className="flex space-x-2">
@@ -91,7 +94,7 @@ const MeetingDetails = () => {
               </div>
               
               <div className="space-y-4">
-                {meeting.followUp && (
+                {meeting.followUpScheduled && (
                   <>
                     <div>
                       <p className="text-sm text-muted-foreground">Follow Up</p>

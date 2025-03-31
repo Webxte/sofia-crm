@@ -123,7 +123,13 @@ const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
           description: "Contact updated successfully",
         });
       } else {
-        await addContact(data);
+        // For new contacts, need to add createdAt and updatedAt
+        const contactData = {
+          ...data, 
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        await addContact(contactData);
         toast({
           title: "Success",
           description: "Contact created successfully",

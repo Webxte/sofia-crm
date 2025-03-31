@@ -25,7 +25,7 @@ const getPriorityColor = (priority: string) => {
 
 const TaskDetails = () => {
   const { id } = useParams();
-  const { getTaskById, completeTask } = useTasks();
+  const { getTaskById, updateTask } = useTasks();
   
   const task = id ? getTaskById(id) : undefined;
   
@@ -41,8 +41,10 @@ const TaskDetails = () => {
   }
   
   const handleCompleteTask = () => {
-    if (id) completeTask(id);
+    if (id) updateTask(id, { status: "completed" });
   };
+  
+  const isCompleted = task.status === "completed";
   
   return (
     <>
@@ -62,12 +64,12 @@ const TaskDetails = () => {
               <span className={`h-2 w-2 rounded-full ${getPriorityColor(task.priority)}`} />
               <span className="text-sm font-medium">{task.priority} Priority</span>
             </div>
-            {task.completed && (
+            {isCompleted && (
               <Badge className="ml-2 bg-green-500">Completed</Badge>
             )}
           </div>
           <div className="flex space-x-2">
-            {!task.completed && (
+            {!isCompleted && (
               <Button variant="outline" onClick={handleCompleteTask}>
                 <CheckSquare className="h-4 w-4 mr-1" />
                 Mark Complete
@@ -93,7 +95,7 @@ const TaskDetails = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Due Date</p>
                     <p className="font-medium">
-                      {format(new Date(task.dueDate), 'PPP')} {task.dueTime ? `at ${task.dueTime}` : ''}
+                      {task.dueDate ? format(new Date(task.dueDate), 'PPP') : 'No due date'} {task.dueTime ? `at ${task.dueTime}` : ''}
                     </p>
                   </div>
                 </div>

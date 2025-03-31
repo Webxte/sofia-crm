@@ -58,7 +58,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         addContact,
         updateContact,
         deleteContact,
-        refreshContacts,
+        refreshContacts: async () => { await fetchContacts(); }, // Fixed to return void
         importContactsFromCsv,
       }}
     >
