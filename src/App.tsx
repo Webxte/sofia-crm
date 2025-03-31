@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ContactsProvider } from './context/ContactsContext';
-import { MeetingsProvider } from './context/MeetingsContext';
+import { MeetingsProvider } from './context/meetings';
 import { TasksProvider } from './context/TasksContext';
 import { ProductsProvider } from './context/products/ProductsContext';
 import { OrdersProvider } from './context/OrdersContext';

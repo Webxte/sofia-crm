@@ -1,6 +1,6 @@
 
 import { useParams, Navigate } from "react-router-dom";
-import { useMeetings } from "@/context/MeetingsContext";
+import { useMeetings } from "@/context/meetings";
 import MeetingForm from "@/components/meetings/MeetingForm";
 
 const EditMeeting = () => {

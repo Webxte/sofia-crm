@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useMeetings } from '@/context/MeetingsContext';
+import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

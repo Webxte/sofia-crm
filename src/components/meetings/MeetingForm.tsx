@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Meeting } from "@/types";
-import { useMeetings } from "@/context/MeetingsContext";
+import { useMeetings } from "@/context/meetings";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";

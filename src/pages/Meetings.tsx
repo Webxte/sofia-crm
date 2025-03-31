@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useMeetings } from '@/context/MeetingsContext';
+import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
 import { useNavigate } from 'react-router-dom';
 import { MeetingCard } from '@/components/meetings/MeetingCard';
