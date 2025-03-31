@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMeetings } from "@/context/MeetingsContext";
+import { useMeetings } from "@/context/meetings";
 import { useTasks } from "@/context/TasksContext";
 import { Meeting, Task } from "@/types";
 import { useContacts } from "@/context/ContactsContext";

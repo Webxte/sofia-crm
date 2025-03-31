@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
-import { useMeetings } from "@/context/MeetingsContext";
+import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
 import { useTasks } from "@/context/TasksContext";

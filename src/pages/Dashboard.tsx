@@ -6,7 +6,7 @@ import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { useContacts } from "@/context/ContactsContext";
-import { useMeetings } from "@/context/MeetingsContext";
+import { useMeetings } from "@/context/meetings";
 import { useTasks } from "@/context/TasksContext";
 import { useOrders } from "@/context/OrdersContext";
 
