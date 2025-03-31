@@ -2,7 +2,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { processContacts, createContact, updateContact, deleteContact } from "./contactUtils";
+import { 
+  processContacts, 
+  createContact, 
+  updateContact, 
+  deleteContact, 
+  importContactsFromCsv as importContacts 
+} from "./contactUtils";
 import { useAuth } from "../AuthContext";
 
 export const useContactsOperations = () => {
@@ -102,16 +108,9 @@ export const useContactsOperations = () => {
   }, [contacts]);
 
   // Import contacts
-  const importContacts = async (newContacts: Omit<Contact, "id">[]): Promise<number> => {
+  const importContactsFromCsv = async (file: File): Promise<number> => {
     try {
-      let importedCount = 0;
-      
-      for (const contactData of newContacts) {
-        const contact = await createContact(contactData);
-        if (contact) {
-          importedCount++;
-        }
-      }
+      const importedCount = await importContacts(file);
       
       // Refresh contacts after import
       await fetchContacts();
@@ -132,6 +131,6 @@ export const useContactsOperations = () => {
     updateContact: updateContactById,
     deleteContact: deleteContactById,
     getContactById,
-    importContacts,
+    importContactsFromCsv,
   };
 };

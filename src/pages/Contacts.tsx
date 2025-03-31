@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -12,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Contact } from "@/types";
-import { ContactCard } from "@/components/contacts/ContactCard";
+import ContactCard from "@/components/contacts/ContactCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Input } from "@/components/ui/input";
 import { 
@@ -28,7 +27,7 @@ import {
   Search,
   RefreshCw
 } from "lucide-react";
-import { ContactImporter } from "@/components/contacts/ContactImporter";
+import ContactImporter from "@/components/contacts/ContactImporter";
 
 const Contacts = () => {
   const navigate = useNavigate();
@@ -39,7 +38,6 @@ const Contacts = () => {
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Extract unique sources from all contacts
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
     
@@ -61,19 +59,15 @@ const Contacts = () => {
     setIsRefreshing(false);
   };
   
-  // Filter contacts based on selected source and search query
   const filteredContacts = contacts.filter(contact => {
-    // For admins viewing all contacts
     const shouldShowContact = isAdmin || 
-      !selectedSource || // Admin with no filter shows all
-      // Non-admin with their own contacts or specifically filtered
+      !selectedSource || 
       (contact.agentName === user?.name || (selectedSource && contact.source?.includes(selectedSource)));
     
     if (!shouldShowContact) {
       return false;
     }
     
-    // If source is selected, filter by it (for both admins and non-admins)
     if (selectedSource) {
       if (!contact.source) return false;
       const contactSources = contact.source.split(',').map(s => s.trim());
@@ -82,7 +76,6 @@ const Contacts = () => {
       }
     }
     
-    // Apply search query filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
@@ -96,7 +89,6 @@ const Contacts = () => {
     return true;
   });
 
-  // Group contacts by first letter of name or company
   const groupedContacts = React.useMemo(() => {
     const groups: Record<string, Contact[]> = {};
     
@@ -120,7 +112,6 @@ const Contacts = () => {
       groups[firstChar].push(contact);
     });
     
-    // Sort contacts within each group
     Object.keys(groups).forEach(key => {
       groups[key].sort((a, b) => {
         const aName = a.fullName || a.company || '';
@@ -132,7 +123,6 @@ const Contacts = () => {
     return groups;
   }, [filteredContacts]);
   
-  // Get sorted group keys
   const sortedGroups = Object.keys(groupedContacts).sort();
   
   return (

@@ -2,8 +2,22 @@
 import { createContext, useContext, useEffect, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useContactsOperations } from "./useContactsOperations";
-import { ContactsContextType } from "./types";
-import { getContactById, getContactsByAgentId, searchContacts, getContactsBySource } from "./contactUtils";
+import { Contact } from "@/types";
+import { getContactById, getContactsByAgentId, getContactsBySource, searchContacts } from "./contactUtils";
+
+interface ContactsContextType {
+  contacts: Contact[];
+  loading: boolean;
+  addContact: (contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  updateContact: (id: string, contact: Partial<Contact>) => Promise<void>;
+  deleteContact: (id: string) => Promise<void>;
+  getContactById: (id: string) => Contact | undefined;
+  getContactsByAgentId: (agentId: string) => Contact[];
+  getContactsBySource: (source: string) => Contact[];
+  searchContacts: (query: string) => Contact[];
+  refreshContacts: () => Promise<void>;
+  importContactsFromCsv: (file: File) => Promise<void>;
+}
 
 const ContactsContext = createContext<ContactsContextType | undefined>(undefined);
 
@@ -13,10 +27,10 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     contacts, 
     loading, 
     refreshContacts, 
-    addContact, 
-    updateContact, 
-    deleteContact,
-    importContactsFromCsv 
+    addContact: addContactOp, 
+    updateContact: updateContactOp, 
+    deleteContact: deleteContactOp,
+    importContactsFromCsv: importContactsOp 
   } = useContactsOperations();
 
   // Fetch contacts when the component mounts or when user auth state changes
@@ -24,7 +38,24 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     if (isAuthenticated) {
       refreshContacts();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, refreshContacts]);
+
+  // Wrapper functions to adapt return types
+  const addContact = async (contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
+    await addContactOp(contact);
+  };
+
+  const updateContact = async (id: string, contact: Partial<Contact>) => {
+    await updateContactOp(id, contact);
+  };
+
+  const deleteContact = async (id: string) => {
+    await deleteContactOp(id);
+  };
+
+  const importContactsFromCsv = async (file: File) => {
+    await importContactsOp(file);
+  };
 
   return (
     <ContactsContext.Provider
@@ -38,7 +69,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         getContactsByAgentId: (agentId) => getContactsByAgentId(contacts, agentId),
         getContactsBySource: (source) => getContactsBySource(contacts, source),
         searchContacts: (query) => searchContacts(contacts, query),
-        refreshContacts,
+        refreshContacts: async () => { await refreshContacts(); },
         importContactsFromCsv,
       }}
     >
