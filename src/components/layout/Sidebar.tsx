@@ -3,7 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { MobileToggle } from "@/components/ui/sidebar";
+import {
+  SidebarTrigger,
+  useSidebar
+} from "@/components/ui/sidebar";
 import {
   BarChart3,
   BookUser,
@@ -16,7 +19,7 @@ import {
   TimerReset,
   Users,
 } from "lucide-react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const navLinks = [
@@ -63,7 +66,8 @@ export function Sidebar({ className }: { className?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAdmin } = useAuth();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
+  const { toggleSidebar } = useSidebar();
 
   // Filter links based on user role
   const filteredLinks = navLinks.filter(link => !link.adminOnly || isAdmin);
@@ -73,7 +77,9 @@ export function Sidebar({ className }: { className?: string }) {
       <div className={cn("pb-12", className)}>
         <div className="space-y-4 py-4">
           <div className="px-4 py-2">
-            {isMobile && <MobileToggle />}
+            {isMobile && (
+              <SidebarTrigger />
+            )}
 
             <div className="flex items-center justify-center mb-4 lg:justify-start">
               <div className="flex items-center gap-2">
@@ -110,3 +116,5 @@ export function Sidebar({ className }: { className?: string }) {
     </TooltipProvider>
   );
 }
+
+export default Sidebar;
