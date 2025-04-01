@@ -162,7 +162,7 @@ serve(async (req) => {
       `;
     }
     
-    // Prepare email HTML
+    // Prepare email HTML - don't include the message as unformatted text
     const emailContent = `
       <!DOCTYPE html>
       <html>
@@ -175,7 +175,7 @@ serve(async (req) => {
           <h1 style="color: #0EA5E9;">${subject}</h1>
           
           <div style="margin-bottom: 20px;">
-            ${message || ""}
+            ${message.replace(/\n/g, '<br>')}
           </div>
           
           ${orderDetailsHtml}

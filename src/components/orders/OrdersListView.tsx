@@ -14,6 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
+import { Edit, Mail } from "lucide-react";
+import { OrderDeleteDialog } from "./OrderDeleteDialog";
+import { EmailOrderButton } from "./EmailOrderButton";
 
 interface OrdersListViewProps {
   orders: Order[];
@@ -35,7 +38,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
             {isAdmin && <TableHead>Agent</TableHead>}
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Total</TableHead>
-            <TableHead></TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -60,12 +63,24 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                 {formatCurrency(order.total)}
               </TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate(`/orders/${order.id}`)}
-                >
-                  View
-                </Button>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/orders/${order.id}`)}
+                  >
+                    View
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => navigate(`/orders/edit/${order.id}`)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <EmailOrderButton order={order} />
+                  <OrderDeleteDialog orderId={order.id} reference={order.reference} />
+                </div>
               </TableCell>
             </TableRow>
           ))}

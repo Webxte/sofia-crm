@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
@@ -6,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { MeetingCard } from '@/components/meetings/MeetingCard';
 import { MeetingTypeFilter } from '@/components/meetings/MeetingTypeFilter';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, MessagesSquare, Trash2 } from 'lucide-react';
+import { Plus, Calendar, MessagesSquare, Trash2, ShoppingCart } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import {
   Select,
@@ -79,6 +80,10 @@ const Meetings = () => {
     }
   };
 
+  const handleCreateOrder = (contactId: string) => {
+    navigate(`/orders/new?contactId=${contactId}`);
+  };
+
   const getContactName = (contactId: string) => {
     const contact = getContactById(contactId);
     if (!contact) return "Unknown Contact";
@@ -131,7 +136,7 @@ const Meetings = () => {
           </div>
         </div>
 
-        <Tabs defaultValue={viewMode} className="w-full">
+        <Tabs defaultValue="list" className="w-full">
           <TabsList className="grid w-full md:w-60 grid-cols-2">
             <TabsTrigger value="list">List</TabsTrigger>
             <TabsTrigger value="grid">Grid</TabsTrigger>
@@ -164,6 +169,16 @@ const Meetings = () => {
                           handleViewMeeting(meeting.id);
                         }}>
                           View
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCreateOrder(meeting.contactId);
+                          }}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" /> Order
                         </Button>
                         <AlertDialog open={meetingToDelete === meeting.id} onOpenChange={(open) => {
                           if (!open) setMeetingToDelete(null);
@@ -222,7 +237,8 @@ const Meetings = () => {
                   <MeetingCard 
                     key={meeting.id} 
                     meeting={meeting} 
-                    onViewDetails={() => handleViewMeeting(meeting.id)} 
+                    onViewDetails={() => handleViewMeeting(meeting.id)}
+                    onCreateOrder={() => handleCreateOrder(meeting.contactId)} 
                   />
                 ))}
               </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Card, 
@@ -131,7 +132,13 @@ const Contacts = () => {
     }
     
     // Default for agents - show only contacts where agent is assigned
-    return contact.agentName === user?.name;
+    if (user?.name) {
+      if (!contact.source) return false;
+      const contactSources = contact.source.split(',').map(s => s.trim());
+      return contactSources.includes(user.name);
+    }
+    
+    return true;
   });
 
   const groupedContacts = React.useMemo(() => {
@@ -326,8 +333,15 @@ const Contacts = () => {
                 onChange={(e) => {
                   setShowAllContacts(e.target.checked);
                   if (e.target.checked) {
-                    // Don't reset the source when showing all contacts
-                    // This allows filtering by source while viewing all contacts
+                    // If showing all contacts, maintain any existing source filter
+                  } else {
+                    // If unchecking, set the source back to agent's name
+                    if (user?.name) {
+                      const agentSource = sources.find(source =>
+                        source.toLowerCase() === user.name?.toLowerCase()
+                      );
+                      setSelectedSource(agentSource || null);
+                    }
                   }
                 }}
                 className="rounded border-gray-300 text-primary focus:ring-primary"

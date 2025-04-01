@@ -1,114 +1,78 @@
 
-import { format } from "date-fns";
-import { Calendar } from "lucide-react";
-import { Meeting, Contact } from "@/types";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Meeting } from "@/types";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
+import { format } from "date-fns";
+import { CalendarDays, User, MapPin, ShoppingCart } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface MeetingCardProps {
   meeting: Meeting;
-  contact?: Contact;
-  onViewDetails?: () => void;
+  onViewDetails: () => void;
+  onCreateOrder?: () => void;
 }
 
-export const MeetingCard = ({ meeting, contact: propContact, onViewDetails }: MeetingCardProps) => {
-  const navigate = useNavigate();
+export const MeetingCard = ({ meeting, onViewDetails, onCreateOrder }: MeetingCardProps) => {
   const { getContactById } = useContacts();
-  
-  // If contact is not provided as a prop, fetch it from context
-  const contact = propContact || (meeting.contactId ? getContactById(meeting.contactId) : undefined);
-  
-  // Get meeting type badge color
-  const getMeetingTypeColor = (type: string) => {
-    switch (type) {
-      case "meeting":
-        return "bg-blue-100 text-blue-800";
-      case "phone":
-        return "bg-green-100 text-green-800";
-      case "email":
-        return "bg-purple-100 text-purple-800";
-      case "online":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  const { isAdmin } = useAuth();
+  const contact = getContactById(meeting.contactId);
 
-  // Get formatted meeting type
-  const getMeetingTypeText = (type: string) => {
-    switch (type) {
-      case "meeting":
-        return "In-person Meeting";
-      case "phone":
-        return "Phone Call";
-      case "email":
-        return "Email";
-      case "online":
-        return "Online Meeting";
-      default:
-        return "Other";
-    }
-  };
-
-  // Prioritize company name over contact name
-  const displayCompany = contact?.company || "Unknown Company";
-  const displayPerson = contact?.fullName ? ` (${contact.fullName})` : "";
-  const displayTitle = contact?.company ? displayCompany : (contact?.fullName || "Unknown Contact");
+  const meetingDate = new Date(meeting.date);
+  const formattedDate = format(meetingDate, "MMM d, yyyy");
   
-  const handleViewDetails = () => {
-    if (onViewDetails) {
-      onViewDetails();
-    } else {
-      navigate(`/meetings/${meeting.id}`);
-    }
-  };
+  const contactName = contact?.company || contact?.fullName || "Unknown Contact";
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <Badge
-            className={getMeetingTypeColor(meeting.type)}
-            variant="outline"
-          >
-            {getMeetingTypeText(meeting.type)}
-          </Badge>
-          <Badge variant={meeting.followUpScheduled ? "default" : "outline"}>
-            {meeting.followUpScheduled ? "Follow-up Scheduled" : "No Follow-up"}
-          </Badge>
+    <Card className="h-full flex flex-col">
+      <CardContent className="pt-6 flex-1">
+        <div className="mb-4">
+          <h3 className="font-semibold text-lg">{meeting.type.charAt(0).toUpperCase() + meeting.type.slice(1)}</h3>
+          <div className="flex items-center text-muted-foreground mt-1">
+            <CalendarDays className="h-4 w-4 mr-1" />
+            <span className="text-sm">
+              {formattedDate} at {meeting.time}
+            </span>
+          </div>
         </div>
-        <CardTitle className="text-xl">
-          {displayTitle}
-        </CardTitle>
-        <CardDescription className="flex items-center gap-1">
-          <Calendar className="h-3.5 w-3.5" />
-          {format(new Date(meeting.date), "PPP")} at {meeting.time}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground whitespace-pre-line overflow-hidden max-h-36 line-clamp-3">
-          {meeting.notes}
-        </p>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-start">
+            <User className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">{contactName}</p>
+              {contact?.email && <p className="text-muted-foreground">{contact.email}</p>}
+            </div>
+          </div>
+          {meeting.location && (
+            <div className="flex items-start">
+              <MapPin className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+              <p>{meeting.location}</p>
+            </div>
+          )}
+          {isAdmin && meeting.agentName && (
+            <div className="flex items-center mt-2 text-xs text-muted-foreground">
+              <span>Agent: {meeting.agentName}</span>
+            </div>
+          )}
+        </div>
+        {meeting.notes && (
+          <div className="mt-4 border-t pt-3">
+            <p className="text-sm line-clamp-3">{meeting.notes}</p>
+          </div>
+        )}
       </CardContent>
-      <CardFooter className="pt-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full"
-          onClick={handleViewDetails}
-        >
+      <CardFooter className="border-t bg-muted/30 p-3 flex gap-2 justify-end">
+        <Button variant="ghost" size="sm" onClick={onViewDetails}>
           View Details
         </Button>
+        {onCreateOrder && (
+          <Button variant="outline" size="sm" onClick={(e) => {
+            e.stopPropagation();
+            onCreateOrder();
+          }}>
+            <ShoppingCart className="h-4 w-4 mr-1" /> Order
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

@@ -13,37 +13,6 @@ export const generateDefaultEmailContent = (order: Order | undefined, contactNam
   
   let message = `Dear ${contactName},\n\n`;
   message += `Your order (Ref: ${reference}) from ${orderDate} has been processed.\n\n`;
-  
-  // Generate formatted order details
-  message += "Order Details:\n";
-  
-  // Calculate totals
-  let subtotal = 0;
-  let vatTotal = 0;
-  
-  if (order.items && order.items.length > 0) {
-    order.items.forEach(item => {
-      const itemSubtotal = item.price * item.quantity;
-      const itemVat = item.vat ? (itemSubtotal * item.vat / 100) : 0;
-      
-      message += `${item.quantity} x ${item.description} (${item.code})\n`;
-      message += `  Price: ${formatCurrency(item.price)} each\n`;
-      if (item.vat) {
-        message += `  VAT: ${item.vat}%\n`;
-      }
-      message += `  Subtotal: ${formatCurrency(itemSubtotal)}\n\n`;
-      
-      subtotal += itemSubtotal;
-      vatTotal += itemVat;
-    });
-  }
-  
-  // Add summary
-  message += "Summary:\n";
-  message += `Subtotal: ${formatCurrency(subtotal)}\n`;
-  message += `VAT: ${formatCurrency(vatTotal)}\n`;
-  message += `Total: ${formatCurrency(subtotal + vatTotal)}\n\n`;
-  
   message += "Thank you for your business.";
   
   return message;

@@ -29,10 +29,11 @@ export const generateOrderReference = (
   
   orders.forEach(order => {
     if (order.reference && order.reference.startsWith(prefix)) {
-      const parts = order.reference.split('-');
-      if (parts.length === 2) {
-        const sequenceStr = parts[1];
-        const sequence = parseInt(sequenceStr, 10);
+      const sequencePart = order.reference.substring(prefix.length);
+      // Extract digits from the reference, ignoring any non-digit characters
+      const matches = sequencePart.match(/\d+/);
+      if (matches && matches.length > 0) {
+        const sequence = parseInt(matches[0], 10);
         if (!isNaN(sequence) && sequence > maxSequence) {
           maxSequence = sequence;
         }
@@ -44,7 +45,7 @@ export const generateOrderReference = (
   const nextSequence = maxSequence + 1;
   const sequenceStr = nextSequence.toString().padStart(5, '0');
   
-  return `${prefix}-${sequenceStr}`;
+  return `${prefix}${sequenceStr}`;
 };
 
 export const sendOrderEmail = async (

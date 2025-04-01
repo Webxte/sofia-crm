@@ -1,150 +1,112 @@
 
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { MobileToggle } from "@/components/ui/sidebar";
 import {
-  Home, 
-  Users, 
-  Calendar as CalendarIcon, 
-  ListTodo, 
-  ShoppingCart, 
-  BarChart, 
-  Settings,
-  Menu,
+  BarChart3,
+  BookUser,
+  Calendar,
+  ClipboardList,
+  Home,
   MessagesSquare,
+  Settings,
+  ShoppingBag,
+  TimerReset,
+  Users,
 } from "lucide-react";
+import { useMobile } from "@/hooks/use-mobile";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
-interface SidebarProps {
-  className?: string;
-}
+const navLinks = [
+  { name: "Dashboard", href: "/", icon: <Home className="h-5 w-5" /> },
+  {
+    name: "Contacts",
+    href: "/contacts",
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    name: "Meetings",
+    href: "/meetings",
+    icon: <MessagesSquare className="h-5 w-5" />,
+  },
+  {
+    name: "Tasks",
+    href: "/tasks",
+    icon: <ClipboardList className="h-5 w-5" />,
+  },
+  {
+    name: "Calendar",
+    href: "/calendar",
+    icon: <Calendar className="h-5 w-5" />,
+  },
+  {
+    name: "Orders",
+    href: "/orders",
+    icon: <ShoppingBag className="h-5 w-5" />,
+  },
+  {
+    name: "Reports",
+    href: "/reports",
+    icon: <BarChart3 className="h-5 w-5" />,
+  },
+  {
+    name: "Settings",
+    href: "/settings",
+    icon: <Settings className="h-5 w-5" />,
+    adminOnly: true,
+  }
+];
 
-const Sidebar = ({ className }: SidebarProps) => {
-  const { pathname } = useLocation();
-  const { isAdmin } = useAuth();
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+export function Sidebar({ className }: { className?: string }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isAdmin } = useAuth();
+  const isMobile = useMobile();
 
-  const menuItems = [
-    {
-      title: "Dashboard",
-      href: "/",
-      icon: Home,
-    },
-    {
-      title: "Contacts",
-      href: "/contacts",
-      icon: Users,
-    },
-    {
-      title: "Meetings",
-      href: "/meetings",
-      icon: MessagesSquare,
-    },
-    {
-      title: "Calendar",
-      href: "/calendar",
-      icon: CalendarIcon,
-    },
-    {
-      title: "Tasks",
-      href: "/tasks",
-      icon: ListTodo,
-    },
-    {
-      title: "Orders",
-      href: "/orders",
-      icon: ShoppingCart,
-    },
-    {
-      title: "Reports",
-      href: "/reports",
-      icon: BarChart,
-    },
-    {
-      title: "Settings",
-      href: "/settings",
-      icon: Settings,
-      adminOnly: true, // Mark this item as admin only
-    },
-  ];
-
-  // Filter items based on user role
-  const filteredMenuItems = menuItems.filter(item => 
-    !item.adminOnly || (item.adminOnly && isAdmin)
-  );
+  // Filter links based on user role
+  const filteredLinks = navLinks.filter(link => !link.adminOnly || isAdmin);
 
   return (
-    <>
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="fixed left-4 top-4 z-40 md:hidden"
-          >
-            <Menu />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-full sm:w-64">
-          <SheetHeader className="text-left">
-            <SheetTitle>Menu</SheetTitle>
-            <SheetDescription>
-              Navigate through your CRM.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="py-4">
-            {filteredMenuItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center space-x-2 rounded-md p-2 hover:bg-secondary",
-                  pathname === item.href
-                    ? "bg-secondary font-medium"
-                    : "text-muted-foreground",
-                  "w-full"
-                )}
-                onClick={() => setIsSheetOpen(false)}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-              </Link>
-            ))}
+    <TooltipProvider delayDuration={0}>
+      <div className={cn("pb-12", className)}>
+        <div className="space-y-4 py-4">
+          <div className="px-4 py-2">
+            {isMobile && <MobileToggle />}
+
+            <div className="flex items-center justify-center mb-4 lg:justify-start">
+              <div className="flex items-center gap-2">
+                <BookUser className="h-6 w-6 text-primary" />
+                <h1 className="text-xl font-bold">SimpleCRM</h1>
+              </div>
+            </div>
+            <div className="space-y-1">
+              {filteredLinks.map((link) => (
+                <Tooltip key={link.href} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={location.pathname === link.href ? "default" : "ghost"}
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start",
+                        location.pathname === link.href
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      )}
+                      onClick={() => navigate(link.href)}
+                    >
+                      {link.icon}
+                      <span className="ms-3">{link.name}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{link.name}</TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
           </div>
-        </SheetContent>
-      </Sheet>
-      <div className={cn("hidden md:flex flex-col w-64 border-r px-2 py-4", className)}>
-        <div className="mb-4 font-bold">CRM</div>
-        <div className="flex flex-col space-y-1">
-          {filteredMenuItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex items-center space-x-2 rounded-md p-2 hover:bg-secondary",
-                pathname === item.href
-                  ? "bg-secondary font-medium"
-                  : "text-muted-foreground",
-                "w-full"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              <span>{item.title}</span>
-            </Link>
-          ))}
         </div>
       </div>
-    </>
+    </TooltipProvider>
   );
-};
-
-export default Sidebar;
+}
