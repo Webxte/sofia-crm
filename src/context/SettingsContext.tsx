@@ -19,6 +19,8 @@ const defaultSettings: Settings = {
   companyPhone: "+1234567890",
   companyEmail: "contact@yourcompany.com",
   defaultVatRate: 0,
+  defaultEmailSubject: "Order Confirmation - Ref: [Reference]",
+  defaultEmailMessage: "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business.",
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -72,6 +74,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
           companyPhone: data.company_phone || defaultSettings.companyPhone,
           companyEmail: data.company_email || defaultSettings.companyEmail,
           defaultVatRate: data.default_vat_rate || defaultSettings.defaultVatRate,
+          defaultEmailSubject: data.default_email_subject || defaultSettings.defaultEmailSubject,
+          defaultEmailMessage: data.default_email_message || defaultSettings.defaultEmailMessage,
         };
         
         setSettings(formattedSettings);
@@ -99,6 +103,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         company_phone: defaultSettings.companyPhone,
         company_email: defaultSettings.companyEmail,
         default_vat_rate: defaultSettings.defaultVatRate,
+        default_email_subject: defaultSettings.defaultEmailSubject,
+        default_email_message: defaultSettings.defaultEmailMessage,
       };
       
       const { data, error } = await supabase
@@ -120,6 +126,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         companyPhone: data.company_phone,
         companyEmail: data.company_email,
         defaultVatRate: data.default_vat_rate,
+        defaultEmailSubject: data.default_email_subject,
+        defaultEmailMessage: data.default_email_message,
       };
       
       setSettings(newSettings);
@@ -153,6 +161,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         updateData.company_email = settingsData.companyEmail;
       if (settingsData.defaultVatRate !== undefined) 
         updateData.default_vat_rate = settingsData.defaultVatRate;
+      if (settingsData.defaultEmailSubject !== undefined)
+        updateData.default_email_subject = settingsData.defaultEmailSubject;
+      if (settingsData.defaultEmailMessage !== undefined)
+        updateData.default_email_message = settingsData.defaultEmailMessage;
       
       updateData.updated_at = new Date().toISOString();
       

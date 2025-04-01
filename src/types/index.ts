@@ -108,10 +108,12 @@ export interface User {
 // Settings types
 export interface Settings {
   id: string;
-  defaultTermsAndConditions: string;
   companyName: string;
   companyAddress: string;
   companyPhone: string;
   companyEmail: string;
+  defaultTermsAndConditions: string;
   defaultVatRate: number;
+  defaultEmailSubject?: string;
+  defaultEmailMessage?: string;
 }

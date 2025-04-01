@@ -1,6 +1,5 @@
 
 import React, { useEffect } from "react";
-import { Settings as Cog } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useProducts } from "@/context/products/ProductsContext";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +9,7 @@ import TermsSettings from "@/components/settings/TermsSettings";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
+import EmailTemplates from "@/components/settings/EmailTemplates";
 
 const Settings = () => {
   const { settings, updateSettings, refreshSettings } = useSettings();
@@ -42,6 +42,7 @@ const Settings = () => {
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="data">Data Import</TabsTrigger>
           <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
+          <TabsTrigger value="email">Email Templates</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
         
@@ -65,6 +66,13 @@ const Settings = () => {
           <TermsSettings 
             initialSettings={settings} 
             onSubmit={handleUpdateSettings} 
+          />
+        </TabsContent>
+        
+        <TabsContent value="email">
+          <EmailTemplates
+            initialSettings={settings}
+            onSubmit={handleUpdateSettings}
           />
         </TabsContent>
         

@@ -188,19 +188,18 @@ serve(async (req) => {
       </html>
     `;
     
-    // Send email
+    // Send email with the verified domain
     console.log("Sending email to:", recipient);
     console.log("CC recipients:", cc);
     
     try {
-      // Use the verified domain for sending emails
       const { data, error } = await resend.emails.send({
-        from: "CRM System <info@belmorso.eu>", // Updated to use your verified domain
+        from: "CRM System <info@belmorso.eu>",
         to: recipient,
         subject: subject,
         html: emailContent,
         cc: cc.length > 0 ? cc : undefined,
-        reply_to: "info@belmorso.eu", // Updated to use your verified domain
+        reply_to: "info@belmorso.eu",
       });
       
       if (error) {

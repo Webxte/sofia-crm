@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
+import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmailFormValues } from "./emailSchema";
 import { generateDefaultEmailContent, generateDefaultEmailSubject } from "./emailUtils";
@@ -20,6 +21,7 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   const [loadingCustomerEmail, setLoadingCustomerEmail] = useState(false);
   const { orders } = useOrders();
   const { getContactById } = useContacts();
+  const { settings } = useSettings();
   const { toast } = useToast();
   
   // Get order and contact information
@@ -32,8 +34,13 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   const defaultValues = {
     recipient: customerEmail || contact?.email || "",
     cc: "",
-    subject: generateDefaultEmailSubject(reference),
-    message: generateDefaultEmailContent(order, contactName, reference),
+    subject: generateDefaultEmailSubject(reference, settings.defaultEmailSubject),
+    message: generateDefaultEmailContent(
+      order, 
+      contactName, 
+      reference, 
+      settings.defaultEmailMessage ? settings.defaultEmailMessage : undefined
+    ),
   };
   
   // Set default values

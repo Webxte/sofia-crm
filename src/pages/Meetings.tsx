@@ -4,46 +4,25 @@ import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { MeetingCard } from '@/components/meetings/MeetingCard';
-import { MeetingTypeFilter } from '@/components/meetings/MeetingTypeFilter';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, MessagesSquare, Trash2, ShoppingCart } from 'lucide-react';
+import { Plus, Calendar, MessagesSquare } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format } from 'date-fns';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Helmet } from 'react-helmet-async';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useIsMobile } from '@/hooks/use-mobile';
+import { MeetingsFilter } from '@/components/meetings/MeetingsFilter';
+import { MeetingsList } from '@/components/meetings/MeetingsList';
+import { MeetingsGrid } from '@/components/meetings/MeetingsGrid';
 
 const Meetings = () => {
   const { meetings, deleteMeeting } = useMeetings();
   const { getContactById } = useContacts();
-  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMeetingType, setSelectedMeetingType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
-  const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
 
   // Update view mode when screen size changes
@@ -88,21 +67,12 @@ const Meetings = () => {
     navigate(`/meetings/${meetingId}`);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (meetingToDelete) {
-      await deleteMeeting(meetingToDelete);
-      setMeetingToDelete(null);
-    }
+  const handleDeleteMeeting = async (meetingId: string) => {
+    await deleteMeeting(meetingId);
   };
 
   const handleCreateOrder = (contactId: string) => {
     navigate(`/orders/new?contactId=${contactId}`);
-  };
-
-  const getContactName = (contactId: string) => {
-    const contact = getContactById(contactId);
-    if (!contact) return "Unknown Contact";
-    return contact.company || contact.fullName || "Unknown Contact";
   };
 
   return (
@@ -121,119 +91,26 @@ const Meetings = () => {
           </Button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 items-end md:items-center">
-          <div className="w-full md:w-72">
-            <Input
-              placeholder="Search meetings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <div className="w-full md:w-40">
-              <MeetingTypeFilter
-                value={selectedMeetingType}
-                onValueChange={setSelectedMeetingType}
-              />
-            </div>
-            <div className="w-full md:w-40">
-              <Select value={selectedSort} onValueChange={setSelectedSort}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        <Tabs defaultValue={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "list")} className="w-full">
-          <TabsList className="grid w-full md:w-60 grid-cols-2">
-            <TabsTrigger value="list">List</TabsTrigger>
-            <TabsTrigger value="grid">Grid</TabsTrigger>
-          </TabsList>
-          
+        <MeetingsFilter
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          selectedMeetingType={selectedMeetingType}
+          onMeetingTypeChange={setSelectedMeetingType}
+          selectedSort={selectedSort}
+          onSortChange={setSelectedSort}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+        
+        <Tabs value={viewMode} className="w-full">
           <TabsContent value="list" className="mt-4">
             {sortedMeetings.length > 0 ? (
-              <div className="space-y-4">
-                {sortedMeetings.map((meeting) => (
-                  <div 
-                    key={meeting.id} 
-                    className="border rounded-lg p-3 hover:border-primary transition-colors cursor-pointer"
-                    onClick={() => handleViewMeeting(meeting.id)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{getContactName(meeting.contactId)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(meeting.date), 'PPP')} at {meeting.time}
-                        </p>
-                        {isAdmin && meeting.agentName && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Agent: {meeting.agentName}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewMeeting(meeting.id);
-                        }}>
-                          View
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCreateOrder(meeting.contactId);
-                          }}
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-1" /> Order
-                        </Button>
-                        <AlertDialog open={meetingToDelete === meeting.id} onOpenChange={(open) => {
-                          if (!open) setMeetingToDelete(null);
-                        }}>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-500 hover:text-red-700"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMeetingToDelete(meeting.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete this meeting and all related data.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={handleDeleteConfirm}
-                                className="bg-red-500 hover:bg-red-600"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <MeetingsList
+                meetings={sortedMeetings}
+                onViewMeeting={handleViewMeeting}
+                onCreateOrder={handleCreateOrder}
+                onDeleteMeeting={handleDeleteMeeting}
+              />
             ) : (
               <EmptyState
                 icon={<Calendar size={40} />}
@@ -247,16 +124,11 @@ const Meetings = () => {
           
           <TabsContent value="grid" className="mt-4">
             {sortedMeetings.length > 0 ? (
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {sortedMeetings.map((meeting) => (
-                  <MeetingCard 
-                    key={meeting.id} 
-                    meeting={meeting} 
-                    onViewDetails={() => handleViewMeeting(meeting.id)}
-                    onCreateOrder={() => handleCreateOrder(meeting.contactId)} 
-                  />
-                ))}
-              </div>
+              <MeetingsGrid
+                meetings={sortedMeetings}
+                onViewDetails={handleViewMeeting}
+                onCreateOrder={handleCreateOrder}
+              />
             ) : (
               <EmptyState
                 icon={<MessagesSquare size={40} />}

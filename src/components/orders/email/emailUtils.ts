@@ -6,7 +6,16 @@ import { format } from "date-fns";
 /**
  * Generates a default email message with order details
  */
-export const generateDefaultEmailContent = (order: Order | undefined, contactName: string, reference: string): string => {
+export const generateDefaultEmailContent = (
+  order: Order | undefined, 
+  contactName: string, 
+  reference: string,
+  defaultTemplate?: string
+): string => {
+  if (defaultTemplate) {
+    return defaultTemplate;
+  }
+  
   if (!order) return "Please find attached the details of your order. Thank you for your business.";
   
   const orderDate = format(new Date(order.date), 'MMMM do, yyyy');
@@ -40,7 +49,10 @@ export const generateDefaultEmailContent = (order: Order | undefined, contactNam
 /**
  * Generates a default email subject line for an order
  */
-export const generateDefaultEmailSubject = (reference: string): string => {
+export const generateDefaultEmailSubject = (reference: string, defaultSubject?: string): string => {
+  if (defaultSubject) {
+    return defaultSubject.replace(/\[Reference\]/g, reference);
+  }
   return `Order Confirmation - Ref: ${reference}`;
 };
 
