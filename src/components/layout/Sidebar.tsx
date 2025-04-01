@@ -116,5 +116,3 @@ export function Sidebar({ className }: { className?: string }) {
     </TooltipProvider>
   );
 }
-
-export default Sidebar;

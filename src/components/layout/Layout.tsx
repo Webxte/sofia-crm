@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import Sidebar from "./Sidebar";
+import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
 export const Layout = () => {
