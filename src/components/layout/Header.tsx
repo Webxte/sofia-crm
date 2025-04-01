@@ -1,6 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { BellIcon, UserCircle, FileText, UserCog, LogOut, Upload } from "lucide-react";
+import { BellIcon, UserCircle, FileText, UserCog, LogOut, Upload, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -24,10 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import ProductImporter from "@/components/orders/ProductImporter";
-
-// Mobile menu only for Header
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const getPageTitle = (pathname: string): string => {
   const path = pathname.split("/")[1];
@@ -73,6 +71,7 @@ export const Header = () => {
   return (
     <header className="border-b border-border px-4 py-3 flex items-center justify-between bg-white">
       <div className="flex items-center gap-2">
+        <SidebarTrigger className="md:hidden mr-2" />
         <h1 className="text-xl font-semibold">{pageTitle}</h1>
       </div>
       <div className="flex items-center space-x-2">
@@ -114,6 +113,12 @@ export const Header = () => {
                   Reports
                 </DropdownMenuItem>
               </>
+            )}
+            {!isAdmin && (
+              <DropdownMenuItem onClick={() => navigate("/reports")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Reports
+              </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

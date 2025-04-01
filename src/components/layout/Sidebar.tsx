@@ -4,7 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
+  Sidebar as SidebarComponent,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarTrigger,
+  SidebarHeader,
   useSidebar
 } from "@/components/ui/sidebar";
 import {
@@ -16,7 +22,6 @@ import {
   MessagesSquare,
   Settings,
   ShoppingBag,
-  TimerReset,
   Users,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -73,46 +78,43 @@ export function Sidebar({ className }: { className?: string }) {
   const filteredLinks = navLinks.filter(link => !link.adminOnly || isAdmin);
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <div className={cn("pb-12", className)}>
-        <div className="space-y-4 py-4">
-          <div className="px-4 py-2">
-            {isMobile && (
-              <SidebarTrigger />
-            )}
-
-            <div className="flex items-center justify-center mb-4 lg:justify-start">
-              <div className="flex items-center gap-2">
-                <BookUser className="h-6 w-6 text-primary" />
-                <h1 className="text-xl font-bold">SimpleCRM</h1>
-              </div>
-            </div>
-            <div className="space-y-1">
-              {filteredLinks.map((link) => (
-                <Tooltip key={link.href} delayDuration={0}>
+    <SidebarComponent collapsible="offcanvas">
+      <SidebarHeader className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center gap-2">
+          <BookUser className="h-6 w-6 text-primary" />
+          <h1 className="text-xl font-bold">SimpleCRM</h1>
+        </div>
+        {isMobile && (
+          <SidebarTrigger />
+        )}
+      </SidebarHeader>
+      <SidebarContent>
+        <TooltipProvider delayDuration={0}>
+          <SidebarMenu>
+            {filteredLinks.map((link) => (
+              <SidebarMenuItem key={link.href}>
+                <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant={location.pathname === link.href ? "default" : "ghost"}
-                      size="sm"
-                      className={cn(
-                        "w-full justify-start",
-                        location.pathname === link.href
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted"
-                      )}
-                      onClick={() => navigate(link.href)}
+                    <SidebarMenuButton 
+                      isActive={location.pathname === link.href}
+                      onClick={() => {
+                        navigate(link.href);
+                        if (isMobile) {
+                          toggleSidebar();
+                        }
+                      }}
                     >
                       {link.icon}
-                      <span className="ms-3">{link.name}</span>
-                    </Button>
+                      <span>{link.name}</span>
+                    </SidebarMenuButton>
                   </TooltipTrigger>
                   <TooltipContent side="right">{link.name}</TooltipContent>
                 </Tooltip>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </TooltipProvider>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </TooltipProvider>
+      </SidebarContent>
+    </SidebarComponent>
   );
 }

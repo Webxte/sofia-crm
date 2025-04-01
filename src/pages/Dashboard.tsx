@@ -58,7 +58,7 @@ const Dashboard = () => {
       
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <Link to={stat.link} key={stat.title} className="block">
+          <div key={stat.title} className="block">
             <StatCard
               title={stat.title}
               value={stat.value}
@@ -66,7 +66,7 @@ const Dashboard = () => {
               viewAllLink={stat.link}
               animationDelay={index * 100}
             />
-          </Link>
+          </div>
         ))}
       </div>
       

@@ -12,7 +12,7 @@ export const Layout = () => {
   }, []);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={!window.matchMedia('(max-width: 768px)').matches}>
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar />
         <div className="flex-1 flex flex-col">

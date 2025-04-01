@@ -5,6 +5,7 @@ import { useContacts } from "@/context/ContactsContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmailFormValues } from "./emailSchema";
 import { generateDefaultEmailContent, generateDefaultEmailSubject } from "./emailUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseOrderEmailProps {
   orderId: string;
@@ -16,7 +17,7 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   const [open, setOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [loadingCustomerEmail, setLoadingCustomerEmail] = useState(false);
-  const { orders, sendOrderEmail } = useOrders();
+  const { orders } = useOrders();
   const { getContactById } = useContacts();
   const { toast } = useToast();
   
@@ -68,34 +69,46 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
         values.cc.split(',').map(email => email.trim()).filter(email => email) : 
         [];
       
-      const sent = await sendOrderEmail(
+      console.log("Sending email with data:", {
         orderId,
-        values.recipient,
-        values.subject,
-        values.message,
-        ccEmails
-      );
+        recipient: values.recipient,
+        subject: values.subject,
+        cc: ccEmails
+      });
       
-      if (sent) {
-        toast({
-          title: "Email Sent",
-          description: `Order details sent to ${values.recipient}`,
-        });
-        setOpen(false);
-      } else {
-        toast({
-          title: "Failed to Send Email",
-          description: "There was an error sending the email. Please try again.",
-          variant: "destructive",
-        });
+      const { data, error } = await supabase.functions.invoke('send-order-email', {
+        body: {
+          orderId,
+          recipient: values.recipient,
+          subject: values.subject,
+          message: values.message,
+          includeOrderDetails: true,
+          cc: ccEmails
+        }
+      });
+      
+      if (error) {
+        console.error("Error from edge function:", error);
+        throw error;
       }
+      
+      console.log("Email function response:", data);
+      
+      toast({
+        title: "Email Sent",
+        description: `Order details sent to ${values.recipient}`,
+      });
+      
+      setOpen(false);
+      return true;
     } catch (error) {
       console.error("Error sending email:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An error occurred while sending the email. Please try again.",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsSending(false);
     }
