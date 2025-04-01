@@ -193,28 +193,14 @@ serve(async (req) => {
     console.log("CC recipients:", cc);
     
     try {
-      // For testing - redirect all emails to the authenticated user
-      const adminEmail = Deno.env.get("ADMIN_EMAIL") || "tastewithgusto@gmail.com";
-      let emailTo = recipient;
-      
-      // In development mode or when targeting non-verified domains, redirect to admin email
-      const isDevEnvironment = Deno.env.get("ENVIRONMENT") !== "production";
-      
-      // Check if recipient domain is from an unverified domain
-      if (isDevEnvironment || !recipient.endsWith("@resend-verified-domain.com")) {
-        console.log(`Redirecting email from ${recipient} to ${adminEmail} (development mode or unverified domain)`);
-        emailTo = adminEmail;
-      }
-      
+      // Use the verified domain for sending emails
       const { data, error } = await resend.emails.send({
-        from: "CRM System <onboarding@resend.dev>",
-        to: emailTo,
+        from: "CRM System <info@belmorso.eu>", // Updated to use your verified domain
+        to: recipient,
         subject: subject,
         html: emailContent,
-        cc: cc.length > 0 ? cc.map(email => 
-          isDevEnvironment || !email.endsWith("@resend-verified-domain.com") ? adminEmail : email
-        ) : undefined,
-        reply_to: recipient,
+        cc: cc.length > 0 ? cc : undefined,
+        reply_to: "info@belmorso.eu", // Updated to use your verified domain
       });
       
       if (error) {

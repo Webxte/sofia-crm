@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Card, 
@@ -38,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Contacts = () => {
   const navigate = useNavigate();
@@ -47,7 +49,8 @@ const Contacts = () => {
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
   const [showAllContacts, setShowAllContacts] = useState(true);
 
   const sources = React.useMemo(() => {
@@ -65,22 +68,10 @@ const Contacts = () => {
     return Array.from(allSources).sort();
   }, [contacts]);
 
+  // Update view mode when screen size changes
   useEffect(() => {
-    if (user && user.name && !selectedSource && !isAdmin && !showAllContacts) {
-      const agentSourceExists = sources.some(source => 
-        source.toLowerCase() === user.name?.toLowerCase()
-      );
-      
-      if (agentSourceExists) {
-        const agentSource = sources.find(source => 
-          source.toLowerCase() === user.name?.toLowerCase()
-        );
-        if (agentSource) {
-          setSelectedSource(agentSource);
-        }
-      }
-    }
-  }, [user, sources, selectedSource, isAdmin, showAllContacts]);
+    setViewMode(isMobile ? "grid" : "list");
+  }, [isMobile]);
   
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -101,7 +92,8 @@ const Contacts = () => {
       if (!matchesSearch) return false;
     }
     
-    if (isAdmin || showAllContacts) {
+    // Changed logic: if showAllContacts is true, show all contacts regardless of filter
+    if (showAllContacts) {
       if (selectedSource && contact.source) {
         const contactSources = contact.source.split(',').map(s => s.trim());
         return contactSources.includes(selectedSource);
@@ -109,13 +101,14 @@ const Contacts = () => {
       return true;
     }
     
-    if (selectedSource) {
-      if (!contact.source) return false;
+    // If a source is selected, filter by it
+    if (selectedSource && contact.source) {
       const contactSources = contact.source.split(',').map(s => s.trim());
       return contactSources.includes(selectedSource);
     }
     
-    if (user?.name) {
+    // If user has a name and showAllContacts is false, filter by that name
+    if (user?.name && !showAllContacts) {
       if (!contact.source) return false;
       const contactSources = contact.source.split(',').map(s => s.trim());
       return contactSources.includes(user.name);
@@ -124,6 +117,7 @@ const Contacts = () => {
     return true;
   });
 
+  // Group contacts for grid view
   const groupedContacts = React.useMemo(() => {
     const groups: Record<string, Contact[]> = {};
     
@@ -173,14 +167,14 @@ const Contacts = () => {
   };
   
   const renderListView = () => (
-    <div className="border rounded-md">
+    <div className="border rounded-md overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Company</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
+            <TableHead className="hidden md:table-cell">Email</TableHead>
+            <TableHead className="hidden md:table-cell">Phone</TableHead>
             <TableHead>Source</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -190,11 +184,11 @@ const Contacts = () => {
             <TableRow key={contact.id}>
               <TableCell className="font-medium">{contact.fullName || "-"}</TableCell>
               <TableCell>{contact.company || "-"}</TableCell>
-              <TableCell>{contact.email || "-"}</TableCell>
-              <TableCell>{contact.phone || "-"}</TableCell>
+              <TableCell className="hidden md:table-cell">{contact.email || "-"}</TableCell>
+              <TableCell className="hidden md:table-cell">{contact.phone || "-"}</TableCell>
               <TableCell>{contact.source || "-"}</TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1">
                   <Button 
                     variant="ghost" 
                     size="sm"
@@ -306,29 +300,21 @@ const Contacts = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 items-center">
-          {!isAdmin && (
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="showAllContacts"
-                checked={showAllContacts}
-                onChange={(e) => {
-                  setShowAllContacts(e.target.checked);
-                  if (!e.target.checked && user?.name) {
-                    const agentSource = sources.find(source =>
-                      source.toLowerCase() === user.name?.toLowerCase()
-                    );
-                    setSelectedSource(agentSource || null);
-                  }
-                }}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <label htmlFor="showAllContacts" className="text-sm">
-                Show all contacts
-              </label>
-            </div>
-          )}
+        <div className="flex gap-2 items-center w-full sm:w-auto">
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <input
+              type="checkbox"
+              id="showAllContacts"
+              checked={showAllContacts}
+              onChange={(e) => {
+                setShowAllContacts(e.target.checked);
+              }}
+              className="rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="showAllContacts" className="text-sm">
+              Show all
+            </label>
+          </div>
           <Select 
             value={selectedSource || "all"} 
             onValueChange={(value) => setSelectedSource(value === "all" ? null : value)}

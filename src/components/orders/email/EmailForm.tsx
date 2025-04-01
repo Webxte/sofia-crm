@@ -1,6 +1,6 @@
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,30 +12,23 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { emailFormSchema, EmailFormValues } from "./emailSchema";
-import { DialogFooter } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
+import { EmailFormValues, emailFormSchema } from "./emailSchema";
 
 interface EmailFormProps {
   defaultValues: EmailFormValues;
   onSubmit: (values: EmailFormValues) => Promise<boolean>;
-  onCancel: () => void;
   isSending: boolean;
-  loadingCustomerEmail: boolean;
 }
 
-export const EmailForm = ({ 
-  defaultValues, 
-  onSubmit, 
-  onCancel, 
-  isSending,
-  loadingCustomerEmail
-}: EmailFormProps) => {
+export const EmailForm = ({ defaultValues, onSubmit, isSending }: EmailFormProps) => {
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailFormSchema),
     defaultValues,
   });
 
   const handleSubmit = async (values: EmailFormValues) => {
+    // Call the onSubmit handler and ignore the return value
     await onSubmit(values);
   };
 
@@ -47,13 +40,9 @@ export const EmailForm = ({
           name="recipient"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Recipient Email</FormLabel>
+              <FormLabel>To</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder={loadingCustomerEmail ? "Loading customer email..." : "customer@example.com"} 
-                  {...field} 
-                  disabled={loadingCustomerEmail}
-                />
+                <Input placeholder="Recipient email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -64,9 +53,9 @@ export const EmailForm = ({
           name="cc"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>CC (Optional)</FormLabel>
+              <FormLabel>CC (optional)</FormLabel>
               <FormControl>
-                <Input placeholder="email1@example.com, email2@example.com" {...field} />
+                <Input placeholder="Comma-separated emails" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,7 +68,7 @@ export const EmailForm = ({
             <FormItem>
               <FormLabel>Subject</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input placeholder="Email subject" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -92,20 +81,22 @@ export const EmailForm = ({
             <FormItem>
               <FormLabel>Message</FormLabel>
               <FormControl>
-                <Textarea rows={10} {...field} />
+                <Textarea
+                  placeholder="Type your message here"
+                  className="min-h-[200px]"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
+        <div className="flex justify-end pt-2">
           <Button type="submit" disabled={isSending}>
-            {isSending ? "Sending..." : "Send Email"}
+            {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Send Email
           </Button>
-        </DialogFooter>
+        </div>
       </form>
     </Form>
   );

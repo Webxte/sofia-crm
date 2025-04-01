@@ -31,18 +31,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Meetings = () => {
   const { meetings, deleteMeeting } = useMeetings();
   const { getContactById } = useContacts();
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMeetingType, setSelectedMeetingType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
+
+  // Update view mode when screen size changes
+  React.useEffect(() => {
+    setViewMode(isMobile ? "grid" : "list");
+  }, [isMobile]);
 
   const filteredMeetings = meetings
     .filter(meeting => {
@@ -51,7 +58,15 @@ const Meetings = () => {
     })
     .filter(meeting => {
       if (!searchQuery) return true;
-      return meeting.notes?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Also search in contact name/company
+      const contact = getContactById(meeting.contactId);
+      const contactName = contact?.fullName || '';
+      const companyName = contact?.company || '';
+      
+      return meeting.notes?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             companyName.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
   const sortedMeetings = [...filteredMeetings].sort((a, b) => {
@@ -136,7 +151,7 @@ const Meetings = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="list" className="w-full">
+        <Tabs defaultValue={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "list")} className="w-full">
           <TabsList className="grid w-full md:w-60 grid-cols-2">
             <TabsTrigger value="list">List</TabsTrigger>
             <TabsTrigger value="grid">Grid</TabsTrigger>

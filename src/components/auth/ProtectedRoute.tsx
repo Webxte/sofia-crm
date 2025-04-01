@@ -28,9 +28,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" replace />;
   }
 
-  // Allow everyone to access the Reports page
+  // Allow both admins and agents to access the Reports and Contacts pages
   const path = window.location.pathname;
-  if (requireAdmin && !isAdmin && path !== '/reports') {
+  if (requireAdmin && !isAdmin && path !== '/reports' && !path.startsWith('/contacts')) {
     return <Navigate to="/" replace />;
   }
 

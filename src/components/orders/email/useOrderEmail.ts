@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { EmailFormValues } from "./emailSchema";
 import { generateDefaultEmailContent, generateDefaultEmailSubject } from "./emailUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { Order } from "@/types";
 
 interface UseOrderEmailProps {
   orderId: string;
@@ -29,33 +30,11 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   
   // Generate default values for the form
   const defaultValues = {
-    recipient: customerEmail || "",
+    recipient: customerEmail || contact?.email || "",
     cc: "",
     subject: generateDefaultEmailSubject(reference),
     message: generateDefaultEmailContent(order, contactName, reference),
   };
-  
-  // Fetch customer email if not provided
-  useEffect(() => {
-    const fetchCustomerEmail = async () => {
-      if (!customerEmail && open) {
-        setLoadingCustomerEmail(true);
-        // If order exists and we have a contact with email
-        if (order && order.contactId) {
-          const contact = getContactById(order.contactId);
-          if (contact && contact.email) {
-            setDefaultValues(prev => ({
-              ...prev,
-              recipient: contact.email
-            }));
-          }
-        }
-        setLoadingCustomerEmail(false);
-      }
-    };
-    
-    fetchCustomerEmail();
-  }, [orderId, customerEmail, open, order, getContactById]);
   
   // Set default values
   const [formValues, setDefaultValues] = useState(defaultValues);
@@ -120,6 +99,8 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
     isSending,
     loadingCustomerEmail,
     formValues,
-    handleSubmit
+    handleSubmit,
+    order,
+    contact
   };
 };

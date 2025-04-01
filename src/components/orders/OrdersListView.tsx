@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Order } from "@/types";
 import { OrderStatusBadge } from "./OrderStatusBadge";
+import { OrderStatusChanger } from "./OrderStatusChanger";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { formatCurrency } from "@/utils/formatting";
@@ -17,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Edit, Mail } from "lucide-react";
 import { OrderDeleteDialog } from "./OrderDeleteDialog";
 import { EmailOrderButton } from "./EmailOrderButton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OrdersListViewProps {
   orders: Order[];
@@ -26,16 +28,17 @@ interface OrdersListViewProps {
 export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const isMobile = useIsMobile();
   
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Reference</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Date</TableHead>
-            {isAdmin && <TableHead>Agent</TableHead>}
+            {isAdmin && <TableHead className="hidden md:table-cell">Agent</TableHead>}
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Total</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -54,10 +57,14 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                 {format(new Date(order.date), "MMM d, yyyy")}
               </TableCell>
               {isAdmin && (
-                <TableCell>{order.agentName || "Unknown"}</TableCell>
+                <TableCell className="hidden md:table-cell">{order.agentName || "Unknown"}</TableCell>
               )}
               <TableCell>
-                <OrderStatusBadge status={order.status} />
+                {isMobile ? (
+                  <OrderStatusBadge status={order.status} />
+                ) : (
+                  <OrderStatusChanger orderId={order.id} currentStatus={order.status} />
+                )}
               </TableCell>
               <TableCell className="text-right">
                 {formatCurrency(order.total)}
