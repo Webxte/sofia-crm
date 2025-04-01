@@ -17,7 +17,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 
 interface EmailFormProps {
   defaultValues: EmailFormValues;
-  onSubmit: (values: EmailFormValues) => Promise<void>;
+  onSubmit: (values: EmailFormValues) => Promise<boolean>;
   onCancel: () => void;
   isSending: boolean;
   loadingCustomerEmail: boolean;
@@ -35,9 +35,13 @@ export const EmailForm = ({
     defaultValues,
   });
 
+  const handleSubmit = async (values: EmailFormValues) => {
+    await onSubmit(values);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="recipient"
