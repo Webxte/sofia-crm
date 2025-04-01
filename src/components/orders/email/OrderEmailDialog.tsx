@@ -13,9 +13,10 @@ interface OrderEmailDialogProps {
   reference?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  customerEmail?: string; // Add customerEmail as an optional prop
 }
 
-export const OrderEmailDialog = ({ orderId, reference, open, onOpenChange }: OrderEmailDialogProps) => {
+export const OrderEmailDialog = ({ orderId, reference, open, onOpenChange, customerEmail }: OrderEmailDialogProps) => {
   const { 
     formValues, 
     handleSubmit,
@@ -25,7 +26,8 @@ export const OrderEmailDialog = ({ orderId, reference, open, onOpenChange }: Ord
     contact
   } = useOrderEmail({ 
     orderId, 
-    orderReference: reference 
+    orderReference: reference,
+    customerEmail // Pass the customerEmail to useOrderEmail
   });
 
   const { toast } = useToast();

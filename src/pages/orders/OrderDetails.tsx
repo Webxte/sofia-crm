@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
@@ -9,12 +10,14 @@ import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatusChanger } from "@/components/orders/OrderStatusChanger";
 import { format } from "date-fns";
 import { formatCurrency } from "@/utils/formatting";
+import { useState } from "react";
 
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getOrderById } = useOrders();
   const { getContactById } = useContacts();
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   
   const order = id ? getOrderById(id) : undefined;
   const contact = order ? getContactById(order.contactId) : null;
@@ -41,16 +44,12 @@ const OrderDetails = () => {
           <OrderStatusBadge status={order.status} />
         </div>
         <div className="flex gap-2">
-          <OrderEmailDialog
-            orderId={order.id}
-            customerEmail={contact?.email}
-            orderReference={order.reference}
-            trigger={
-              <Button variant="outline">
-                <Mail className="mr-2 h-4 w-4" /> Send Email
-              </Button>
-            }
-          />
+          <Button 
+            variant="outline"
+            onClick={() => setEmailDialogOpen(true)}
+          >
+            <Mail className="mr-2 h-4 w-4" /> Send Email
+          </Button>
           
           <Button variant="outline" onClick={() => navigate(`/orders/${id}/edit`)}>
             <Edit className="mr-2 h-4 w-4" /> Edit
@@ -62,6 +61,14 @@ const OrderDetails = () => {
           />
         </div>
       </div>
+      
+      <OrderEmailDialog
+        orderId={order.id}
+        reference={order.reference}
+        customerEmail={contact?.email}
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="border rounded-lg p-4">
