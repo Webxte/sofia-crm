@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
@@ -46,6 +45,11 @@ const OrderDetails = () => {
             orderId={order.id}
             customerEmail={contact?.email}
             orderReference={order.reference}
+            trigger={
+              <Button variant="outline">
+                <Mail className="mr-2 h-4 w-4" /> Send Email
+              </Button>
+            }
           />
           
           <Button variant="outline" onClick={() => navigate(`/orders/${id}/edit`)}>

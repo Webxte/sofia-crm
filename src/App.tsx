@@ -68,8 +68,8 @@ export default function App() {
                       <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
                       <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
                       <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
-                      <Route path="/reports" element={<ProtectedRoute requireAdmin={true}><Reports /></ProtectedRoute>} />
-                      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                      <Route path="/settings" element={<ProtectedRoute requireAdmin={true}><Settings /></ProtectedRoute>} />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                   </Routes>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Card, 
@@ -49,8 +48,8 @@ const Contacts = () => {
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  const [showAllContacts, setShowAllContacts] = useState(false);
-  
+  const [showAllContacts, setShowAllContacts] = useState(true);
+
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
     
@@ -66,16 +65,13 @@ const Contacts = () => {
     return Array.from(allSources).sort();
   }, [contacts]);
 
-  // Find and set the agent's name as the default source filter
   useEffect(() => {
     if (user && user.name && !selectedSource && !isAdmin && !showAllContacts) {
-      // Find the agent's name in sources
       const agentSourceExists = sources.some(source => 
         source.toLowerCase() === user.name?.toLowerCase()
       );
       
       if (agentSourceExists) {
-        // Find the exact match case from the sources
         const agentSource = sources.find(source => 
           source.toLowerCase() === user.name?.toLowerCase()
         );
@@ -93,7 +89,6 @@ const Contacts = () => {
   };
   
   const filteredContacts = contacts.filter(contact => {
-    // First apply search filter regardless of other filters
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = (
@@ -106,8 +101,7 @@ const Contacts = () => {
       if (!matchesSearch) return false;
     }
     
-    // For admin users - show all contacts regardless of source
-    if (isAdmin) {
+    if (isAdmin || showAllContacts) {
       if (selectedSource && contact.source) {
         const contactSources = contact.source.split(',').map(s => s.trim());
         return contactSources.includes(selectedSource);
@@ -115,23 +109,12 @@ const Contacts = () => {
       return true;
     }
     
-    // For agents with showAllContacts enabled - show all contacts
-    if (showAllContacts) {
-      if (selectedSource && contact.source) {
-        const contactSources = contact.source.split(',').map(s => s.trim());
-        return contactSources.includes(selectedSource);
-      }
-      return true;
-    }
-    
-    // For agents with specific source selected
     if (selectedSource) {
       if (!contact.source) return false;
       const contactSources = contact.source.split(',').map(s => s.trim());
       return contactSources.includes(selectedSource);
     }
     
-    // Default for agents - show only contacts where agent is assigned
     if (user?.name) {
       if (!contact.source) return false;
       const contactSources = contact.source.split(',').map(s => s.trim());
@@ -332,16 +315,11 @@ const Contacts = () => {
                 checked={showAllContacts}
                 onChange={(e) => {
                   setShowAllContacts(e.target.checked);
-                  if (e.target.checked) {
-                    // If showing all contacts, maintain any existing source filter
-                  } else {
-                    // If unchecking, set the source back to agent's name
-                    if (user?.name) {
-                      const agentSource = sources.find(source =>
-                        source.toLowerCase() === user.name?.toLowerCase()
-                      );
-                      setSelectedSource(agentSource || null);
-                    }
+                  if (!e.target.checked && user?.name) {
+                    const agentSource = sources.find(source =>
+                      source.toLowerCase() === user.name?.toLowerCase()
+                    );
+                    setSelectedSource(agentSource || null);
                   }
                 }}
                 className="rounded border-gray-300 text-primary focus:ring-primary"

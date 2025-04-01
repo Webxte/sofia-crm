@@ -28,7 +28,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && !isAdmin) {
+  // Allow everyone to access the Reports page
+  const path = window.location.pathname;
+  if (requireAdmin && !isAdmin && path !== '/reports') {
     return <Navigate to="/" replace />;
   }
 

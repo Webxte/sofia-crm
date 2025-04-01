@@ -74,7 +74,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                   <Button 
                     variant="outline" 
                     size="icon"
-                    onClick={() => navigate(`/orders/edit/${order.id}`)}
+                    onClick={() => navigate(`/orders/${order.id}/edit`)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -88,4 +88,4 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
       </Table>
     </div>
   );
-};
+}

@@ -74,8 +74,10 @@ export function Sidebar({ className }: { className?: string }) {
   const isMobile = useIsMobile();
   const { toggleSidebar } = useSidebar();
 
-  // Filter links based on user role
-  const filteredLinks = navLinks.filter(link => !link.adminOnly || isAdmin);
+  // Filter links based on user role - remove adminOnly restriction for Reports
+  const filteredLinks = navLinks.filter(link => 
+    !link.adminOnly || isAdmin || link.name === "Reports"
+  );
 
   return (
     <SidebarComponent collapsible="offcanvas">
