@@ -47,16 +47,19 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
       }
       
       if (data) {
+        // TypeScript is unaware of the new fields, so we need to type assert
+        const dbData = data as any;
+        
         const formattedSettings: Settings = {
-          id: data.id,
-          defaultTermsAndConditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.defaultTermsAndConditions,
-          companyName: data.company_name || DEFAULT_SETTINGS.companyName,
-          companyAddress: data.company_address || DEFAULT_SETTINGS.companyAddress,
-          companyPhone: data.company_phone || DEFAULT_SETTINGS.companyPhone,
-          companyEmail: data.company_email || DEFAULT_SETTINGS.companyEmail,
-          defaultVatRate: data.default_vat_rate || DEFAULT_SETTINGS.defaultVatRate,
-          defaultEmailSubject: data.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
-          defaultEmailMessage: data.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
+          id: dbData.id,
+          defaultTermsAndConditions: dbData.default_terms_and_conditions || DEFAULT_SETTINGS.defaultTermsAndConditions,
+          companyName: dbData.company_name || DEFAULT_SETTINGS.companyName,
+          companyAddress: dbData.company_address || DEFAULT_SETTINGS.companyAddress,
+          companyPhone: dbData.company_phone || DEFAULT_SETTINGS.companyPhone,
+          companyEmail: dbData.company_email || DEFAULT_SETTINGS.companyEmail,
+          defaultVatRate: dbData.default_vat_rate || DEFAULT_SETTINGS.defaultVatRate,
+          defaultEmailSubject: dbData.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
+          defaultEmailMessage: dbData.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
         };
         
         setSettings(formattedSettings);
@@ -99,16 +102,19 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         return;
       }
       
+      // TypeScript is unaware of the new fields, so we need to type assert
+      const dbData = data as any;
+      
       const newSettings: Settings = {
-        id: data.id,
-        defaultTermsAndConditions: data.default_terms_and_conditions,
-        companyName: data.company_name,
-        companyAddress: data.company_address,
-        companyPhone: data.company_phone,
-        companyEmail: data.company_email,
-        defaultVatRate: data.default_vat_rate,
-        defaultEmailSubject: data.default_email_subject,
-        defaultEmailMessage: data.default_email_message,
+        id: dbData.id,
+        defaultTermsAndConditions: dbData.default_terms_and_conditions,
+        companyName: dbData.company_name,
+        companyAddress: dbData.company_address,
+        companyPhone: dbData.company_phone,
+        companyEmail: dbData.company_email,
+        defaultVatRate: dbData.default_vat_rate,
+        defaultEmailSubject: dbData.default_email_subject,
+        defaultEmailMessage: dbData.default_email_message,
       };
       
       setSettings(newSettings);
