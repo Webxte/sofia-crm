@@ -11,18 +11,19 @@ import { ContactsHeader } from "@/components/contacts/ContactsHeader";
 import { ContactsFilter } from "@/components/contacts/ContactsFilter";
 import { ContactsList } from "@/components/contacts/ContactsList";
 import { ContactsGrid } from "@/components/contacts/ContactsGrid";
+import { useAuth } from "@/context/AuthContext";
 
 const Contacts = () => {
   const navigate = useNavigate();
   const { contacts, refreshContacts } = useContacts();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
-  // We'll set showAllContacts to true by default and remove the toggle
-  const [showAllContacts] = useState(true); // Always show all contacts
+  const [showAllContacts, setShowAllContacts] = useState(false); // Show only agent's contacts by default
 
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
@@ -51,6 +52,11 @@ const Contacts = () => {
   };
   
   const filteredContacts = contacts.filter(contact => {
+    // Filter by agent ID first if not showing all contacts
+    if (!showAllContacts && user && user.id !== contact.agentId) {
+      return false;
+    }
+    
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -70,7 +76,6 @@ const Contacts = () => {
       return contactSources.includes(selectedSource);
     }
     
-    // Show all contacts by default
     return true;
   });
 
@@ -131,7 +136,7 @@ const Contacts = () => {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         showAllContacts={showAllContacts}
-        onShowAllContactsChange={() => {}} // No-op since we always show all contacts
+        onShowAllContactsChange={setShowAllContacts}
         selectedSource={selectedSource}
         onSourceChange={setSelectedSource}
         sources={sources}
