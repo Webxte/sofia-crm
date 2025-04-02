@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
-import { useAuth } from "@/context/AuthContext";
 import { Contact } from "@/types";
 import { EmptyState } from "@/components/EmptyState";
 import { Users } from "lucide-react";
@@ -16,14 +15,14 @@ import { ContactsGrid } from "@/components/contacts/ContactsGrid";
 const Contacts = () => {
   const navigate = useNavigate();
   const { contacts, refreshContacts } = useContacts();
-  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
-  const [showAllContacts, setShowAllContacts] = useState(true);
+  // We'll set showAllContacts to true by default and remove the toggle
+  const [showAllContacts] = useState(true); // Always show all contacts
 
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
@@ -52,6 +51,7 @@ const Contacts = () => {
   };
   
   const filteredContacts = contacts.filter(contact => {
+    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = (
@@ -64,28 +64,13 @@ const Contacts = () => {
       if (!matchesSearch) return false;
     }
     
-    // Changed logic: if showAllContacts is true, show all contacts regardless of filter
-    if (showAllContacts) {
-      if (selectedSource && contact.source) {
-        const contactSources = contact.source.split(',').map(s => s.trim());
-        return contactSources.includes(selectedSource);
-      }
-      return true;
-    }
-    
-    // If a source is selected, filter by it
+    // Filter by source if selected
     if (selectedSource && contact.source) {
       const contactSources = contact.source.split(',').map(s => s.trim());
       return contactSources.includes(selectedSource);
     }
     
-    // If user has a name and showAllContacts is false, filter by that name
-    if (user?.name && !showAllContacts) {
-      if (!contact.source) return false;
-      const contactSources = contact.source.split(',').map(s => s.trim());
-      return contactSources.includes(user.name);
-    }
-    
+    // Show all contacts by default
     return true;
   });
 
@@ -146,7 +131,7 @@ const Contacts = () => {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         showAllContacts={showAllContacts}
-        onShowAllContactsChange={setShowAllContacts}
+        onShowAllContactsChange={() => {}} // No-op since we always show all contacts
         selectedSource={selectedSource}
         onSourceChange={setSelectedSource}
         sources={sources}

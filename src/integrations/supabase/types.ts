@@ -311,6 +311,8 @@ export type Database = {
           company_name: string | null
           company_phone: string | null
           created_at: string
+          default_email_message: string | null
+          default_email_subject: string | null
           default_terms_and_conditions: string | null
           default_vat_rate: number | null
           id: string
@@ -322,6 +324,8 @@ export type Database = {
           company_name?: string | null
           company_phone?: string | null
           created_at?: string
+          default_email_message?: string | null
+          default_email_subject?: string | null
           default_terms_and_conditions?: string | null
           default_vat_rate?: number | null
           id?: string
@@ -333,6 +337,8 @@ export type Database = {
           company_name?: string | null
           company_phone?: string | null
           created_at?: string
+          default_email_message?: string | null
+          default_email_subject?: string | null
           default_terms_and_conditions?: string | null
           default_vat_rate?: number | null
           id?: string

@@ -21,8 +21,6 @@ interface ContactsFilterProps {
 export const ContactsFilter = ({
   searchQuery,
   onSearchChange,
-  showAllContacts,
-  onShowAllContactsChange,
   selectedSource,
   onSourceChange,
   sources,
@@ -43,20 +41,6 @@ export const ContactsFilter = ({
         />
       </div>
       <div className="flex gap-2 items-center w-full sm:w-auto">
-        <div className="flex items-center gap-2 whitespace-nowrap">
-          <input
-            type="checkbox"
-            id="showAllContacts"
-            checked={showAllContacts}
-            onChange={(e) => {
-              onShowAllContactsChange(e.target.checked);
-            }}
-            className="rounded border-gray-300 text-primary focus:ring-primary"
-          />
-          <label htmlFor="showAllContacts" className="text-sm">
-            Show all
-          </label>
-        </div>
         <Select 
           value={selectedSource || "all"} 
           onValueChange={(value) => onSourceChange(value === "all" ? null : value)}
