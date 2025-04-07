@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useContacts } from "@/context/ContactsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Contact } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 interface ContactDeleteDialogProps {
   contact: Contact;
@@ -26,6 +27,7 @@ export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { deleteContact } = useContacts();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const displayName = contact.company ? 
     `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
@@ -42,6 +44,11 @@ export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
           description: "The contact has been permanently deleted.",
         });
         setIsOpen(false);
+        
+        // If we're on the contact details page, navigate back to the contacts list
+        if (window.location.pathname.includes(`/contacts/${contact.id}`)) {
+          navigate('/contacts');
+        }
       } else {
         throw new Error("Failed to delete contact");
       }
@@ -49,7 +56,7 @@ export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
       console.error("Error deleting contact:", error);
       toast({
         title: "Error",
-        description: "Failed to delete contact. This may be because you don't have permission to delete contacts created by other agents.",
+        description: "Failed to delete contact. This contact may have associated meetings or orders that need to be deleted first.",
         variant: "destructive",
       });
     } finally {
@@ -71,6 +78,10 @@ export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
           <AlertDialogDescription>
             Are you sure you want to delete {displayName}? This action cannot be undone.
             All associated meetings, tasks, and orders will remain but will no longer be linked to this contact.
+            <p className="mt-2 font-medium text-red-500">
+              Note: You cannot delete contacts that have associated meetings or orders. 
+              Please delete those items first.
+            </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

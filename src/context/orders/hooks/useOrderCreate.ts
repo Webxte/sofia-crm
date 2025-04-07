@@ -18,7 +18,7 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
           description: "You must be logged in to add orders",
           variant: "destructive",
         });
-        return;
+        return null;
       }
       
       // Add agent information
@@ -57,7 +57,7 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
           description: "Failed to add order",
           variant: "destructive",
         });
-        return;
+        return null;
       }
       
       // Insert all order items
@@ -86,7 +86,7 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
           description: "Failed to add order items",
           variant: "destructive",
         });
-        return;
+        return null;
       }
       
       // Refresh orders to get the complete data including items
@@ -96,6 +96,8 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
         title: "Success",
         description: "Order added successfully",
       });
+      
+      return orderResult;
     } catch (err) {
       console.error('Unexpected error adding order:', err);
       toast({
@@ -103,6 +105,7 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+      return null;
     }
   };
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays, isSameDay, isSameMonth, subMonths, addMonths, startOfWeek, startOfMonth, endOfWeek, endOfMonth, eachDayOfInterval } from "date-fns";
@@ -54,11 +53,9 @@ const Calendar = () => {
   const { getContactById } = useContacts();
   const navigate = useNavigate();
 
-  // Combine meetings, follow-ups, and tasks into events
   useEffect(() => {
     const events: CalendarEvent[] = [];
     
-    // Add meetings
     meetings.forEach(meeting => {
       const contact = getContactById(meeting.contactId);
       events.push({
@@ -71,7 +68,6 @@ const Calendar = () => {
         original: meeting
       });
       
-      // Add follow-ups if scheduled
       if (meeting.followUpScheduled && meeting.followUpDate) {
         events.push({
           id: `followup-${meeting.id}`,
@@ -84,7 +80,6 @@ const Calendar = () => {
       }
     });
     
-    // Add tasks
     tasks.forEach(task => {
       if (task.dueDate) {
         const contact = task.contactId ? getContactById(task.contactId) : undefined;
@@ -100,11 +95,9 @@ const Calendar = () => {
       }
     });
     
-    // Filter events by date and event type
     filterEventsByDate(events);
   }, [meetings, tasks, date, view, eventFilter, getContactById]);
 
-  // Calculate calendar days based on view
   useEffect(() => {
     let days: Date[] = [];
     
@@ -123,17 +116,14 @@ const Calendar = () => {
     setCalendarDays(days);
   }, [date, view]);
 
-  // Filter events by selected date and view
   const filterEventsByDate = (allEvents: CalendarEvent[]) => {
     let filteredEvents: CalendarEvent[] = [];
     
     if (view === 'month') {
-      // For month view, show events for the selected day
       filteredEvents = allEvents.filter(event => 
         isSameDay(new Date(event.date), date)
       );
     } else if (view === 'week') {
-      // For week view, show events within the week
       const startDate = startOfWeek(date, { weekStartsOn: 0 });
       const endDate = endOfWeek(date, { weekStartsOn: 0 });
       filteredEvents = allEvents.filter(event => {
@@ -141,13 +131,11 @@ const Calendar = () => {
         return eventDate >= startDate && eventDate <= endDate;
       });
     } else if (view === 'day') {
-      // For day view, show events for the selected day
       filteredEvents = allEvents.filter(event => 
         isSameDay(new Date(event.date), date)
       );
     }
     
-    // Apply event type filter if not 'all'
     if (eventFilter !== 'all') {
       filteredEvents = filteredEvents.filter(event => event.type === eventFilter);
     }
@@ -155,14 +143,12 @@ const Calendar = () => {
     setDisplayedEvents(filteredEvents);
   };
 
-  // Handle date change
   const handleDateChange = (newDate: Date | undefined) => {
     if (newDate) {
       setDate(newDate);
     }
   };
 
-  // Navigate to previous period
   const handlePrevPeriod = () => {
     if (view === 'month') {
       setDate(prevDate => subMonths(prevDate, 1));
@@ -173,7 +159,6 @@ const Calendar = () => {
     }
   };
 
-  // Navigate to next period
   const handleNextPeriod = () => {
     if (view === 'month') {
       setDate(prevDate => addMonths(prevDate, 1));
@@ -184,12 +169,10 @@ const Calendar = () => {
     }
   };
 
-  // Navigate to today
   const handleToday = () => {
     setDate(new Date());
   };
 
-  // Get event type color
   const getEventTypeColor = (type: EventType) => {
     switch (type) {
       case 'meeting':
@@ -203,7 +186,6 @@ const Calendar = () => {
     }
   };
 
-  // Create day content for calendar
   const getDayContent = (day: Date) => {
     const dayEvents = [
       ...meetings.filter(meeting => isSameDay(new Date(meeting.date), day)),
@@ -220,7 +202,6 @@ const Calendar = () => {
     );
   };
 
-  // Navigate to appropriate form based on event type
   const handleAddEvent = (type: EventType) => {
     switch (type) {
       case 'meeting':
@@ -234,7 +215,6 @@ const Calendar = () => {
     }
   };
 
-  // Navigate to event details
   const handleEventClick = (event: CalendarEvent) => {
     if (event.type === 'meeting' || event.type === 'followUp') {
       navigate(`/meetings/edit/${event.id.replace('followup-', '')}`);
@@ -416,7 +396,11 @@ const Calendar = () => {
           <Card 
             key={event.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleEventClick(event)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleEventClick(event);
+            }}
           >
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-start">

@@ -371,19 +371,22 @@ ${settings.companyEmail}`;
       };
       
       if (isEditing && order) {
-        updateOrder(order.id, orderData);
+        await updateOrder(order.id, orderData);
         toast({
           title: "Success",
           description: "Order updated successfully",
         });
+        navigate("/orders");
       } else {
-        addOrder(orderData);
-        toast({
-          title: "Success",
-          description: "Order created successfully",
-        });
+        const result = await addOrder(orderData);
+        if (result) {
+          toast({
+            title: "Success",
+            description: "Order created successfully",
+          });
+          navigate("/orders");
+        }
       }
-      navigate("/orders");
     } catch (error) {
       console.error(error);
       toast({
@@ -614,7 +617,7 @@ ${settings.companyEmail}`;
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
                         <Input 
                           type="number" 
-                          min="1" 
+                          min="0" 
                           step="1"
                           value={item.quantity}
                           onChange={(e) => updateOrderItem(index, 'quantity', parseInt(e.target.value) || 1)}
