@@ -1,3 +1,4 @@
+
 // Contact types
 export interface Contact {
   id: string;
@@ -116,4 +117,8 @@ export interface Settings {
   defaultVatRate: number;
   defaultEmailSubject?: string;
   defaultEmailMessage?: string;
+  // New fields for contact email templates
+  defaultContactEmailMessage?: string;
+  catalogUrl?: string;
+  priceListUrl?: string;
 }

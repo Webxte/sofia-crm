@@ -6,18 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
+import { Settings } from "@/types";
 
 interface ContactEmailTemplatesProps {
-  initialSettings: {
-    defaultContactEmailMessage?: string;
-    catalogUrl?: string;
-    priceListUrl?: string;
-  };
-  onSubmit: (data: { 
-    defaultContactEmailMessage: string;
-    catalogUrl: string;
-    priceListUrl: string;
-  }) => Promise<void>;
+  initialSettings: Settings;
+  onSubmit: (data: Partial<Settings>) => Promise<void>;
 }
 
 const ContactEmailTemplates: React.FC<ContactEmailTemplatesProps> = ({ 

@@ -14,6 +14,9 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultVatRate: 0,
   defaultEmailSubject: "Order Confirmation - Ref: [Reference]",
   defaultEmailMessage: "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business.",
+  defaultContactEmailMessage: "Dear [Name],\n\nThank you for your time during our recent meeting. As discussed, I've attached the links to our product catalog and price list.\n\nCatalog: [Catalog URL]\nPrice List: [Price List URL]\n\nPlease don't hesitate to reach out if you have any questions.\n\nBest regards,\n[Company Name]",
+  catalogUrl: "",
+  priceListUrl: "",
 };
 
 export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean) => {
@@ -60,6 +63,9 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           defaultVatRate: dbData.default_vat_rate || DEFAULT_SETTINGS.defaultVatRate,
           defaultEmailSubject: dbData.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
           defaultEmailMessage: dbData.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
+          defaultContactEmailMessage: dbData.default_contact_email_message || DEFAULT_SETTINGS.defaultContactEmailMessage,
+          catalogUrl: dbData.catalog_url || DEFAULT_SETTINGS.catalogUrl,
+          priceListUrl: dbData.price_list_url || DEFAULT_SETTINGS.priceListUrl,
         };
         
         setSettings(formattedSettings);
@@ -89,6 +95,9 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         default_vat_rate: DEFAULT_SETTINGS.defaultVatRate,
         default_email_subject: DEFAULT_SETTINGS.defaultEmailSubject,
         default_email_message: DEFAULT_SETTINGS.defaultEmailMessage,
+        default_contact_email_message: DEFAULT_SETTINGS.defaultContactEmailMessage,
+        catalog_url: DEFAULT_SETTINGS.catalogUrl,
+        price_list_url: DEFAULT_SETTINGS.priceListUrl,
       };
       
       const { data, error } = await supabase
@@ -115,6 +124,9 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         defaultVatRate: dbData.default_vat_rate,
         defaultEmailSubject: dbData.default_email_subject,
         defaultEmailMessage: dbData.default_email_message,
+        defaultContactEmailMessage: dbData.default_contact_email_message,
+        catalogUrl: dbData.catalog_url,
+        priceListUrl: dbData.price_list_url,
       };
       
       setSettings(newSettings);
@@ -152,6 +164,12 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         updateData.default_email_subject = settingsData.defaultEmailSubject;
       if (settingsData.defaultEmailMessage !== undefined)
         updateData.default_email_message = settingsData.defaultEmailMessage;
+      if (settingsData.defaultContactEmailMessage !== undefined)
+        updateData.default_contact_email_message = settingsData.defaultContactEmailMessage;
+      if (settingsData.catalogUrl !== undefined)
+        updateData.catalog_url = settingsData.catalogUrl;
+      if (settingsData.priceListUrl !== undefined)
+        updateData.price_list_url = settingsData.priceListUrl;
       
       updateData.updated_at = new Date().toISOString();
       
