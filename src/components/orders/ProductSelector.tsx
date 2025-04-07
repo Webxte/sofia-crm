@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useProducts } from "@/context/products/ProductsContext";
 import { FormControl } from "@/components/ui/form";
@@ -170,11 +171,11 @@ export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSele
           <Input
             ref={quantityInputRef}
             type="number"
-            min="1"
+            min="0"
             className="w-24"
             placeholder="Qty"
             value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
             onKeyDown={handleKeyDown}
           />
         </FormControl>
