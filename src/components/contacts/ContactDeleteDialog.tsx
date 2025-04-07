@@ -34,16 +34,22 @@ export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await deleteContact(contact.id);
-      toast({
-        title: "Contact deleted",
-        description: "The contact has been permanently deleted.",
-      });
-      setIsOpen(false);
+      const success = await deleteContact(contact.id);
+      
+      if (success) {
+        toast({
+          title: "Contact deleted",
+          description: "The contact has been permanently deleted.",
+        });
+        setIsOpen(false);
+      } else {
+        throw new Error("Failed to delete contact");
+      }
     } catch (error) {
+      console.error("Error deleting contact:", error);
       toast({
         title: "Error",
-        description: "Failed to delete contact. Please try again.",
+        description: "Failed to delete contact. This may be because you don't have permission to delete contacts created by other agents.",
         variant: "destructive",
       });
     } finally {

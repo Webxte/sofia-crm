@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -89,7 +88,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   
   const { contacts, getContactById } = useContacts();
   const { products, getProductByCode } = useProducts();
-  const { addOrder, updateOrder, sendOrderEmail } = useOrders();
+  const { addOrder, updateOrder, sendOrderEmail, generateOrderReference } = useOrders();
   const { settings } = useSettings();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -108,6 +107,13 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     resolver: zodResolver(orderSchema),
     defaultValues,
   });
+
+  useEffect(() => {
+    if (!isEditing && !form.getValues("reference")) {
+      const newReference = generateOrderReference();
+      form.setValue("reference", newReference);
+    }
+  }, [isEditing, form, generateOrderReference]);
 
   useEffect(() => {
     if (newItem.code) {
@@ -135,7 +141,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     }
   }, [form.watch("contactId"), getContactById]);
 
-  // Fix: changed parameter name from product to productToAdd to avoid conflict
   const addItemToOrder = (productToAdd = null) => {
     if (productToAdd) {
       const orderItem: OrderItem = {
@@ -217,16 +222,13 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     setOrderItems(prev => prev.filter((_, i) => i !== index));
   };
 
-  // New function to update an order item
   const updateOrderItem = (index: number, field: string, value: any) => {
     setOrderItems(prev => {
       const updatedItems = [...prev];
       const item = { ...updatedItems[index] };
       
-      // Update the specified field
       item[field] = value;
       
-      // Recalculate subtotal if price or quantity changes
       if (field === 'price' || field === 'quantity') {
         item.subtotal = item.price * item.quantity;
       }

@@ -23,7 +23,8 @@ const Contacts = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
-  const [showAllContacts, setShowAllContacts] = useState(false); // Show only agent's contacts by default
+  // Setting showAllContacts to false by default to filter by agent's contacts
+  const [showAllContacts, setShowAllContacts] = useState(false);
 
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
@@ -153,7 +154,9 @@ const Contacts = () => {
           description={
             searchQuery || selectedSource
               ? "Try adjusting your search or filter"
-              : "Get started by adding your first contact"
+              : showAllContacts 
+                ? "Get started by adding your first contact" 
+                : "You don't have any contacts assigned to you. Try showing all contacts or add a new one."
           }
           actionText="Add Contact"
           actionLink="/contacts/new"
