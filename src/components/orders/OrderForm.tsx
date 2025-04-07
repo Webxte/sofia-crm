@@ -315,14 +315,14 @@ ${settings.companyEmail}`;
     setIsSendingEmail(true);
     
     try {
-      const success = await sendOrderEmail(
+      const emailSent = await sendOrderEmail(
         order.id,
         emailData.recipient,
         emailData.subject,
         emailData.message
       );
       
-      if (success) {
+      if (emailSent) {
         toast({
           title: "Email Sent",
           description: `Order sent to ${emailData.recipient}`,
@@ -344,11 +344,12 @@ ${settings.companyEmail}`;
 
   const onSubmit = async (data: OrderFormValues) => {
     if (orderItems.length === 0) {
-      return toast({
+      toast({
         title: "Error",
         description: "Please add at least one item to the order",
         variant: "destructive",
       });
+      return;
     }
     
     setIsSubmitting(true);
@@ -378,14 +379,12 @@ ${settings.companyEmail}`;
         });
         navigate("/orders");
       } else {
-        const result = await addOrder(orderData);
-        if (result) {
-          toast({
-            title: "Success",
-            description: "Order created successfully",
-          });
-          navigate("/orders");
-        }
+        await addOrder(orderData);
+        toast({
+          title: "Success",
+          description: "Order created successfully",
+        });
+        navigate("/orders");
       }
     } catch (error) {
       console.error(error);
