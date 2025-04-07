@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { 
     orders, 
     loading, 
@@ -27,6 +27,11 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated]);
 
+  // Create a function that passes user data from the component level
+  const generateOrderReferenceWithUserInfo = () => {
+    return generateOrderReference(orders, user?.email, user?.id);
+  };
+
   return (
     <OrdersContext.Provider
       value={{
@@ -39,7 +44,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         getOrdersByContactId: (contactId: string) => getOrdersByContactId(orders, contactId),
         createOrderItem,
         sendOrderEmail,
-        generateOrderReference: () => generateOrderReference(orders, useAuth().user?.email, useAuth().user?.id),
+        generateOrderReference: generateOrderReferenceWithUserInfo,
         refreshOrders,
       }}
     >
