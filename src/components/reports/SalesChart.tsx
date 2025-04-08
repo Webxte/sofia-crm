@@ -30,8 +30,13 @@ const SalesChart: React.FC<SalesChartProps> = ({ orders }) => {
   }, {});
   
   const salesChartData = Object.values(salesData).sort((a, b) => {
-    const aDate = new Date(a.name);
-    const bDate = new Date(b.name);
+    // Ensure we're comparing Date objects properly by parsing the month-year format
+    const aMonthYear = a.name.split(' ');
+    const bMonthYear = b.name.split(' ');
+    
+    const aDate = new Date(`${aMonthYear[0]} 1, ${aMonthYear[1]}`);
+    const bDate = new Date(`${bMonthYear[0]} 1, ${bMonthYear[1]}`);
+    
     return aDate.getTime() - bDate.getTime();
   });
   
