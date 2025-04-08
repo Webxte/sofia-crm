@@ -1,14 +1,3 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Contact } from "@/types";
-import { useContacts } from "@/context/ContactsContext";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -18,317 +7,230 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Contact } from "@/types";
+import { useContacts } from "@/context/ContactsContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
-// Define the schema for contact validation
-const contactSchema = z.object({
-  fullName: z.string().optional(),
+const contactFormSchema = z.object({
+  fullName: z.string().min(2, {
+    message: "Full name must be at least 2 characters.",
+  }),
   company: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
+  position: z.string().optional(),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }).optional(),
   phone: z.string().optional(),
   mobile: z.string().optional(),
   address: z.string().optional(),
-  position: z.string().optional(),
-  notes: z.string().optional(),
   source: z.string().optional(),
-}).refine(data => data.fullName || data.company, {
-  message: "Either full name or company is required",
-  path: ["fullName"],
+  notes: z.string().optional(),
 });
 
-type ContactFormValues = z.infer<typeof contactSchema>;
+type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 interface ContactFormProps {
-  contact?: Contact;
-  isEditing?: boolean;
+  initialData?: Partial<ContactFormValues>;
 }
 
-const ContactForm = ({ contact, isEditing = false }: ContactFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tags, setTags] = useState<string[]>(contact?.source ? contact.source.split(',').map(tag => tag.trim()).filter(Boolean) : []);
-  const [tagInput, setTagInput] = useState("");
+const ContactForm = ({ initialData }: ContactFormProps) => {
   const { addContact, updateContact } = useContacts();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  // User tag
-  const userTag = user?.name || "";
   
-  // Initialize with user tag if creating a new contact and user has a name
-  useEffect(() => {
-    if (!isEditing && userTag && tags.length === 0) {
-      setTags([userTag]);
-    }
-  }, [isEditing, userTag, tags]);
-
-  // Update the form when tags change
-  useEffect(() => {
-    form.setValue("source", tags.join(", "));
-  }, [tags]);
-
-  const defaultValues: ContactFormValues = {
-    fullName: contact?.fullName || "",
-    company: contact?.company || "",
-    email: contact?.email || "",
-    phone: contact?.phone || "",
-    mobile: contact?.mobile || "",
-    address: contact?.address || "",
-    position: contact?.position || "",
-    notes: contact?.notes || "",
-    source: tags.join(", "),
-  };
-
   const form = useForm<ContactFormValues>({
-    resolver: zodResolver(contactSchema),
-    defaultValues,
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      fullName: initialData?.fullName || "",
+      company: initialData?.company || "",
+      position: initialData?.position || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
+      mobile: initialData?.mobile || "",
+      address: initialData?.address || "",
+      source: initialData?.source || "",
+      notes: initialData?.notes || "",
+    },
   });
+  
+  useEffect(() => {
+    // Update form values when initialData changes
+    form.reset(initialData);
+  }, [initialData, form.reset]);
 
-  const addTag = () => {
-    if (tagInput.trim() !== "" && !tags.includes(tagInput.trim())) {
-      const newTags = [...tags, tagInput.trim()];
-      setTags(newTags);
-      form.setValue("source", newTags.join(", "));
-      setTagInput("");
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    const newTags = tags.filter(tag => tag !== tagToRemove);
-    setTags(newTags);
-    form.setValue("source", newTags.join(", "));
-  };
-
-  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === "," || e.key === " ") {
-      e.preventDefault();
-      addTag();
-    }
-  };
-
-  const onSubmit = async (data: ContactFormValues) => {
-    setIsSubmitting(true);
-    
+  const onSubmit = async (values: ContactFormValues) => {
     try {
-      // Ensure tags from the UI are saved to the source field
-      data.source = tags.join(", ");
-      
-      if (isEditing && contact) {
-        await updateContact(contact.id, data);
+      if (!user) {
         toast({
-          title: "Success",
-          description: "Contact updated successfully",
+          title: "Error",
+          description: "You must be logged in to add contacts",
+          variant: "destructive",
         });
-      } else {
-        // For new contacts, need to add createdAt and updatedAt
-        const contactData = {
-          ...data, 
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        await addContact(contactData);
-        toast({
-          title: "Success",
-          description: "Contact created successfully",
-        });
+        return;
       }
+      
+      // Add agent information
+      const agentData = {
+        agentId: user.id,
+        agentName: user.name || ''
+      };
+      
+      await addContact({ ...values, ...agentData });
+      toast({
+        title: "Success",
+        description: "Contact created successfully!",
+      });
       navigate("/contacts");
     } catch (error) {
-      console.error(error);
       toast({
         title: "Error",
-        description: "Something went wrong",
+        description: "Failed to create contact. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="mr-2"
-          onClick={() => navigate("/contacts")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {isEditing ? "Edit Contact" : "Add Contact"}
-        </h1>
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Acme Inc." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="john@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1 (555) 123-4567" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="mobile"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mobile</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1 (555) 987-6543" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="position"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Position</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Sales Manager" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <FormLabel>Tags (Agents, Sources, etc.)</FormLabel>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {tags.map((tag, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1 p-1">
-                  {tag}
-                  <button 
-                    type="button" 
-                    onClick={() => removeTag(tag)}
-                    className="rounded-full p-1 hover:bg-gray-200"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add tag (type and press Enter, comma, or space)"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleTagInputKeyDown}
-                className="flex-1"
-              />
-              <Button type="button" onClick={addTag} variant="secondary">
-                Add Tag
-              </Button>
-            </div>
-          </div>
-
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="address"
+            name="fullName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="123 Main St, City, Country" {...field} />
+                  <Input placeholder="John Doe" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
-            name="notes"
+            name="company"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Notes</FormLabel>
+                <FormLabel>Company</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Add any additional notes..." 
-                    className="min-h-32" 
-                    {...field} 
-                  />
+                  <Input placeholder="Acme Corp" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          <div className="flex justify-end gap-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => navigate("/contacts")}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : isEditing ? "Update Contact" : "Add Contact"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="position"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Position</FormLabel>
+                <FormControl>
+                  <Input placeholder="Software Engineer" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="johndoe@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1 (555) 123-4567" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="mobile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mobile</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1 (555) 987-6543" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Input placeholder="123 Main St, Anytown, USA" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="source"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Source</FormLabel>
+                <FormControl>
+                  <Input placeholder="LinkedIn, Referral, etc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Additional information" className="resize-none" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Create Contact</Button>
+      </form>
+    </Form>
   );
 };
 

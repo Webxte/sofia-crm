@@ -1,27 +1,65 @@
 
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
 import { useTasks } from "@/context/TasksContext";
-import { format, subMonths } from "date-fns";
 import { formatCurrency } from "@/utils/formatting";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Colors for charts
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+import { format, subMonths } from "date-fns";
 
 const AgentReports = () => {
   const [timeFrame, setTimeFrame] = useState<"30" | "90" | "365" | "all">("30");
-  const [selectedAgent, setSelectedAgent] = useState<string>("all");
-  
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const { meetings } = useMeetings();
   const { orders } = useOrders();
   const { contacts } = useContacts();
   const { tasks } = useTasks();
+  const [agents, setAgents] = useState<{id: string, name: string}[]>([]);
+  
+  // Extract unique agents from data
+  useEffect(() => {
+    const uniqueAgents = new Map<string, {id: string, name: string}>();
+    
+    // Get agents from meetings
+    meetings.forEach(meeting => {
+      if (meeting.agentId && meeting.agentName) {
+        uniqueAgents.set(meeting.agentId, {id: meeting.agentId, name: meeting.agentName});
+      }
+    });
+    
+    // Get agents from orders
+    orders.forEach(order => {
+      if (order.agentId && order.agentName) {
+        uniqueAgents.set(order.agentId, {id: order.agentId, name: order.agentName});
+      }
+    });
+    
+    // Get agents from contacts
+    contacts.forEach(contact => {
+      if (contact.agentId && contact.agentName) {
+        uniqueAgents.set(contact.agentId, {id: contact.agentId, name: contact.agentName});
+      }
+    });
+    
+    // Get agents from tasks
+    tasks.forEach(task => {
+      if (task.agentId && task.agentName) {
+        uniqueAgents.set(task.agentId, {id: task.agentId, name: task.agentName});
+      }
+    });
+    
+    const agentsList = Array.from(uniqueAgents.values());
+    setAgents(agentsList);
+    
+    // Set first agent as default if there are agents and none is selected
+    if (agentsList.length > 0 && !selectedAgent) {
+      setSelectedAgent(agentsList[0].id);
+    }
+  }, [meetings, orders, contacts, tasks, selectedAgent]);
   
   // Get date threshold based on selected time frame
   const getDateThreshold = () => {
@@ -32,134 +70,112 @@ const AgentReports = () => {
   
   const dateThreshold = getDateThreshold();
   
-  // Get unique agents from data
-  const agents = useMemo(() => {
-    const agentSet = new Set<string>();
-    
-    // Add agents from meetings
-    meetings.forEach(meeting => {
-      if (meeting.agentName) agentSet.add(meeting.agentName);
-    });
-    
-    // Add agents from orders
-    orders.forEach(order => {
-      if (order.agentName) agentSet.add(order.agentName);
-    });
-    
-    // Add agents from contacts
-    contacts.forEach(contact => {
-      if (contact.agentName) agentSet.add(contact.agentName);
-    });
-    
-    // Add agents from tasks
-    tasks.forEach(task => {
-      if (task.agentName) agentSet.add(task.agentName);
-    });
-    
-    return Array.from(agentSet);
-  }, [meetings, orders, contacts, tasks]);
+  // Filter data based on selected time frame and agent
+  const filteredMeetings = meetings.filter(m => 
+    new Date(m.createdAt) >= dateThreshold && 
+    (selectedAgent ? m.agentId === selectedAgent : true)
+  );
   
-  // Filter data based on selected agent and time frame
-  const filteredData = useMemo(() => {
-    const filteredMeetings = meetings.filter(m => {
-      const dateCondition = new Date(m.createdAt) >= dateThreshold;
-      const agentCondition = selectedAgent === "all" || m.agentName === selectedAgent;
-      return dateCondition && agentCondition;
-    });
-    
-    const filteredOrders = orders.filter(o => {
-      const dateCondition = new Date(o.createdAt) >= dateThreshold;
-      const agentCondition = selectedAgent === "all" || o.agentName === selectedAgent;
-      return dateCondition && agentCondition;
-    });
-    
-    const filteredContacts = contacts.filter(c => {
-      const dateCondition = new Date(c.createdAt) >= dateThreshold;
-      const agentCondition = selectedAgent === "all" || c.agentName === selectedAgent;
-      return dateCondition && agentCondition;
-    });
-    
-    const filteredTasks = tasks.filter(t => {
-      const dateCondition = new Date(t.createdAt) >= dateThreshold;
-      const agentCondition = selectedAgent === "all" || t.agentName === selectedAgent;
-      return dateCondition && agentCondition;
-    });
-    
-    return { filteredMeetings, filteredOrders, filteredContacts, filteredTasks };
-  }, [meetings, orders, contacts, tasks, selectedAgent, dateThreshold]);
+  const filteredOrders = orders.filter(o => 
+    new Date(o.createdAt) >= dateThreshold && 
+    (selectedAgent ? o.agentId === selectedAgent : true)
+  );
+  
+  const filteredContacts = contacts.filter(c => 
+    new Date(c.createdAt) >= dateThreshold && 
+    (selectedAgent ? c.agentId === selectedAgent : true)
+  );
+  
+  const filteredTasks = tasks.filter(t => 
+    new Date(t.createdAt) >= dateThreshold && 
+    (selectedAgent ? t.agentId === selectedAgent : true)
+  );
   
   // Prepare data for sales chart
-  const salesData = useMemo(() => {
-    const salesByMonth = filteredData.filteredOrders.reduce((acc, order) => {
-      // Use month-year as key
-      const date = new Date(order.date);
-      const key = format(date, "MMM yyyy");
-      
-      if (!acc[key]) {
-        acc[key] = { name: key, value: 0 };
-      }
-      
-      acc[key].value += order.total;
-      return acc;
-    }, {} as Record<string, { name: string, value: number }>);
+  const salesData = filteredOrders.reduce((acc, order) => {
+    const date = new Date(order.date);
+    const key = format(date, "MMM yyyy");
     
-    return Object.values(salesByMonth).sort((a, b) => {
-      const aDate = new Date(a.name);
-      const bDate = new Date(b.name);
-      return aDate.getTime() - bDate.getTime();
-    });
-  }, [filteredData.filteredOrders]);
+    if (!acc[key]) {
+      acc[key] = { name: key, value: 0 };
+    }
+    
+    acc[key].value += order.total;
+    return acc;
+  }, {} as Record<string, { name: string, value: number }>);
+  
+  const salesChartData = Object.values(salesData).sort((a, b) => {
+    const aDate = new Date(a.name);
+    const bDate = new Date(b.name);
+    return aDate.getTime() - bDate.getTime();
+  });
   
   // Prepare data for meeting types chart
-  const meetingTypesData = useMemo(() => {
-    const typeCount = filteredData.filteredMeetings.reduce((acc, meeting) => {
-      if (!acc[meeting.type]) {
-        acc[meeting.type] = { name: meeting.type, value: 0 };
-      }
-      
-      acc[meeting.type].value += 1;
-      return acc;
-    }, {} as Record<string, { name: string, value: number }>);
+  const meetingTypesData = filteredMeetings.reduce((acc, meeting) => {
+    if (!acc[meeting.type]) {
+      acc[meeting.type] = { name: meeting.type, value: 0 };
+    }
     
-    return Object.values(typeCount);
-  }, [filteredData.filteredMeetings]);
+    acc[meeting.type].value += 1;
+    return acc;
+  }, {} as Record<string, { name: string, value: number }>);
+  
+  const meetingTypesChartData = Object.values(meetingTypesData);
+  
+  // Prepare data for contact sources chart
+  const contactSourcesData = filteredContacts.reduce((acc, contact) => {
+    const source = contact.source || "Unknown";
+    
+    if (!acc[source]) {
+      acc[source] = { name: source, value: 0 };
+    }
+    
+    acc[source].value += 1;
+    return acc;
+  }, {} as Record<string, { name: string, value: number }>);
+  
+  const contactSourcesChartData = Object.values(contactSourcesData);
   
   // Prepare data for task priority chart
-  const taskPriorityData = useMemo(() => {
-    const priorityCount = filteredData.filteredTasks.reduce((acc, task) => {
-      if (!acc[task.priority]) {
-        acc[task.priority] = { 
-          name: task.priority.charAt(0).toUpperCase() + task.priority.slice(1), 
-          value: 0 
-        };
-      }
-      
-      acc[task.priority].value += 1;
-      return acc;
-    }, {} as Record<string, { name: string, value: number }>);
+  const taskPriorityData = filteredTasks.reduce((acc, task) => {
+    if (!acc[task.priority]) {
+      acc[task.priority] = { name: task.priority.charAt(0).toUpperCase() + task.priority.slice(1), value: 0 };
+    }
     
-    return Object.values(priorityCount);
-  }, [filteredData.filteredTasks]);
+    acc[task.priority].value += 1;
+    return acc;
+  }, {} as Record<string, { name: string, value: number }>);
   
-  // Calculate total sales
-  const totalSales = filteredData.filteredOrders.reduce((total, order) => total + order.total, 0);
+  const taskPriorityChartData = Object.values(taskPriorityData);
+  
+  // Colors for pie charts
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+  
+  // Get the selected agent name
+  const getSelectedAgentName = () => {
+    if (!selectedAgent) return "All Agents";
+    const agent = agents.find(a => a.id === selectedAgent);
+    return agent ? agent.name : "Unknown Agent";
+  };
   
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Agent Performance</h2>
-          <p className="text-muted-foreground mt-1">View performance metrics by agent</p>
+          <h2 className="text-xl font-semibold">Agent Performance</h2>
+          <p className="text-muted-foreground">Track individual agent metrics and performance</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+        
+        <div className="flex items-center gap-2">
+          <Select value={selectedAgent || ""} onValueChange={setSelectedAgent}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select agent" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Agents</SelectItem>
               {agents.map(agent => (
-                <SelectItem key={agent} value={agent}>{agent}</SelectItem>
+                <SelectItem key={agent.id} value={agent.id}>
+                  {agent.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -178,18 +194,18 @@ const AgentReports = () => {
         </div>
       </div>
       
-      {/* Overview Cards */}
+      {/* Agent Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(totalSales)}
+              {formatCurrency(filteredOrders.reduce((total, order) => total + order.total, 0))}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {filteredData.filteredOrders.length} orders
+              {filteredOrders.length} orders
             </p>
           </CardContent>
         </Card>
@@ -199,10 +215,10 @@ const AgentReports = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {filteredData.filteredContacts.length}
+              {filteredContacts.length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {filteredData.filteredContacts.filter(c => c.company).length} companies
+              {filteredContacts.filter(c => c.company).length} companies
             </p>
           </CardContent>
         </Card>
@@ -212,10 +228,10 @@ const AgentReports = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {filteredData.filteredMeetings.length}
+              {filteredMeetings.length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {filteredData.filteredMeetings.filter(m => m.followUpScheduled).length} with follow-ups
+              {filteredMeetings.filter(m => m.followUpScheduled).length} with follow-ups
             </p>
           </CardContent>
         </Card>
@@ -225,61 +241,65 @@ const AgentReports = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {filteredData.filteredTasks.length}
+              {filteredTasks.length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {filteredData.filteredTasks.filter(t => t.status === "active").length} active
+              {filteredTasks.filter(t => t.status === "active").length} active
             </p>
           </CardContent>
         </Card>
       </div>
       
-      {/* Charts */}
       <Tabs defaultValue="sales">
         <TabsList>
           <TabsTrigger value="sales">Sales</TabsTrigger>
           <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="customers">Customers</TabsTrigger>
         </TabsList>
+        
         <TabsContent value="sales" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Sales Overview</CardTitle>
+              <CardDescription>Sales for {getSelectedAgentName()} over time</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                {salesData.length > 0 ? (
+                {salesChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={salesData}>
+                    <BarChart data={salesChartData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [`${formatCurrency(value as number)}`, "Sales"]} />
+                      <Tooltip formatter={(value) => [formatCurrency(value as number), "Sales"]} />
                       <Legend />
                       <Bar dataKey="value" name="Sales" fill="#8884d8" />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">
-                    No sales data available for selected criteria
+                    No sales data available
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
+        
         <TabsContent value="activities" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle>Meeting Types</CardTitle>
+                <CardDescription>Distribution of meeting types</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
-                  {meetingTypesData.length > 0 ? (
+                  {meetingTypesChartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={meetingTypesData}
+                          data={meetingTypesChartData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -288,7 +308,7 @@ const AgentReports = () => {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {meetingTypesData.map((entry, index) => (
+                          {meetingTypesChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -297,23 +317,25 @@ const AgentReports = () => {
                     </ResponsiveContainer>
                   ) : (
                     <div className="flex h-full items-center justify-center text-muted-foreground">
-                      No meeting data available for selected criteria
+                      No meeting data available
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
+            
             <Card>
               <CardHeader>
                 <CardTitle>Task Priorities</CardTitle>
+                <CardDescription>Distribution of task priorities</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
-                  {taskPriorityData.length > 0 ? (
+                  {taskPriorityChartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={taskPriorityData}
+                          data={taskPriorityChartData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -322,7 +344,7 @@ const AgentReports = () => {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {taskPriorityData.map((entry, index) => (
+                          {taskPriorityChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -331,13 +353,51 @@ const AgentReports = () => {
                     </ResponsiveContainer>
                   ) : (
                     <div className="flex h-full items-center justify-center text-muted-foreground">
-                      No task data available for selected criteria
+                      No task data available
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="customers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Sources</CardTitle>
+              <CardDescription>Where {getSelectedAgentName()}'s contacts come from</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                {contactSourcesChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={contactSourcesChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {contactSourcesChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [value, "Contacts"]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    No contact source data available
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

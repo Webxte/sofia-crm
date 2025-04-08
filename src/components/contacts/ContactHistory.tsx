@@ -49,6 +49,8 @@ export const ContactMeetings: React.FC<ContactMeetingsProps> = ({ meetings }) =>
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Agent</TableHead>
+              <TableHead>Notes</TableHead>
               <TableHead>Follow-up</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -62,6 +64,20 @@ export const ContactMeetings: React.FC<ContactMeetingsProps> = ({ meetings }) =>
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline">{meeting.type}</Badge>
+                </TableCell>
+                <TableCell>
+                  {meeting.agentName ? (
+                    <span className="text-sm">{meeting.agentName}</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Unassigned</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {meeting.notes ? (
+                    <span className="text-sm line-clamp-1">{meeting.notes}</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No notes</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {meeting.followUpScheduled ? (
@@ -123,6 +139,7 @@ export const ContactOrders: React.FC<ContactOrdersProps> = ({ orders }) => {
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Reference</TableHead>
+              <TableHead>Agent</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Actions</TableHead>
@@ -133,6 +150,13 @@ export const ContactOrders: React.FC<ContactOrdersProps> = ({ orders }) => {
               <TableRow key={order.id}>
                 <TableCell>{format(new Date(order.date), 'MMM d, yyyy')}</TableCell>
                 <TableCell>{order.reference || `#${order.id.slice(0, 8)}`}</TableCell>
+                <TableCell>
+                  {order.agentName ? (
+                    <span className="text-sm">{order.agentName}</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Unassigned</span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <OrderStatusBadge status={order.status} />
                 </TableCell>

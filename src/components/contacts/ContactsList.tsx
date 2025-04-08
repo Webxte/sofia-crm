@@ -3,9 +3,10 @@ import { Contact } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Mail, Calendar, ListTodo, Eye, ShoppingCart } from "lucide-react";
 import { ContactEmailDialog } from "./ContactEmailDialog";
 import { useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ContactsListProps {
   contacts: Contact[];
@@ -47,45 +48,83 @@ export const ContactsList = ({ contacts, onScheduleMeeting, onCreateTask, onCrea
                 <TableCell className="hidden md:table-cell">{contact.phone || "-"}</TableCell>
                 <TableCell>{contact.source || "-"}</TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => navigate(`/contacts/${contact.id}`)}
-                    >
-                      View
-                    </Button>
+                  <div className="flex items-center gap-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => navigate(`/contacts/${contact.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View Details</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
                     {contact.email && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEmailContact(contact)}
-                      >
-                        <Mail className="h-4 w-4 mr-1" />
-                        Email
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEmailContact(contact)}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Send Email</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => onScheduleMeeting(contact.id)}
-                    >
-                      Meeting
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => onCreateTask(contact.id)}
-                    >
-                      Task
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => onCreateOrder(contact.id)}
-                    >
-                      Order
-                    </Button>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => onScheduleMeeting(contact.id)}
+                          >
+                            <Calendar className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Schedule Meeting</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => onCreateTask(contact.id)}
+                          >
+                            <ListTodo className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Create Task</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => onCreateOrder(contact.id)}
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Create Order</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </TableCell>
               </TableRow>
