@@ -1,3 +1,3 @@
 
-// Re-export the ContactDetails component from elsewhere if it exists
+// Re-export the ContactDetails component from the parent directory
 export { default } from '../ContactDetails';

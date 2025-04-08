@@ -3,14 +3,20 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
+import { Order } from "@/types";
 
 interface SalesChartProps {
-  orders: any[];
+  orders: Order[];
+}
+
+interface ChartDataItem {
+  name: string;
+  value: number;
 }
 
 const SalesChart: React.FC<SalesChartProps> = ({ orders }) => {
   // Prepare data for sales chart
-  const salesData = orders.reduce((acc, order) => {
+  const salesData = orders.reduce<Record<string, ChartDataItem>>((acc, order) => {
     // Use month-year as key
     const date = new Date(order.date);
     const key = format(date, "MMM yyyy");
@@ -21,7 +27,7 @@ const SalesChart: React.FC<SalesChartProps> = ({ orders }) => {
     
     acc[key].value += order.total;
     return acc;
-  }, {} as Record<string, { name: string, value: number }>);
+  }, {});
   
   const salesChartData = Object.values(salesData).sort((a, b) => {
     const aDate = new Date(a.name);
