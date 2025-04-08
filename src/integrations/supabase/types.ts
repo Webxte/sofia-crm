@@ -306,42 +306,54 @@ export type Database = {
       }
       settings: {
         Row: {
+          catalog_url: string | null
           company_address: string | null
           company_email: string | null
           company_name: string | null
           company_phone: string | null
           created_at: string
+          custom_links: Json | null
+          default_contact_email_message: string | null
           default_email_message: string | null
           default_email_subject: string | null
           default_terms_and_conditions: string | null
           default_vat_rate: number | null
           id: string
+          price_list_url: string | null
           updated_at: string
         }
         Insert: {
+          catalog_url?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name?: string | null
           company_phone?: string | null
           created_at?: string
+          custom_links?: Json | null
+          default_contact_email_message?: string | null
           default_email_message?: string | null
           default_email_subject?: string | null
           default_terms_and_conditions?: string | null
           default_vat_rate?: number | null
           id?: string
+          price_list_url?: string | null
           updated_at?: string
         }
         Update: {
+          catalog_url?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name?: string | null
           company_phone?: string | null
           created_at?: string
+          custom_links?: Json | null
+          default_contact_email_message?: string | null
           default_email_message?: string | null
           default_email_subject?: string | null
           default_terms_and_conditions?: string | null
           default_vat_rate?: number | null
           id?: string
+          price_list_url?: string | null
           updated_at?: string
         }
         Relationships: []
