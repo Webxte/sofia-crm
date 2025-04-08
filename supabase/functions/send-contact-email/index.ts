@@ -16,7 +16,10 @@ interface ContactEmailRequest {
   message: string;
   contactId: string;
   contactName: string;
+  contactCompany?: string;
   cc?: string[];
+  fromName?: string;
+  fromEmail?: string;
 }
 
 serve(async (req) => {
@@ -37,7 +40,10 @@ serve(async (req) => {
       subject: body.subject,
       contactId: body.contactId,
       contactName: body.contactName,
-      cc: body.cc || []
+      contactCompany: body.contactCompany,
+      cc: body.cc || [],
+      fromName: body.fromName,
+      fromEmail: body.fromEmail
     });
     
     // Check for Resend API key
@@ -52,14 +58,22 @@ serve(async (req) => {
       throw new Error("Missing required fields: to, subject, message");
     }
     
+    // Replace placeholders in message
+    let processedMessage = body.message;
+    if (body.contactName) {
+      processedMessage = processedMessage.replace(/\{name\}/g, body.contactName);
+    }
+    if (body.contactCompany) {
+      processedMessage = processedMessage.replace(/\{company\}/g, body.contactCompany);
+    }
+    
     // Format message with proper line breaks for HTML
-    const htmlMessage = body.message.replace(/\n/g, "<br />");
+    const htmlMessage = processedMessage.replace(/\n/g, "<br />");
     
     console.log("Sending contact email with Resend API");
     
-    // Send email using Resend
-    const { data, error } = await resend.emails.send({
-      from: "CRM System <onboarding@resend.dev>",
+    // Prepare email config
+    const emailConfig: any = {
       to: body.to,
       subject: body.subject,
       html: `
@@ -68,10 +82,52 @@ serve(async (req) => {
         </div>
       `,
       cc: body.cc,
-    });
+    };
+    
+    // Use custom from email if provided and allowed by Resend
+    // For this to work, the domain must be verified in Resend
+    if (body.fromEmail && body.fromName) {
+      emailConfig.from = `${body.fromName} <${body.fromEmail}>`;
+      console.log(`Using custom from address: ${emailConfig.from}`);
+    } else {
+      // Default to the Resend onboarding email
+      emailConfig.from = "CRM System <onboarding@resend.dev>";
+      console.log(`Using default from address: ${emailConfig.from}`);
+    }
+    
+    // Send email using Resend
+    const { data, error } = await resend.emails.send(emailConfig);
     
     if (error) {
       console.error("Resend API error:", error);
+      
+      // Check if the error is related to domain verification
+      if (error.message && error.message.includes("domain") && error.message.includes("verify")) {
+        console.log("Falling back to default Resend email address due to domain verification issue");
+        
+        // Fall back to using the Resend onboarding email
+        emailConfig.from = "CRM System <onboarding@resend.dev>";
+        
+        // Try again with the default email
+        const fallbackResult = await resend.emails.send(emailConfig);
+        
+        if (fallbackResult.error) {
+          console.error("Fallback send also failed:", fallbackResult.error);
+          throw new Error(`Failed to send email: ${fallbackResult.error.message}`);
+        }
+        
+        console.log("Email sent successfully with fallback email:", fallbackResult.data);
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          data: fallbackResult.data,
+          warning: "Used fallback email address. To use your own domain, please verify it in Resend."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
       throw new Error(`Failed to send email: ${error.message}`);
     }
     

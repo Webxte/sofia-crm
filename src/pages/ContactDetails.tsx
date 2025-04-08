@@ -2,29 +2,29 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useContacts } from '@/context/ContactsContext';
+import { useMeetings } from '@/context/meetings';
+import { useOrders } from '@/context/OrdersContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Edit, Trash2, Calendar, ListTodo } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Calendar, ListTodo, Mail } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ContactDeleteDialog } from '@/components/contacts/ContactDeleteDialog';
+import { ContactEmailDialog } from '@/components/contacts/ContactEmailDialog';
+import { ContactMeetings, ContactOrders } from '@/components/contacts/ContactHistory';
+import { useState } from 'react';
 
 const ContactDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getContactById, deleteContact } = useContacts();
+  const { getContactById } = useContacts();
+  const { getMeetingsByContactId } = useMeetings();
+  const { getOrdersByContactId } = useOrders();
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   
   const contact = id ? getContactById(id) : undefined;
+  const meetings = id ? getMeetingsByContactId(id) : [];
+  const orders = id ? getOrdersByContactId(id) : [];
   
   if (!contact) {
     return (
@@ -36,13 +36,6 @@ const ContactDetails = () => {
       </div>
     );
   }
-  
-  const handleDelete = async () => {
-    if (id) {
-      await deleteContact(id);
-      navigate('/contacts');
-    }
-  };
   
   return (
     <>
@@ -60,6 +53,14 @@ const ContactDetails = () => {
             <h1 className="text-2xl font-bold">{contact.company || contact.fullName}</h1>
           </div>
           <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              className="flex items-center space-x-1"
+              onClick={() => setEmailDialogOpen(true)}
+            >
+              <Mail className="h-4 w-4 mr-1" />
+              Send Email
+            </Button>
             <Button asChild variant="outline" className="flex items-center space-x-1">
               <Link to={`/meetings/new?contactId=${contact.id}`}>
                 <Calendar className="h-4 w-4 mr-1" />
@@ -78,33 +79,22 @@ const ContactDetails = () => {
                 Edit
               </Link>
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="text-red-500 hover:text-red-700">
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete this contact and all related data.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleDelete}
-                    className="bg-red-500 hover:bg-red-600"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <ContactDeleteDialog 
+              contactId={contact.id} 
+              contactName={contact.company || contact.fullName || 'this contact'} 
+            />
           </div>
         </div>
+        
+        <ContactEmailDialog
+          contactId={contact.id}
+          contactName={contact.fullName || ''}
+          contactEmail={contact.email || ''}
+          contactCompany={contact.company || ''}
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+        />
+        
         <Card>
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
@@ -161,6 +151,11 @@ const ContactDetails = () => {
             )}
           </CardContent>
         </Card>
+        
+        <div className="grid grid-cols-1 gap-6">
+          <ContactMeetings meetings={meetings} />
+          <ContactOrders orders={orders} />
+        </div>
       </div>
     </>
   );

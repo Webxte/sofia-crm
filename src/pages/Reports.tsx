@@ -17,6 +17,9 @@ import { useContacts } from "@/context/ContactsContext";
 import { useTasks } from "@/context/TasksContext";
 import { format, subMonths } from "date-fns";
 import { Download } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import AgentReports from "@/components/reports/AgentReports";
+import { formatCurrency } from "@/utils/formatting";
 
 const Reports = () => {
   const [timeFrame, setTimeFrame] = useState<"30" | "90" | "365" | "all">("30");
@@ -24,6 +27,7 @@ const Reports = () => {
   const { orders } = useOrders();
   const { contacts } = useContacts();
   const { tasks } = useTasks();
+  const { user } = useAuth();
   
   // Get date threshold based on selected time frame
   const getDateThreshold = () => {
@@ -99,6 +103,9 @@ const Reports = () => {
   // Colors for pie charts
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
   
+  // Check if user is admin
+  const isAdmin = user?.role === "admin";
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -124,202 +131,217 @@ const Reports = () => {
         </div>
       </div>
       
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              €{filteredOrders.reduce((total, order) => total + order.total, 0).toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredOrders.length} orders
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Contacts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {filteredContacts.length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredContacts.filter(c => c.company).length} companies
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Meetings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {filteredMeetings.length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredMeetings.filter(m => m.followUpScheduled).length} with follow-ups
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {filteredTasks.length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredTasks.filter(t => t.status === "active").length} active
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Charts */}
-      <Tabs defaultValue="sales">
+      <Tabs defaultValue="overview">
         <TabsList>
-          <TabsTrigger value="sales">Sales</TabsTrigger>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
-          <TabsTrigger value="status">Status</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          {isAdmin && <TabsTrigger value="agents">Agent Performance</TabsTrigger>}
         </TabsList>
-        <TabsContent value="sales" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sales Overview</CardTitle>
-              <CardDescription>Total sales over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`€${value}`, "Sales"]} />
-                    <Legend />
-                    <Bar dataKey="value" name="Sales" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="activities" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <TabsContent value="overview" className="space-y-6">
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Meeting Types</CardTitle>
-                <CardDescription>Distribution of meeting types</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
-                  {meetingTypesChartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={meetingTypesChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {meetingTypesChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [value, "Meetings"]} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      No meeting data available
-                    </div>
-                  )}
+                <div className="text-2xl font-bold">
+                  €{filteredOrders.reduce((total, order) => total + order.total, 0).toFixed(2)}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filteredOrders.length} orders
+                </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader>
-                <CardTitle>Task Priorities</CardTitle>
-                <CardDescription>Distribution of task priorities</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Contacts</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
-                  {taskPriorityChartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={taskPriorityChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {taskPriorityChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [value, "Tasks"]} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      No task data available
-                    </div>
-                  )}
+                <div className="text-2xl font-bold">
+                  {filteredContacts.length}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filteredContacts.filter(c => c.company).length} companies
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Meetings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {filteredMeetings.length}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filteredMeetings.filter(m => m.followUpScheduled).length} with follow-ups
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Tasks</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {filteredTasks.length}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filteredTasks.filter(t => t.status === "active").length} active
+                </p>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-        <TabsContent value="status" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Status</CardTitle>
-              <CardDescription>Distribution of order statuses</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                {orderStatusChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={orderStatusChartData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {orderStatusChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [value, "Orders"]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground">
-                    No order data available
+          
+          {/* Charts */}
+          <Tabs defaultValue="sales">
+            <TabsList>
+              <TabsTrigger value="sales">Sales</TabsTrigger>
+              <TabsTrigger value="activities">Activities</TabsTrigger>
+              <TabsTrigger value="status">Status</TabsTrigger>
+            </TabsList>
+            <TabsContent value="sales" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sales Overview</CardTitle>
+                  <CardDescription>Total sales over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={salesChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`€${value}`, "Sales"]} />
+                        <Legend />
+                        <Bar dataKey="value" name="Sales" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="activities" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Meeting Types</CardTitle>
+                    <CardDescription>Distribution of meeting types</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      {meetingTypesChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={meetingTypesChartData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {meetingTypesChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => [value, "Meetings"]} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                          No meeting data available
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Task Priorities</CardTitle>
+                    <CardDescription>Distribution of task priorities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      {taskPriorityChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={taskPriorityChartData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {taskPriorityChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => [value, "Tasks"]} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                          No task data available
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
+            <TabsContent value="status" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Status</CardTitle>
+                  <CardDescription>Distribution of order statuses</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    {orderStatusChartData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={orderStatusChartData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {orderStatusChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [value, "Orders"]} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-muted-foreground">
+                        No order data available
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
+        
+        {isAdmin && (
+          <TabsContent value="agents">
+            <AgentReports />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
