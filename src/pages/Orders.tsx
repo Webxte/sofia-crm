@@ -18,6 +18,7 @@ import {
   downloadOrdersCSV,
   filterOrders
 } from "@/components/orders/utils/orderHelpers";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,9 +29,13 @@ const Orders = () => {
   const { isAdmin, user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const queryParams = new URLSearchParams(location.search);
   const contactId = queryParams.get("contactId");
+  
+  // If on mobile, force list view which we've optimized for mobile
+  const effectiveViewMode = isMobile ? "list" : viewMode;
   
   // Build a map of contact IDs to company names for quick lookup
   const companyNameMap = buildCompanyNameMap(contacts);
@@ -62,22 +67,23 @@ const Orders = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <OrdersHeader contactId={contactId} />
       <OrdersFilter 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
-        viewMode={viewMode}
+        viewMode={effectiveViewMode}
         setViewMode={setViewMode}
         handleExport={handleExport}
+        isMobile={isMobile}
       />
 
       {sortedOrders.length === 0 ? (
         <OrdersEmptyState />
       ) : (
-        viewMode === "grid" ? (
+        effectiveViewMode === "grid" ? (
           <OrdersGridView 
             orders={sortedOrders} 
             getStatusColor={getStatusColor}

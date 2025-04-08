@@ -1,23 +1,19 @@
 
-import { Search, Grid, List, Download } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LayoutGrid, LayoutList, Download, Search as SearchIcon } from "lucide-react";
+import { useState } from "react";
 
 interface OrdersFilterProps {
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  setSearchQuery: (value: string) => void;
   filterStatus: string;
-  setFilterStatus: (status: string) => void;
+  setFilterStatus: (value: string) => void;
   viewMode: "grid" | "list";
-  setViewMode: (mode: "grid" | "list") => void;
+  setViewMode: (value: "grid" | "list") => void;
   handleExport: () => void;
+  isMobile?: boolean;
 }
 
 export const OrdersFilter = ({
@@ -28,55 +24,80 @@ export const OrdersFilter = ({
   viewMode,
   setViewMode,
   handleExport,
+  isMobile
 }: OrdersFilterProps) => {
+  const [focused, setFocused] = useState(false);
+  
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-center">
-      <div className="relative w-full sm:max-w-sm">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search orders..."
-          className="w-full pl-8"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      <div className="flex items-center gap-2 sm:ml-auto">
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex border rounded-md overflow-hidden">
-          <Button 
-            variant={viewMode === "grid" ? "default" : "ghost"} 
-            size="sm"
-            onClick={() => setViewMode("grid")}
-            className="rounded-none"
-          >
-            <Grid className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant={viewMode === "list" ? "default" : "ghost"} 
-            size="sm"
-            onClick={() => setViewMode("list")}
-            className="rounded-none"
-          >
-            <List className="h-4 w-4" />
+    <div className="space-y-2">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-grow">
+          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search orders..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 w-full"
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+          />
+          {searchQuery && focused && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1 h-8 w-8 p-0"
+              onClick={() => setSearchQuery("")}
+            >
+              ×
+            </Button>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-32 sm:w-[140px]">
+              <SelectValue placeholder="Filter Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {!isMobile && (
+            <div className="flex items-center space-x-1 border rounded-md">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`rounded-l-md rounded-r-none h-9 ${
+                  viewMode === "list" ? "bg-secondary" : ""
+                }`}
+                onClick={() => setViewMode("list")}
+              >
+                <LayoutList className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`rounded-l-none rounded-r-md h-9 ${
+                  viewMode === "grid" ? "bg-secondary" : ""
+                }`}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          
+          <Button variant="outline" size="icon" onClick={handleExport} title="Export Orders">
+            <Download className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" /> Export
-        </Button>
       </div>
     </div>
   );

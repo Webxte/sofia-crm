@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
-import { Edit, Mail } from "lucide-react";
+import { Edit, Mail, Eye } from "lucide-react";
 import { OrderDeleteDialog } from "./OrderDeleteDialog";
 import { EmailOrderButton } from "./EmailOrderButton";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,6 +29,49 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const isMobile = useIsMobile();
+  
+  if (isMobile) {
+    return (
+      <div className="space-y-2">
+        {orders.map((order) => (
+          <div 
+            key={order.id} 
+            className="border rounded-md p-3 bg-card"
+            onClick={() => navigate(`/orders/${order.id}`)}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="font-medium">{order.reference || `Order ${order.id.slice(0, 8)}`}</div>
+              <OrderStatusBadge status={order.status} />
+            </div>
+            <div className="text-sm text-muted-foreground mb-1">
+              {companyNameMap[order.contactId] || "Unknown"}
+            </div>
+            <div className="text-sm text-muted-foreground mb-2">
+              {format(new Date(order.date), "MMM d, yyyy")}
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="font-semibold">{formatCurrency(order.total)}</div>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/orders/${order.id}/edit`);
+                  }}
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+                <EmailOrderButton order={order} size="sm" />
+                <OrderDeleteDialog orderId={order.id} reference={order.reference} size="sm" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   
   return (
     <div className="border rounded-md overflow-x-auto">
@@ -60,11 +103,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                 <TableCell className="hidden md:table-cell">{order.agentName || "Unknown"}</TableCell>
               )}
               <TableCell>
-                {isMobile ? (
-                  <OrderStatusBadge status={order.status} />
-                ) : (
-                  <OrderStatusChanger orderId={order.id} currentStatus={order.status} />
-                )}
+                <OrderStatusChanger orderId={order.id} currentStatus={order.status} />
               </TableCell>
               <TableCell className="text-right">
                 {formatCurrency(order.total)}
@@ -76,6 +115,7 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
                     size="sm"
                     onClick={() => navigate(`/orders/${order.id}`)}
                   >
+                    <Eye className="mr-2 h-4 w-4" />
                     View
                   </Button>
                   <Button 

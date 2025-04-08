@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ContactForm from "@/components/contacts/ContactForm";
 import { BusinessCardScanner } from "@/components/contacts/BusinessCardScanner";
 import { Button } from "@/components/ui/button";
@@ -25,13 +25,13 @@ const NewContact = () => {
   const handleScanComplete = (data: ScanResult) => {
     console.log("Scan completed with data:", data);
     setScanResult(data);
-    setKey(prev => prev + 1); // Increment the key to force re-render
+    setKey(prevKey => prevKey + 1); // Increment key to force re-render
   };
   
   return (
-    <div className="space-y-4 max-w-4xl mx-auto px-4 pb-20">
+    <div className="space-y-4 max-w-4xl mx-auto px-2 sm:px-4 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">Add New Contact</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Add New Contact</h1>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

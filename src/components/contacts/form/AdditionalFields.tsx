@@ -8,9 +8,10 @@ import { ContactFormValues } from "./types";
 
 interface AdditionalFieldsProps {
   form: UseFormReturn<ContactFormValues>;
+  isMobile?: boolean;
 }
 
-const AdditionalFields: React.FC<AdditionalFieldsProps> = ({ form }) => {
+const AdditionalFields: React.FC<AdditionalFieldsProps> = ({ form, isMobile }) => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -19,11 +20,16 @@ const AdditionalFields: React.FC<AdditionalFieldsProps> = ({ form }) => {
           name="source"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Source</FormLabel>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Source</FormLabel>
               <FormControl>
-                <Input placeholder="LinkedIn, Referral, etc." {...field} value={field.value || ''} />
+                <Input 
+                  placeholder="LinkedIn, Referral, etc." 
+                  {...field} 
+                  value={field.value || ''} 
+                  className={isMobile ? "text-sm h-9" : ""}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>
           )}
         />
@@ -33,11 +39,16 @@ const AdditionalFields: React.FC<AdditionalFieldsProps> = ({ form }) => {
         name="notes"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Notes</FormLabel>
+            <FormLabel className={isMobile ? "text-sm" : ""}>Notes</FormLabel>
             <FormControl>
-              <Textarea placeholder="Additional information" className="resize-none" {...field} value={field.value || ''} />
+              <Textarea 
+                placeholder="Additional information" 
+                className={`resize-none ${isMobile ? "text-sm" : ""}`} 
+                {...field} 
+                value={field.value || ''} 
+              />
             </FormControl>
-            <FormMessage />
+            <FormMessage className={isMobile ? "text-xs" : ""} />
           </FormItem>
         )}
       />

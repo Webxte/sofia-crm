@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Camera, CameraOff, Upload, RefreshCw } from "lucide-react";
@@ -26,22 +26,47 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCameraSupported, setIsCameraSupported] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
+  
+  // Start the camera when the dialog opens
+  useEffect(() => {
+    if (open && !cameraActive) {
+      startCamera();
+    }
+    
+    // Cleanup when component unmounts or dialog closes
+    return () => {
+      if (cameraStream) {
+        stopCamera();
+      }
+    };
+  }, [open]);
   
   // Start the camera
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
+      const constraints = { 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       setCameraStream(stream);
       setCameraActive(true);
       
       // Connect the camera stream to the video element
-      const videoElement = document.getElementById('camera-feed') as HTMLVideoElement;
-      if (videoElement) {
-        videoElement.srcObject = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(err => {
+            console.error("Error playing video:", err);
+          });
+        };
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -73,24 +98,23 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
   
   // Capture image from camera
   const captureImage = async () => {
-    const videoElement = document.getElementById('camera-feed') as HTMLVideoElement;
-    if (!videoElement) return;
+    if (!videoRef.current) return;
     
     setIsProcessing(true);
     
     try {
       const canvas = document.createElement('canvas');
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         
         // Get image data as base64
         const imageData = canvas.toDataURL('image/jpeg');
         
-        // Process the image data (here we would call an OCR API)
+        // Process the image data
         await processImage(imageData);
       }
     } catch (error) {
@@ -137,11 +161,8 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
     }
   };
   
-  // Process image data (mock implementation - in a real app, this would call an OCR API)
+  // Process image data (mock implementation)
   const processImage = async (imageData: string) => {
-    // In a real implementation, we would send the image to an OCR API like Google Cloud Vision,
-    // Azure Computer Vision, or similar services to extract text and identify business card fields
-    
     console.log("Processing image...");
     
     // For now, simulate a successful scan with mock data
@@ -156,10 +177,8 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
         address: "123 Business Ave, Suite 101, New York, NY 10001"
       };
       
-      // Apply the scan result
+      // Apply the scan result and close the scanner dialog
       onScanComplete(mockResult);
-      
-      // Close the scanner dialog
       handleOpenChange(false);
       
       toast({
@@ -184,17 +203,20 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
             <>
               <div className="relative w-full aspect-video bg-black rounded-md overflow-hidden">
                 <video 
+                  ref={videoRef}
                   id="camera-feed" 
                   autoPlay 
-                  playsInline 
+                  playsInline
+                  muted
                   className="w-full h-full object-cover"
                 />
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 w-full justify-center">
                 <Button
                   onClick={captureImage}
                   disabled={isProcessing}
+                  className="flex-grow sm:flex-grow-0"
                 >
                   {isProcessing ? (
                     <>
@@ -209,6 +231,7 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
                 <Button
                   variant="outline"
                   onClick={stopCamera}
+                  className="flex-grow sm:flex-grow-0"
                 >
                   <CameraOff className="mr-2 h-4 w-4" />
                   Stop Camera

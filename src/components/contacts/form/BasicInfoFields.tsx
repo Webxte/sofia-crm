@@ -7,9 +7,10 @@ import { ContactFormValues } from "./types";
 
 interface BasicInfoFieldsProps {
   form: UseFormReturn<ContactFormValues>;
+  isMobile?: boolean;
 }
 
-const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form }) => {
+const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form, isMobile }) => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -18,11 +19,11 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form }) => {
           name="fullName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="John Doe" {...field} className={isMobile ? "text-sm h-9" : ""} />
               </FormControl>
-              <FormMessage />
+              <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>
           )}
         />
@@ -31,11 +32,11 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form }) => {
           name="company"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company</FormLabel>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Company</FormLabel>
               <FormControl>
-                <Input placeholder="Acme Corp" {...field} />
+                <Input placeholder="Acme Corp" {...field} className={isMobile ? "text-sm h-9" : ""} />
               </FormControl>
-              <FormMessage />
+              <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>
           )}
         />
@@ -46,11 +47,11 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form }) => {
           name="position"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Position</FormLabel>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Position</FormLabel>
               <FormControl>
-                <Input placeholder="Software Engineer" {...field} />
+                <Input placeholder="Software Engineer" {...field} className={isMobile ? "text-sm h-9" : ""} />
               </FormControl>
-              <FormMessage />
+              <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>
           )}
         />
@@ -59,11 +60,16 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form }) => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Email</FormLabel>
               <FormControl>
-                <Input placeholder="johndoe@example.com" {...field} value={field.value || ''} />
+                <Input 
+                  placeholder="johndoe@example.com" 
+                  {...field} 
+                  value={field.value || ''} 
+                  className={isMobile ? "text-sm h-9" : ""}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>
           )}
         />

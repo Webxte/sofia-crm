@@ -1,83 +1,69 @@
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface OrderDeleteDialogProps {
   orderId: string;
   reference?: string;
-  trigger?: React.ReactNode;
+  size?: "default" | "sm" | "lg" | "icon";
 }
 
-export const OrderDeleteDialog = ({ orderId, reference, trigger }: OrderDeleteDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+export const OrderDeleteDialog = ({ orderId, reference, size }: OrderDeleteDialogProps) => {
+  const [open, setOpen] = useState(false);
   const { deleteOrder } = useOrders();
+  const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await deleteOrder(orderId);
-      toast({
-        title: "Order deleted",
-        description: "The order has been permanently deleted.",
-      });
-      setIsOpen(false);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
+  
+  const handleDelete = () => {
+    deleteOrder(orderId);
+    setOpen(false);
+    
+    toast({
+      title: "Order Deleted",
+      description: `Order ${reference || orderId.slice(0, 8)} has been deleted.`,
+    });
+    
+    // Navigate back to orders list if we're on the order details page
+    if (window.location.pathname.includes(`/orders/${orderId}`)) {
+      navigate("/orders");
     }
   };
-
+  
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Order</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete order {reference || `#${orderId.slice(0, 6)}`}? This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault();
-              handleDelete();
-            }}
-            className="bg-red-500 hover:bg-red-600"
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      <Button
+        variant="outline"
+        size={size || (size === "icon" ? "icon" : "default")}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className={`${size === "sm" ? "h-7 w-7" : ""} text-destructive hover:bg-destructive hover:text-destructive-foreground`}
+      >
+        <Trash className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} />
+      </Button>
+      
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete order {reference || `#${orderId.slice(0, 8)}`}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

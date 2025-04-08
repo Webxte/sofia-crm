@@ -7,9 +7,10 @@ import { ContactFormValues } from "./types";
 
 interface ContactInfoFieldsProps {
   form: UseFormReturn<ContactFormValues>;
+  isMobile?: boolean;
 }
 
-const ContactInfoFields: React.FC<ContactInfoFieldsProps> = ({ form }) => {
+const ContactInfoFields: React.FC<ContactInfoFieldsProps> = ({ form, isMobile }) => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -18,11 +19,16 @@ const ContactInfoFields: React.FC<ContactInfoFieldsProps> = ({ form }) => {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Phone</FormLabel>
               <FormControl>
-                <Input placeholder="+1 (555) 123-4567" {...field} value={field.value || ''} />
+                <Input 
+                  placeholder="+1 (555) 123-4567" 
+                  {...field} 
+                  value={field.value || ''} 
+                  className={isMobile ? "text-sm h-9" : ""}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>
           )}
         />
@@ -31,11 +37,16 @@ const ContactInfoFields: React.FC<ContactInfoFieldsProps> = ({ form }) => {
           name="mobile"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile</FormLabel>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Mobile</FormLabel>
               <FormControl>
-                <Input placeholder="+1 (555) 987-6543" {...field} value={field.value || ''} />
+                <Input 
+                  placeholder="+1 (555) 987-6543" 
+                  {...field} 
+                  value={field.value || ''} 
+                  className={isMobile ? "text-sm h-9" : ""}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>
           )}
         />
@@ -45,11 +56,16 @@ const ContactInfoFields: React.FC<ContactInfoFieldsProps> = ({ form }) => {
         name="address"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Address</FormLabel>
+            <FormLabel className={isMobile ? "text-sm" : ""}>Address</FormLabel>
             <FormControl>
-              <Input placeholder="123 Main St, Anytown, USA" {...field} value={field.value || ''} />
+              <Input 
+                placeholder="123 Main St, Anytown, USA" 
+                {...field} 
+                value={field.value || ''} 
+                className={isMobile ? "text-sm h-9" : ""}
+              />
             </FormControl>
-            <FormMessage />
+            <FormMessage className={isMobile ? "text-xs" : ""} />
           </FormItem>
         )}
       />
