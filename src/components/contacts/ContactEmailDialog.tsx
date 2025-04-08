@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,8 @@ interface ContactEmailDialogProps {
 }
 
 const emailFormSchema = z.object({
+  to: z.string().email("Must be a valid email").min(1, "Required"),
+  cc: z.array(z.string().email("Must be a valid email")),
   subject: z.string().min(1, "Subject is required"),
   message: z.string().min(1, "Message is required"),
 });
@@ -31,6 +33,7 @@ export const ContactEmailDialog = ({ contact, open, onOpenChange }: ContactEmail
   const { settings } = useSettings();
   const { toast } = useToast();
   const [isSending, setIsSending] = useState(false);
+  const [newCc, setNewCc] = useState("");
   
   const defaultSubject = "Follow-up from our meeting";
   const defaultMessage = settings.defaultContactEmailMessage || 
@@ -49,13 +52,30 @@ ${settings.companyName || "The Team"}`;
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailFormSchema),
     defaultValues: {
+      to: contact.email || "",
+      cc: [],
       subject: defaultSubject,
       message: defaultMessage,
     },
   });
   
+  const handleAddCc = () => {
+    if (newCc && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCc)) {
+      const currentCc = form.getValues("cc");
+      if (!currentCc.includes(newCc)) {
+        form.setValue("cc", [...currentCc, newCc]);
+        setNewCc("");
+      }
+    }
+  };
+  
+  const handleRemoveCc = (email: string) => {
+    const currentCc = form.getValues("cc");
+    form.setValue("cc", currentCc.filter(cc => cc !== email));
+  };
+  
   const handleSubmit = async (values: EmailFormValues) => {
-    if (!contact.email) {
+    if (!values.to) {
       toast({
         title: "Missing Email",
         description: "Contact does not have an email address.",
@@ -69,7 +89,8 @@ ${settings.companyName || "The Team"}`;
     try {
       const { data, error } = await supabase.functions.invoke("send-contact-email", {
         body: {
-          to: contact.email,
+          to: values.to,
+          cc: values.cc,
           subject: values.subject,
           message: values.message,
           contactId: contact.id,
@@ -99,13 +120,69 @@ ${settings.companyName || "The Team"}`;
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Email to {contact.fullName || contact.email}</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="to"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>To</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Email address" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <div>
+              <FormLabel>CC</FormLabel>
+              <div className="flex space-x-2 mb-2">
+                <Input 
+                  placeholder="Add CC email" 
+                  value={newCc} 
+                  onChange={(e) => setNewCc(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCc();
+                    }
+                  }}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleAddCc}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {form.getValues("cc").length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {form.getValues("cc").map((email) => (
+                    <div 
+                      key={email} 
+                      className="bg-muted text-sm rounded-full px-3 py-1 flex items-center"
+                    >
+                      <span className="mr-1">{email}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveCc(email)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             <FormField
               control={form.control}
               name="subject"

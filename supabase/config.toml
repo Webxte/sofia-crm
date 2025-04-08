@@ -20,3 +20,6 @@ enabled = true
 
 [functions.send-order-email]
 enabled = true
+
+[functions.send-contact-email]
+enabled = true

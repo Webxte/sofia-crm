@@ -37,6 +37,7 @@ serve(async (req) => {
       subject: body.subject,
       contactId: body.contactId,
       contactName: body.contactName,
+      cc: body.cc || []
     });
     
     // Check for Resend API key
@@ -75,8 +76,6 @@ serve(async (req) => {
     }
     
     console.log("Contact email sent successfully:", data);
-    
-    // After sending the email, log the contact activity (optional enhancement for later)
     
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

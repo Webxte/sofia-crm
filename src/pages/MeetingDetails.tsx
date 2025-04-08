@@ -1,15 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Edit, Calendar, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Trash2, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import { Badge } from '@/components/ui/badge';
+import { ContactEmailDialog } from '@/components/contacts/ContactEmailDialog';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ const MeetingDetails = () => {
   const navigate = useNavigate();
   const { getMeetingById, deleteMeeting } = useMeetings();
   const { getContactById } = useContacts();
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   
   const meeting = id ? getMeetingById(id) : undefined;
   const contact = meeting?.contactId ? getContactById(meeting.contactId) : undefined;
@@ -50,6 +52,16 @@ const MeetingDetails = () => {
   // Create a friendly description for the meeting title using contact information
   const meetingTitle = contact ? (contact.company || contact.fullName || 'Unknown Contact') : 'Meeting (No contact specified)';
   
+  const handleEmailContact = () => {
+    if (contact && contact.email) {
+      setShowEmailDialog(true);
+    } else {
+      // Handle case where contact has no email
+      // You could show a toast notification here
+      console.error("Contact has no email address");
+    }
+  };
+  
   return (
     <>
       <Helmet>
@@ -69,6 +81,12 @@ const MeetingDetails = () => {
             </Badge>
           </div>
           <div className="flex space-x-2">
+            {contact && contact.email && (
+              <Button variant="outline" onClick={handleEmailContact}>
+                <Mail className="h-4 w-4 mr-1" />
+                Email Contact
+              </Button>
+            )}
             <Button asChild variant="outline">
               <Link to={`/meetings/${meeting.id}/edit`}>
                 <Edit className="h-4 w-4 mr-1" />
@@ -182,6 +200,14 @@ const MeetingDetails = () => {
             )}
           </CardContent>
         </Card>
+        
+        {contact && (
+          <ContactEmailDialog
+            contact={contact}
+            open={showEmailDialog}
+            onOpenChange={setShowEmailDialog}
+          />
+        )}
       </div>
     </>
   );
