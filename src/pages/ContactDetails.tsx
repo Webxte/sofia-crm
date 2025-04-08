@@ -79,18 +79,12 @@ const ContactDetails = () => {
                 Edit
               </Link>
             </Button>
-            <ContactDeleteDialog 
-              contactId={contact.id} 
-              contactName={contact.company || contact.fullName || 'this contact'} 
-            />
+            <ContactDeleteDialog contact={contact} />
           </div>
         </div>
         
         <ContactEmailDialog
-          contactId={contact.id}
-          contactName={contact.fullName || ''}
-          contactEmail={contact.email || ''}
-          contactCompany={contact.company || ''}
+          contact={contact}
           open={emailDialogOpen}
           onOpenChange={setEmailDialogOpen}
         />
