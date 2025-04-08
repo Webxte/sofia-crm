@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Settings } from "@/types";
+import { Settings, CustomLink } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultContactEmailMessage: "Dear [Name],\n\nThank you for your time during our recent meeting. As discussed, I've attached the links to our product catalog and price list.\n\nCatalog: [Catalog URL]\nPrice List: [Price List URL]\n\nPlease don't hesitate to reach out if you have any questions.\n\nBest regards,\n[Company Name]",
   catalogUrl: "",
   priceListUrl: "",
+  customLinks: Array(10).fill({ url: "", description: "" })
 };
 
 export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean) => {
@@ -53,6 +54,24 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         // TypeScript is unaware of the new fields, so we need to type assert
         const dbData = data as any;
         
+        // Parse custom links from JSON if they exist
+        let customLinks: CustomLink[] = Array(10).fill({ url: "", description: "" });
+        if (dbData.custom_links) {
+          try {
+            customLinks = JSON.parse(dbData.custom_links);
+            // Ensure we always have 10 links
+            if (!Array.isArray(customLinks) || customLinks.length < 10) {
+              const existingLinks = Array.isArray(customLinks) ? customLinks : [];
+              customLinks = [
+                ...existingLinks,
+                ...Array(10 - existingLinks.length).fill({ url: "", description: "" })
+              ];
+            }
+          } catch (e) {
+            console.error('Error parsing custom links:', e);
+          }
+        }
+        
         const formattedSettings: Settings = {
           id: dbData.id,
           defaultTermsAndConditions: dbData.default_terms_and_conditions || DEFAULT_SETTINGS.defaultTermsAndConditions,
@@ -66,6 +85,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           defaultContactEmailMessage: dbData.default_contact_email_message || DEFAULT_SETTINGS.defaultContactEmailMessage,
           catalogUrl: dbData.catalog_url || DEFAULT_SETTINGS.catalogUrl,
           priceListUrl: dbData.price_list_url || DEFAULT_SETTINGS.priceListUrl,
+          customLinks
         };
         
         setSettings(formattedSettings);
@@ -86,6 +106,8 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
   const createDefaultSettings = async () => {
     try {
+      const customLinksJson = JSON.stringify(DEFAULT_SETTINGS.customLinks);
+      
       const settingsData = {
         default_terms_and_conditions: DEFAULT_SETTINGS.defaultTermsAndConditions,
         company_name: DEFAULT_SETTINGS.companyName,
@@ -98,6 +120,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         default_contact_email_message: DEFAULT_SETTINGS.defaultContactEmailMessage,
         catalog_url: DEFAULT_SETTINGS.catalogUrl,
         price_list_url: DEFAULT_SETTINGS.priceListUrl,
+        custom_links: customLinksJson
       };
       
       const { data, error } = await supabase
@@ -114,6 +137,16 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
       // TypeScript is unaware of the new fields, so we need to type assert
       const dbData = data as any;
       
+      // Parse custom links
+      let customLinks: CustomLink[] = DEFAULT_SETTINGS.customLinks || [];
+      if (dbData.custom_links) {
+        try {
+          customLinks = JSON.parse(dbData.custom_links);
+        } catch (e) {
+          console.error('Error parsing custom links:', e);
+        }
+      }
+      
       const newSettings: Settings = {
         id: dbData.id,
         defaultTermsAndConditions: dbData.default_terms_and_conditions,
@@ -127,6 +160,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         defaultContactEmailMessage: dbData.default_contact_email_message,
         catalogUrl: dbData.catalog_url,
         priceListUrl: dbData.price_list_url,
+        customLinks
       };
       
       setSettings(newSettings);
@@ -170,6 +204,8 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         updateData.catalog_url = settingsData.catalogUrl;
       if (settingsData.priceListUrl !== undefined)
         updateData.price_list_url = settingsData.priceListUrl;
+      if (settingsData.customLinks !== undefined)
+        updateData.custom_links = JSON.stringify(settingsData.customLinks);
       
       updateData.updated_at = new Date().toISOString();
       

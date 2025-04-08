@@ -11,6 +11,7 @@ import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
 import EmailTemplates from "@/components/settings/EmailTemplates";
 import ContactEmailTemplates from "@/components/settings/ContactEmailTemplates";
+import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
 
 const Settings = () => {
   const { settings, updateSettings, refreshSettings } = useSettings();
@@ -45,6 +46,7 @@ const Settings = () => {
           <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
           <TabsTrigger value="email">Email Templates</TabsTrigger>
           <TabsTrigger value="contact-email">Contact Emails</TabsTrigger>
+          <TabsTrigger value="custom-links">Custom Links</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
         
@@ -80,6 +82,13 @@ const Settings = () => {
         
         <TabsContent value="contact-email">
           <ContactEmailTemplates
+            initialSettings={settings}
+            onSubmit={handleUpdateSettings}
+          />
+        </TabsContent>
+        
+        <TabsContent value="custom-links">
+          <CustomLinksSettings
             initialSettings={settings}
             onSubmit={handleUpdateSettings}
           />

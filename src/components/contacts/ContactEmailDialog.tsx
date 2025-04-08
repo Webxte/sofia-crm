@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Contact } from "@/types";
+import { Contact, CustomLink } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -13,6 +13,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ContactEmailDialogProps {
   contact: Contact;
@@ -34,20 +35,32 @@ export const ContactEmailDialog = ({ contact, open, onOpenChange }: ContactEmail
   const { toast } = useToast();
   const [isSending, setIsSending] = useState(false);
   const [newCc, setNewCc] = useState("");
+  const [selectedCustomLink, setSelectedCustomLink] = useState<string | null>(null);
   
   const defaultSubject = "Follow-up from our meeting";
-  const defaultMessage = settings.defaultContactEmailMessage || 
-    `Dear ${contact.fullName || "valued customer"},
+  
+  // Create message with placeholders replaced
+  const getDefaultMessage = () => {
+    const defaultTemplate = settings.defaultContactEmailMessage || 
+      `Dear [Name],
 
 Thank you for your time during our recent meeting. As discussed, I've attached the links to our product catalog and price list.
 
-Catalog: ${settings.catalogUrl || "[Catalog URL]"}
-Price List: ${settings.priceListUrl || "[Price List URL]"}
+Catalog: [Catalog URL]
+Price List: [Price List URL]
 
 Please don't hesitate to reach out if you have any questions.
 
 Best regards,
-${settings.companyName || "The Team"}`;
+[Company Name]`;
+    
+    // Replace placeholders with actual values
+    return defaultTemplate
+      .replace(/\[Name\]/g, contact.fullName || "valued customer")
+      .replace(/\[Company Name\]/g, settings.companyName || "The Team")
+      .replace(/\[Catalog URL\]/g, settings.catalogUrl || "[Catalog URL]")
+      .replace(/\[Price List URL\]/g, settings.priceListUrl || "[Price List URL]");
+  };
   
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailFormSchema),
@@ -55,7 +68,7 @@ ${settings.companyName || "The Team"}`;
       to: contact.email || "",
       cc: [],
       subject: defaultSubject,
-      message: defaultMessage,
+      message: getDefaultMessage(),
     },
   });
   
@@ -72,6 +85,24 @@ ${settings.companyName || "The Team"}`;
   const handleRemoveCc = (email: string) => {
     const currentCc = form.getValues("cc");
     form.setValue("cc", currentCc.filter(cc => cc !== email));
+  };
+  
+  const handleAddCustomLink = () => {
+    if (!selectedCustomLink) return;
+    
+    const index = parseInt(selectedCustomLink, 10);
+    const customLinks = settings.customLinks || [];
+    
+    if (index >= 0 && index < customLinks.length) {
+      const link = customLinks[index];
+      if (link.url && link.description) {
+        const currentMessage = form.getValues("message");
+        const newMessage = currentMessage + `\n\n${link.description}: ${link.url}`;
+        form.setValue("message", newMessage);
+      }
+    }
+    
+    setSelectedCustomLink(null);
   };
   
   const handleSubmit = async (values: EmailFormValues) => {
@@ -117,6 +148,11 @@ ${settings.companyName || "The Team"}`;
       setIsSending(false);
     }
   };
+  
+  // Filter out empty custom links
+  const availableCustomLinks = (settings.customLinks || [])
+    .map((link, index) => ({ ...link, index }))
+    .filter(link => link.url && link.description);
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -195,6 +231,34 @@ ${settings.companyName || "The Team"}`;
                 </FormItem>
               )}
             />
+            
+            {availableCustomLinks.length > 0 && (
+              <div className="flex items-end space-x-2">
+                <div className="flex-1">
+                  <FormLabel>Add Custom Link</FormLabel>
+                  <Select value={selectedCustomLink || ""} onValueChange={setSelectedCustomLink}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a link to add" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCustomLinks.map((link, idx) => (
+                        <SelectItem key={idx} value={String(link.index)}>
+                          {link.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleAddCustomLink}
+                  disabled={!selectedCustomLink}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Link
+                </Button>
+              </div>
+            )}
             
             <FormField
               control={form.control}

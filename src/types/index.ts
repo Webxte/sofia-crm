@@ -106,6 +106,12 @@ export interface User {
   role: "admin" | "agent";
 }
 
+// Custom Link interface for settings
+export interface CustomLink {
+  url: string;
+  description: string;
+}
+
 // Settings types
 export interface Settings {
   id: string;
@@ -117,8 +123,9 @@ export interface Settings {
   defaultVatRate: number;
   defaultEmailSubject?: string;
   defaultEmailMessage?: string;
-  // New fields for contact email templates
   defaultContactEmailMessage?: string;
   catalogUrl?: string;
   priceListUrl?: string;
+  // New fields for custom links (10 custom links)
+  customLinks?: CustomLink[];
 }
