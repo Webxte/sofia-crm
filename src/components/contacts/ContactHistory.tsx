@@ -1,176 +1,177 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Eye, Calendar, ListTodo } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Meeting } from '@/types';
-import { Order } from '@/types';
-import { format } from 'date-fns';
-import { formatCurrency } from '@/utils/formatting';
-import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge';
+import React from "react";
+import { useMeetings } from "@/context/meetings";
+import { useOrders } from "@/context/OrdersContext";
+import { formatCurrency } from "@/utils/formatting";
+import { format } from "date-fns";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarClock, ShoppingBag } from "lucide-react";
+import { Contact } from "@/types";
 
-interface ContactMeetingsProps {
-  meetings: Meeting[];
+interface ContactHistoryProps {
+  contact: Contact;
 }
 
-export const ContactMeetings: React.FC<ContactMeetingsProps> = ({ meetings }) => {
-  const navigate = useNavigate();
+const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
+  const { meetings } = useMeetings();
+  const { orders } = useOrders();
   
-  if (meetings.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Meeting History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6 text-muted-foreground">
-            <p>No meetings found for this contact.</p>
-            <Button variant="outline" className="mt-2" onClick={() => navigate('/meetings/new')}>
-              <Calendar className="mr-2 h-4 w-4" />
-              Schedule Meeting
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Filter meetings and orders for this contact
+  const contactMeetings = meetings.filter(meeting => meeting.contactId === contact.id);
+  const contactOrders = orders.filter(order => order.contactId === contact.id);
+  
+  // Sort by date - most recent first
+  const sortedMeetings = [...contactMeetings].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
+  const sortedOrders = [...contactOrders].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
+  // Extract notes for display (up to 2 lines)
+  const formatNotes = (notes: string | null | undefined, maxLines = 2) => {
+    if (!notes) return "";
+    
+    const lines = notes.split("\n");
+    if (lines.length <= maxLines) return notes;
+    
+    return lines.slice(0, maxLines).join("\n") + (lines.length > maxLines ? "..." : "");
+  };
+  
+  const meetingsEmpty = sortedMeetings.length === 0;
+  const ordersEmpty = sortedOrders.length === 0;
   
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Meeting History</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Agent</TableHead>
-              <TableHead>Notes</TableHead>
-              <TableHead>Follow-up</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {meetings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((meeting) => (
-              <TableRow key={meeting.id}>
-                <TableCell>
-                  {format(new Date(meeting.date), 'MMM d, yyyy')}
-                  {meeting.time && <span className="text-sm text-muted-foreground"> at {meeting.time}</span>}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{meeting.type}</Badge>
-                </TableCell>
-                <TableCell>
-                  {meeting.agentName ? (
-                    <span className="text-sm">{meeting.agentName}</span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Unassigned</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {meeting.notes ? (
-                    <span className="text-sm line-clamp-1">{meeting.notes}</span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No notes</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {meeting.followUpScheduled ? (
-                    <Badge variant="secondary">
-                      {meeting.followUpDate && format(new Date(meeting.followUpDate), 'MMM d, yyyy')}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">None</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/meetings/${meeting.id}`)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold mb-4">Contact History</h2>
+      
+      <Tabs defaultValue="meetings">
+        <TabsList>
+          <TabsTrigger value="meetings" className="flex items-center">
+            <CalendarClock className="mr-2 h-4 w-4" />
+            Meetings ({sortedMeetings.length})
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="flex items-center">
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Orders ({sortedOrders.length})
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="meetings">
+          {meetingsEmpty ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No meetings recorded with this contact yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedMeetings.map(meeting => (
+                <Card key={meeting.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle>{meeting.type} Meeting</CardTitle>
+                        <CardDescription>
+                          {format(new Date(meeting.date), "PPP 'at' p")}
+                        </CardDescription>
+                      </div>
+                      <Badge>{meeting.status}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-sm font-medium">Location:</p>
+                        <p className="text-sm">{meeting.location}</p>
+                      </div>
+                      
+                      {meeting.notes && (
+                        <div>
+                          <p className="text-sm font-medium">Notes:</p>
+                          <p className="text-sm whitespace-pre-line">{formatNotes(meeting.notes, 2)}</p>
+                        </div>
+                      )}
+                      
+                      {meeting.agentName && (
+                        <div>
+                          <p className="text-sm font-medium">Agent:</p>
+                          <p className="text-sm">{meeting.agentName}</p>
+                        </div>
+                      )}
+                      
+                      {meeting.followUpScheduled && (
+                        <div className="mt-2">
+                          <Badge variant="outline" className="bg-blue-50">
+                            Follow-up: {format(new Date(meeting.followUpDate), "PPP")}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="orders">
+          {ordersEmpty ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No orders recorded with this contact yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedOrders.map(order => (
+                <Card key={order.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle>Order #{order.reference || order.id.slice(0, 8).toUpperCase()}</CardTitle>
+                        <CardDescription>
+                          {format(new Date(order.date), "PPP")}
+                        </CardDescription>
+                      </div>
+                      <Badge className={
+                        order.status === "completed" ? "bg-green-100 text-green-800" :
+                        order.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                        "bg-gray-100"
+                      }>
+                        {order.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Amount:</span>
+                        <span className="font-bold">{formatCurrency(order.total)}</span>
+                      </div>
+                      
+                      {order.notes && (
+                        <div>
+                          <p className="text-sm font-medium">Notes:</p>
+                          <p className="text-sm whitespace-pre-line">{formatNotes(order.notes, 2)}</p>
+                        </div>
+                      )}
+                      
+                      {order.agentName && (
+                        <div>
+                          <p className="text-sm font-medium">Agent:</p>
+                          <p className="text-sm">{order.agentName}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
-interface ContactOrdersProps {
-  orders: Order[];
-}
-
-export const ContactOrders: React.FC<ContactOrdersProps> = ({ orders }) => {
-  const navigate = useNavigate();
-  
-  if (orders.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Order History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6 text-muted-foreground">
-            <p>No orders found for this contact.</p>
-            <Button variant="outline" className="mt-2" onClick={() => navigate('/orders/new')}>
-              <ListTodo className="mr-2 h-4 w-4" />
-              Create Order
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Order History</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead>Agent</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{format(new Date(order.date), 'MMM d, yyyy')}</TableCell>
-                <TableCell>{order.reference || `#${order.id.slice(0, 8)}`}</TableCell>
-                <TableCell>
-                  {order.agentName ? (
-                    <span className="text-sm">{order.agentName}</span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Unassigned</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <OrderStatusBadge status={order.status} />
-                </TableCell>
-                <TableCell>{formatCurrency(order.total)}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/orders/${order.id}`)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
-};
+export default ContactHistory;

@@ -125,7 +125,11 @@ Best regards,
           subject: values.subject,
           message: values.message,
           contactId: contact.id,
-          contactName: contact.fullName || contact.company || "Customer"
+          contactName: contact.fullName || contact.company || "Customer",
+          contactCompany: contact.company,
+          // Add fromName and fromEmail to match the order email configuration
+          fromName: "CRM System",
+          fromEmail: "info@belmorso.eu"
         }
       });
       

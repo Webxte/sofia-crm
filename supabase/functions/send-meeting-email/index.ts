@@ -10,13 +10,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface ContactEmailRequest {
+interface MeetingEmailRequest {
   to: string;
   subject: string;
   message: string;
-  contactId: string;
-  contactName: string;
-  contactCompany?: string;
+  meetingId: string;
+  meetingType: string;
+  meetingDate: string;
   cc?: string[];
   fromName?: string;
   fromEmail?: string;
@@ -29,18 +29,18 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Received contact email request");
+    console.log("Received meeting email request");
     
     // Get request body
-    const body: ContactEmailRequest = await req.json();
+    const body: MeetingEmailRequest = await req.json();
     
     // Log the request for debugging
-    console.log("Contact email request details:", {
+    console.log("Meeting email request details:", {
       to: body.to,
       subject: body.subject,
-      contactId: body.contactId,
-      contactName: body.contactName,
-      contactCompany: body.contactCompany,
+      meetingId: body.meetingId,
+      meetingType: body.meetingType,
+      meetingDate: body.meetingDate,
       cc: body.cc || [],
       fromName: body.fromName,
       fromEmail: body.fromEmail
@@ -58,38 +58,34 @@ serve(async (req) => {
       throw new Error("Missing required fields: to, subject, message");
     }
     
-    // Replace placeholders in message
-    let processedMessage = body.message;
-    if (body.contactName) {
-      processedMessage = processedMessage.replace(/\{name\}/g, body.contactName);
-    }
-    if (body.contactCompany) {
-      processedMessage = processedMessage.replace(/\{company\}/g, body.contactCompany);
-    }
-    
     // Format message with proper line breaks for HTML
-    const htmlMessage = processedMessage.replace(/\n/g, "<br />");
+    const htmlMessage = body.message.replace(/\n/g, "<br />");
     
-    console.log("Sending contact email with Resend API");
+    console.log("Sending meeting email with Resend API");
     
-    // Prepare email config - matching the order email configuration
+    // Prepare email config - using the same verified domain as in orders
     const emailConfig = {
       to: body.to,
       subject: body.subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${htmlMessage}
+          <h2>${body.subject}</h2>
+          <p>Meeting Type: ${body.meetingType}</p>
+          <p>Date: ${body.meetingDate}</p>
+          <div style="margin-top: 20px;">
+            ${htmlMessage}
+          </div>
         </div>
       `,
       cc: body.cc,
     };
     
-    // Use the same from address as the order email function uses
+    // Use custom from email if provided
     if (body.fromEmail && body.fromName) {
       emailConfig.from = `${body.fromName} <${body.fromEmail}>`;
       console.log(`Using custom from address: ${emailConfig.from}`);
     } else {
-      // Use the same verified domain as in the orders email function
+      // Use the same verified domain as in the orders email
       emailConfig.from = "CRM System <info@belmorso.eu>";
       console.log(`Using default from address: ${emailConfig.from}`);
     }
@@ -102,7 +98,7 @@ serve(async (req) => {
       throw new Error(`Failed to send email: ${error.message}`);
     }
     
-    console.log("Contact email sent successfully:", data);
+    console.log("Meeting email sent successfully:", data);
     
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -110,7 +106,7 @@ serve(async (req) => {
     });
     
   } catch (error: any) {
-    console.error("Error in send-contact-email function:", error);
+    console.error("Error in send-meeting-email function:", error);
     
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
