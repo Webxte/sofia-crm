@@ -20,11 +20,15 @@ const ContactForm = ({ initialData, contact, isEditing = false }: ContactFormPro
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <BasicInfoFields form={form} />
-        <ContactInfoFields form={form} />
-        <AdditionalFields form={form} />
-        <FormSubmitButton isEditing={isEditing} />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-gray-950 rounded-lg p-4 sm:p-6 shadow-sm border">
+          <BasicInfoFields form={form} />
+          <ContactInfoFields form={form} />
+          <AdditionalFields form={form} />
+          <div className="mt-8 flex justify-end">
+            <FormSubmitButton isEditing={isEditing} />
+          </div>
+        </div>
       </form>
     </Form>
   );

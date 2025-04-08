@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/OrdersContext";
@@ -7,8 +6,10 @@ import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarClock, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarClock, Eye, ShoppingBag, ShoppingCart } from "lucide-react";
 import { Contact, Meeting, Order } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 interface ContactHistoryProps {
   contact: Contact;
@@ -18,11 +19,9 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
   const { meetings } = useMeetings();
   const { orders } = useOrders();
   
-  // Filter meetings and orders for this contact
   const contactMeetings = meetings.filter(meeting => meeting.contactId === contact.id);
   const contactOrders = orders.filter(order => order.contactId === contact.id);
   
-  // Sort by date - most recent first
   const sortedMeetings = [...contactMeetings].sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -31,7 +30,6 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   
-  // Extract notes for display (up to 3 lines)
   const formatNotes = (notes: string | null | undefined, maxLines = 3) => {
     if (!notes) return "";
     
@@ -176,14 +174,14 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
 
 export default ContactHistory;
 
-// Create separate components for ContactMeetings and ContactOrders for use in ContactDetails page
 interface ContactDataProps {
   meetings?: Meeting[];
   orders?: Order[];
 }
 
 export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) => {
-  // Extract notes for display (up to 3 lines)
+  const navigate = useNavigate();
+  
   const formatNotes = (notes: string | null | undefined, maxLines = 3) => {
     if (!notes) return "";
     
@@ -197,11 +195,19 @@ export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) =
   
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="flex items-center">
           <CalendarClock className="mr-2 h-5 w-5" />
           Recent Meetings
         </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`/orders/new?contactId=${meetings[0]?.contactId}`)}
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Create Order
+        </Button>
       </CardHeader>
       <CardContent>
         {meetingsEmpty ? (
@@ -218,8 +224,22 @@ export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) =
                     <p className="text-sm text-gray-500">
                       {format(new Date(meeting.date), "PPP 'at' p")}
                     </p>
+                    {meeting.agentName && (
+                      <p className="text-xs text-muted-foreground">
+                        Agent: {meeting.agentName}
+                      </p>
+                    )}
                   </div>
-                  <Badge>{meeting.followUpScheduled ? "Follow-up Scheduled" : "Completed"}</Badge>
+                  <div className="flex gap-2 items-center">
+                    <Badge>{meeting.followUpScheduled ? "Follow-up Scheduled" : "Completed"}</Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => navigate(`/meetings/${meeting.id}`)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 
                 {meeting.notes && (
@@ -237,7 +257,8 @@ export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) =
 };
 
 export const ContactOrders: React.FC<ContactDataProps> = ({ orders = [] }) => {
-  // Extract notes for display (up to 3 lines)
+  const navigate = useNavigate();
+  
   const formatNotes = (notes: string | null | undefined, maxLines = 3) => {
     if (!notes) return "";
     
@@ -251,11 +272,19 @@ export const ContactOrders: React.FC<ContactDataProps> = ({ orders = [] }) => {
   
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="flex items-center">
           <ShoppingBag className="mr-2 h-5 w-5" />
           Recent Orders
         </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`/orders/new?contactId=${orders[0]?.contactId}`)}
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Create Order
+        </Button>
       </CardHeader>
       <CardContent>
         {ordersEmpty ? (
@@ -272,14 +301,28 @@ export const ContactOrders: React.FC<ContactDataProps> = ({ orders = [] }) => {
                     <p className="text-sm text-gray-500">
                       {format(new Date(order.date), "PPP")}
                     </p>
+                    {order.agentName && (
+                      <p className="text-xs text-muted-foreground">
+                        Agent: {order.agentName}
+                      </p>
+                    )}
                   </div>
-                  <Badge className={
-                    order.status === "paid" ? "bg-green-100 text-green-800" :
-                    order.status === "draft" ? "bg-yellow-100 text-yellow-800" :
-                    "bg-gray-100"
-                  }>
-                    {order.status}
-                  </Badge>
+                  <div className="flex gap-2 items-center">
+                    <Badge className={
+                      order.status === "paid" ? "bg-green-100 text-green-800" :
+                      order.status === "draft" ? "bg-yellow-100 text-yellow-800" :
+                      "bg-gray-100"
+                    }>
+                      {order.status}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="flex justify-between items-center text-sm mt-2">

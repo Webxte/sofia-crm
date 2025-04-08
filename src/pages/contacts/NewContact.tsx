@@ -20,14 +20,17 @@ interface ScanResult {
 const NewContact = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [key, setKey] = useState(0); // Add a key to force re-render of the form
   
   const handleScanComplete = (data: ScanResult) => {
+    console.log("Scan completed with data:", data);
     setScanResult(data);
+    setKey(prev => prev + 1); // Increment the key to force re-render
   };
   
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 max-w-4xl mx-auto px-4 pb-20">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Add New Contact</h1>
         <TooltipProvider>
           <Tooltip>
@@ -35,7 +38,7 @@ const NewContact = () => {
               <Button 
                 variant="outline"
                 onClick={() => setShowScanner(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
                 <Camera className="h-4 w-4" />
                 Scan Business Card
@@ -49,6 +52,7 @@ const NewContact = () => {
       </div>
       
       <ContactForm 
+        key={key} // Use the key to force re-render
         initialData={scanResult ? {
           fullName: scanResult.fullName || '',
           company: scanResult.company || '',

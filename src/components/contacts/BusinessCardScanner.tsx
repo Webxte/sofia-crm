@@ -37,6 +37,12 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
       
       setCameraStream(stream);
       setCameraActive(true);
+      
+      // Connect the camera stream to the video element
+      const videoElement = document.getElementById('camera-feed') as HTMLVideoElement;
+      if (videoElement) {
+        videoElement.srcObject = stream;
+      }
     } catch (error) {
       console.error("Error accessing camera:", error);
       setIsCameraSupported(false);
@@ -136,7 +142,9 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
     // In a real implementation, we would send the image to an OCR API like Google Cloud Vision,
     // Azure Computer Vision, or similar services to extract text and identify business card fields
     
-    // For now, we'll simulate a successful scan with mock data
+    console.log("Processing image...");
+    
+    // For now, simulate a successful scan with mock data
     setTimeout(() => {
       const mockResult: ScanResult = {
         fullName: "John Smith",
@@ -148,7 +156,10 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
         address: "123 Business Ave, Suite 101, New York, NY 10001"
       };
       
+      // Apply the scan result
       onScanComplete(mockResult);
+      
+      // Close the scanner dialog
       handleOpenChange(false);
       
       toast({
@@ -160,7 +171,7 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
   
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Scan Business Card</DialogTitle>
           <DialogDescription>
