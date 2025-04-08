@@ -13,6 +13,7 @@ import ContactInfoFields from "./form/ContactInfoFields";
 import AdditionalFields from "./form/AdditionalFields";
 import { useContactForm } from "./form/useContactForm";
 import { ContactFormProps } from "./form/types";
+import FormSubmitButton from "./form/FormSubmitButton";
 
 const ContactForm = ({ initialData, contact, isEditing = false }: ContactFormProps) => {
   const { form, onSubmit } = useContactForm({ initialData, contact, isEditing });
@@ -23,7 +24,7 @@ const ContactForm = ({ initialData, contact, isEditing = false }: ContactFormPro
         <BasicInfoFields form={form} />
         <ContactInfoFields form={form} />
         <AdditionalFields form={form} />
-        <Button type="submit">{isEditing ? "Update" : "Create"} Contact</Button>
+        <FormSubmitButton isEditing={isEditing} />
       </form>
     </Form>
   );

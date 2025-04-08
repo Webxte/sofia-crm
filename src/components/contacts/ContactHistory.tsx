@@ -31,8 +31,8 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   
-  // Extract notes for display (up to 2 lines)
-  const formatNotes = (notes: string | null | undefined, maxLines = 2) => {
+  // Extract notes for display (up to 3 lines)
+  const formatNotes = (notes: string | null | undefined, maxLines = 3) => {
     if (!notes) return "";
     
     const lines = notes.split("\n");
@@ -90,7 +90,7 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
                       {meeting.notes && (
                         <div>
                           <p className="text-sm font-medium">Notes:</p>
-                          <p className="text-sm whitespace-pre-line">{formatNotes(meeting.notes, 2)}</p>
+                          <p className="text-sm whitespace-pre-line">{formatNotes(meeting.notes, 3)}</p>
                         </div>
                       )}
                       
@@ -152,7 +152,7 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
                       {order.notes && (
                         <div>
                           <p className="text-sm font-medium">Notes:</p>
-                          <p className="text-sm whitespace-pre-line">{formatNotes(order.notes, 2)}</p>
+                          <p className="text-sm whitespace-pre-line">{formatNotes(order.notes, 3)}</p>
                         </div>
                       )}
                       
@@ -176,15 +176,15 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
 
 export default ContactHistory;
 
-// Create separate components for ContactMeetings and ContactOrders
+// Create separate components for ContactMeetings and ContactOrders for use in ContactDetails page
 interface ContactDataProps {
   meetings?: Meeting[];
   orders?: Order[];
 }
 
 export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) => {
-  // Extract notes for display (up to 2 lines)
-  const formatNotes = (notes: string | null | undefined, maxLines = 2) => {
+  // Extract notes for display (up to 3 lines)
+  const formatNotes = (notes: string | null | undefined, maxLines = 3) => {
     if (!notes) return "";
     
     const lines = notes.split("\n");
@@ -211,42 +211,22 @@ export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) =
         ) : (
           <div className="space-y-4">
             {meetings.slice(0, 3).map(meeting => (
-              <Card key={meeting.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{meeting.type} Meeting</CardTitle>
-                      <CardDescription>
-                        {format(new Date(meeting.date), "PPP 'at' p")}
-                      </CardDescription>
-                    </div>
-                    <Badge>{meeting.followUpScheduled ? "Follow-up Scheduled" : "Completed"}</Badge>
+              <Card key={meeting.id} className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-medium">{meeting.type} Meeting</h4>
+                    <p className="text-sm text-gray-500">
+                      {format(new Date(meeting.date), "PPP 'at' p")}
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {meeting.location && (
-                      <div>
-                        <p className="text-sm font-medium">Location:</p>
-                        <p className="text-sm">{meeting.location}</p>
-                      </div>
-                    )}
-                    
-                    {meeting.notes && (
-                      <div>
-                        <p className="text-sm font-medium">Notes:</p>
-                        <p className="text-sm whitespace-pre-line">{formatNotes(meeting.notes, 2)}</p>
-                      </div>
-                    )}
-                    
-                    {meeting.agentName && (
-                      <div>
-                        <p className="text-sm font-medium">Agent:</p>
-                        <p className="text-sm">{meeting.agentName}</p>
-                      </div>
-                    )}
+                  <Badge>{meeting.followUpScheduled ? "Follow-up Scheduled" : "Completed"}</Badge>
+                </div>
+                
+                {meeting.notes && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 whitespace-pre-line line-clamp-3">{formatNotes(meeting.notes, 3)}</p>
                   </div>
-                </CardContent>
+                )}
               </Card>
             ))}
           </div>
@@ -257,8 +237,8 @@ export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) =
 };
 
 export const ContactOrders: React.FC<ContactDataProps> = ({ orders = [] }) => {
-  // Extract notes for display (up to 2 lines)
-  const formatNotes = (notes: string | null | undefined, maxLines = 2) => {
+  // Extract notes for display (up to 3 lines)
+  const formatNotes = (notes: string | null | undefined, maxLines = 3) => {
     if (!notes) return "";
     
     const lines = notes.split("\n");
@@ -285,46 +265,33 @@ export const ContactOrders: React.FC<ContactDataProps> = ({ orders = [] }) => {
         ) : (
           <div className="space-y-4">
             {orders.slice(0, 3).map(order => (
-              <Card key={order.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>Order #{order.reference || order.id.slice(0, 8).toUpperCase()}</CardTitle>
-                      <CardDescription>
-                        {format(new Date(order.date), "PPP")}
-                      </CardDescription>
-                    </div>
-                    <Badge className={
-                      order.status === "paid" ? "bg-green-100 text-green-800" :
-                      order.status === "draft" ? "bg-yellow-100 text-yellow-800" :
-                      "bg-gray-100"
-                    }>
-                      {order.status}
-                    </Badge>
+              <Card key={order.id} className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-medium">Order #{order.reference || order.id.slice(0, 8).toUpperCase()}</h4>
+                    <p className="text-sm text-gray-500">
+                      {format(new Date(order.date), "PPP")}
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">Total Amount:</span>
-                      <span className="font-bold">{formatCurrency(order.total)}</span>
-                    </div>
-                    
-                    {order.notes && (
-                      <div>
-                        <p className="text-sm font-medium">Notes:</p>
-                        <p className="text-sm whitespace-pre-line">{formatNotes(order.notes, 2)}</p>
-                      </div>
-                    )}
-                    
-                    {order.agentName && (
-                      <div>
-                        <p className="text-sm font-medium">Agent:</p>
-                        <p className="text-sm">{order.agentName}</p>
-                      </div>
-                    )}
+                  <Badge className={
+                    order.status === "paid" ? "bg-green-100 text-green-800" :
+                    order.status === "draft" ? "bg-yellow-100 text-yellow-800" :
+                    "bg-gray-100"
+                  }>
+                    {order.status}
+                  </Badge>
+                </div>
+                
+                <div className="flex justify-between items-center text-sm mt-2">
+                  <span className="font-medium">Total:</span>
+                  <span className="font-bold">{formatCurrency(order.total)}</span>
+                </div>
+                
+                {order.notes && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 whitespace-pre-line line-clamp-3">{formatNotes(order.notes, 3)}</p>
                   </div>
-                </CardContent>
+                )}
               </Card>
             ))}
           </div>

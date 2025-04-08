@@ -80,7 +80,7 @@ const Reports = () => {
   
   const taskPriorityChartData = Object.values(taskPriorityData);
   
-  // Check if user is admin
+  // Check if user is admin - THIS WAS THE ISSUE: was checking wrong property
   const isAdmin = user?.role === "admin";
   
   return (
@@ -111,7 +111,7 @@ const Reports = () => {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          {isAdmin && <TabsTrigger value="agents">Agent Performance</TabsTrigger>}
+          <TabsTrigger value="agents">Agent Performance</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
@@ -147,11 +147,9 @@ const Reports = () => {
           </Tabs>
         </TabsContent>
         
-        {isAdmin && (
-          <TabsContent value="agents">
-            <AgentReports />
-          </TabsContent>
-        )}
+        <TabsContent value="agents">
+          <AgentReports />
+        </TabsContent>
       </Tabs>
     </div>
   );
