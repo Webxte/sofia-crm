@@ -13,8 +13,15 @@ interface EmailTemplatesProps {
   initialSettings: {
     defaultEmailSubject?: string;
     defaultEmailMessage?: string;
+    emailFooter?: string;
+    emailSenderName?: string;
   };
-  onSubmit: (data: { defaultEmailSubject: string; defaultEmailMessage: string }) => Promise<void>;
+  onSubmit: (data: { 
+    defaultEmailSubject: string; 
+    defaultEmailMessage: string;
+    emailFooter: string;
+    emailSenderName: string;
+  }) => Promise<void>;
 }
 
 const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubmit }) => {
@@ -22,13 +29,20 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubm
     defaultValues: {
       defaultEmailSubject: initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
       defaultEmailMessage: initialSettings.defaultEmailMessage || 
-        "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business."
+        "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business.",
+      emailFooter: initialSettings.emailFooter || "This is an automated message from your CRM system.",
+      emailSenderName: initialSettings.emailSenderName || "CRM System"
     }
   });
   
   const placeholders = getEmailPlaceholders();
   
-  const handleSubmit = async (data: { defaultEmailSubject: string; defaultEmailMessage: string }) => {
+  const handleSubmit = async (data: { 
+    defaultEmailSubject: string; 
+    defaultEmailMessage: string;
+    emailFooter: string;
+    emailSenderName: string;
+  }) => {
     await onSubmit(data);
   };
   
@@ -43,6 +57,19 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubm
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="emailSenderName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sender Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="CRM System" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
             <FormField
               control={form.control}
               name="defaultEmailSubject"
@@ -66,6 +93,23 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubm
                     <Textarea 
                       placeholder="Enter default email message" 
                       className="min-h-32" 
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="emailFooter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Footer Text</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="This is an automated message from your CRM system." 
+                      className="min-h-16" 
                       {...field} 
                     />
                   </FormControl>
