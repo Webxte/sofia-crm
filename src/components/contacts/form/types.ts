@@ -3,9 +3,7 @@ import { z } from "zod";
 import { Contact } from "@/types";
 
 export const contactFormSchema = z.object({
-  fullName: z.string().min(2, {
-    message: "Full name must be at least 2 characters.",
-  }),
+  fullName: z.string().optional(),
   company: z.string().optional(),
   position: z.string().optional(),
   email: z.string().email({
@@ -16,6 +14,12 @@ export const contactFormSchema = z.object({
   address: z.string().optional().nullable(),
   source: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+}).refine((data) => {
+  // Either fullName or company must be provided
+  return !!data.fullName || !!data.company;
+}, {
+  message: "Either Full Name or Company must be provided",
+  path: ["fullName"] // Error will be shown on the fullName field
 });
 
 export type ContactFormValues = z.infer<typeof contactFormSchema>;

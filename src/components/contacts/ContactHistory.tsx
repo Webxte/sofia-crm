@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/OrdersContext";
@@ -203,10 +204,10 @@ export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) =
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/orders/new?contactId=${meetings[0]?.contactId}`)}
+          onClick={() => meetings.length > 0 && navigate(`/meetings/new?contactId=${meetings[0]?.contactId}`)}
         >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Create Order
+          <CalendarClock className="mr-2 h-4 w-4" />
+          Schedule Meeting
         </Button>
       </CardHeader>
       <CardContent>
@@ -216,7 +217,8 @@ export const ContactMeetings: React.FC<ContactDataProps> = ({ meetings = [] }) =
           </div>
         ) : (
           <div className="space-y-4">
-            {meetings.slice(0, 3).map(meeting => (
+            {/* Show all meetings instead of just 3 */}
+            {meetings.map(meeting => (
               <Card key={meeting.id} className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>
@@ -280,7 +282,7 @@ export const ContactOrders: React.FC<ContactDataProps> = ({ orders = [] }) => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/orders/new?contactId=${orders[0]?.contactId}`)}
+          onClick={() => orders.length > 0 && navigate(`/orders/new?contactId=${orders[0]?.contactId}`)}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
           Create Order
@@ -293,7 +295,8 @@ export const ContactOrders: React.FC<ContactDataProps> = ({ orders = [] }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.slice(0, 3).map(order => (
+            {/* Show all orders instead of just 3 */}
+            {orders.map(order => (
               <Card key={order.id} className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>

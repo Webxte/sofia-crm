@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
 import { Contact } from "@/types";
 import { EmptyState } from "@/components/EmptyState";
-import { Users } from "lucide-react";
+import { Users, ArrowDownUp } from "lucide-react";
 import ContactImporter from "@/components/contacts/ContactImporter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ContactsHeader } from "@/components/contacts/ContactsHeader";
@@ -12,6 +12,11 @@ import { ContactsFilter } from "@/components/contacts/ContactsFilter";
 import { ContactsList } from "@/components/contacts/ContactsList";
 import { ContactsGrid } from "@/components/contacts/ContactsGrid";
 import { useAuth } from "@/context/AuthContext";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+type SortField = "fullName" | "company" | "email" | "phone" | "source";
+type SortDirection = "asc" | "desc";
 
 const Contacts = () => {
   const navigate = useNavigate();
@@ -23,8 +28,11 @@ const Contacts = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
-  // Setting showAllContacts to false by default to filter by agent's contacts
   const [showAllContacts, setShowAllContacts] = useState(false);
+  
+  // Add sorting state
+  const [sortField, setSortField] = useState<SortField>("company");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
@@ -78,6 +86,41 @@ const Contacts = () => {
     }
     
     return true;
+  }).sort((a, b) => {
+    // Sort by selected field
+    let valueA: string | undefined;
+    let valueB: string | undefined;
+    
+    switch (sortField) {
+      case "company":
+        valueA = a.company || a.fullName || "";
+        valueB = b.company || b.fullName || "";
+        break;
+      case "fullName":
+        valueA = a.fullName || a.company || "";
+        valueB = b.fullName || b.company || "";
+        break;
+      case "email":
+        valueA = a.email || "";
+        valueB = b.email || "";
+        break;
+      case "phone":
+        valueA = a.phone || "";
+        valueB = b.phone || "";
+        break;
+      case "source":
+        valueA = a.source || "";
+        valueB = b.source || "";
+        break;
+      default:
+        valueA = a.company || a.fullName || "";
+        valueB = b.company || b.fullName || "";
+    }
+    
+    // Apply sort direction
+    return sortDirection === "asc" 
+      ? valueA.localeCompare(valueB) 
+      : valueB.localeCompare(valueA);
   });
 
   // Group contacts for grid view
@@ -87,10 +130,14 @@ const Contacts = () => {
     filteredContacts.forEach(contact => {
       let firstChar = '#';
       
-      if (contact.fullName) {
-        firstChar = contact.fullName.charAt(0).toUpperCase();
-      } else if (contact.company) {
-        firstChar = contact.company.charAt(0).toUpperCase();
+      // Get the first character of the sorting field
+      if (sortField === "company") {
+        firstChar = (contact.company || contact.fullName || "#").charAt(0).toUpperCase();
+      } else if (sortField === "fullName") {
+        firstChar = (contact.fullName || contact.company || "#").charAt(0).toUpperCase();
+      } else {
+        // For other sort fields, still group by name or company
+        firstChar = (contact.company || contact.fullName || "#").charAt(0).toUpperCase();
       }
       
       if (!/[A-Z]/.test(firstChar)) {
@@ -104,18 +151,41 @@ const Contacts = () => {
       groups[firstChar].push(contact);
     });
     
+    // Sort contacts within each group by the sorting field
     Object.keys(groups).forEach(key => {
       groups[key].sort((a, b) => {
-        const aName = a.fullName || a.company || '';
-        const bName = b.fullName || b.company || '';
-        return aName.localeCompare(bName);
+        let valueA: string | undefined;
+        let valueB: string | undefined;
+        
+        switch (sortField) {
+          case "company":
+            valueA = a.company || a.fullName || "";
+            valueB = b.company || b.fullName || "";
+            break;
+          case "fullName":
+            valueA = a.fullName || a.company || "";
+            valueB = b.fullName || b.company || "";
+            break;
+          default:
+            valueA = a.company || a.fullName || "";
+            valueB = b.company || b.fullName || "";
+        }
+        
+        return sortDirection === "asc"
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
       });
     });
     
     return groups;
-  }, [filteredContacts]);
+  }, [filteredContacts, sortField, sortDirection]);
   
-  const sortedGroups = Object.keys(groupedContacts).sort();
+  // Sort the group keys based on sortDirection
+  const sortedGroups = Object.keys(groupedContacts).sort((a, b) => {
+    return sortDirection === "asc" 
+      ? a.localeCompare(b) 
+      : b.localeCompare(a);
+  });
   
   const handleScheduleMeeting = (contactId: string) => {
     navigate(`/meetings/new?contactId=${contactId}`);
@@ -128,24 +198,71 @@ const Contacts = () => {
   const handleCreateOrder = (contactId: string) => {
     navigate(`/orders/new?contactId=${contactId}`);
   };
+
+  const toggleSortDirection = () => {
+    setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+  };
+  
+  const handleSortChange = (field: SortField) => {
+    if (sortField === field) {
+      // If clicking the same field, toggle direction
+      toggleSortDirection();
+    } else {
+      // If clicking a new field, set it as the sort field and reset direction to asc
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
   
   return (
     <div className="space-y-6">
       <ContactsHeader onImportClick={() => setShowImporter(true)} />
       
-      <ContactsFilter
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        showAllContacts={showAllContacts}
-        onShowAllContactsChange={setShowAllContacts}
-        selectedSource={selectedSource}
-        onSourceChange={setSelectedSource}
-        sources={sources}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+        <ContactsFilter
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          showAllContacts={showAllContacts}
+          onShowAllContactsChange={setShowAllContacts}
+          selectedSource={selectedSource}
+          onSourceChange={setSelectedSource}
+          sources={sources}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="ml-0 sm:ml-2 mt-2 sm:mt-0">
+              <ArrowDownUp className="h-4 w-4 mr-2" />
+              Sort: {sortField === "company" ? "Company" : 
+                    sortField === "fullName" ? "Name" : 
+                    sortField === "email" ? "Email" :
+                    sortField === "phone" ? "Phone" : "Source"}
+              {sortDirection === "asc" ? " (A-Z)" : " (Z-A)"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleSortChange("company")}>
+              Sort by Company
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleSortChange("fullName")}>
+              Sort by Name
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleSortChange("email")}>
+              Sort by Email
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleSortChange("phone")}>
+              Sort by Phone
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleSortChange("source")}>
+              Sort by Source
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       
       {filteredContacts.length === 0 ? (
         <EmptyState

@@ -25,7 +25,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       phone: contact?.phone || initialData?.phone || "",
       mobile: contact?.mobile || initialData?.mobile || "",
       address: contact?.address || initialData?.address || "",
-      source: contact?.source || initialData?.source || "",
+      source: contact?.source || initialData?.source || (user?.name ? user.name : ""),
       notes: contact?.notes || initialData?.notes || "",
     },
   });
@@ -41,13 +41,17 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         phone: contact.phone || "",
         mobile: contact.mobile || "",
         address: contact.address || "",
-        source: contact.source || "",
+        source: contact.source || (user?.name ? user.name : ""),
         notes: contact.notes || "",
       });
     } else if (initialData) {
-      form.reset(initialData);
+      // For new contacts, ensure source is set to user's name if available
+      form.reset({
+        ...initialData,
+        source: initialData.source || (user?.name ? user.name : "")
+      });
     }
-  }, [initialData, contact, form]);
+  }, [initialData, contact, form, user?.name]);
 
   const onSubmit = async (values: ContactFormValues) => {
     try {
@@ -65,6 +69,11 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         agentId: user.id,
         agentName: user.name || ''
       };
+      
+      // Ensure source is set if not provided
+      if (!values.source && user?.name) {
+        values.source = user.name;
+      }
       
       if (isEditing && contact) {
         // Update existing contact
