@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
@@ -30,7 +29,6 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [view, setView] = useState<CalendarView>('month');
 
-  // Navigate to previous period (month/week/day)
   const previous = () => {
     if (view === 'month') {
       setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -41,7 +39,6 @@ const Calendar = () => {
     }
   };
 
-  // Navigate to next period (month/week/day)
   const next = () => {
     if (view === 'month') {
       setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
@@ -52,40 +49,33 @@ const Calendar = () => {
     }
   };
 
-  // Navigate to today
   const goToToday = () => {
     setCurrentDate(new Date());
     setSelectedDate(new Date());
   };
 
-  // Get days in a month
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  // Get day of week (0 = Sunday, 6 = Saturday)
   const getFirstDayOfMonth = (year: number, month: number) => {
     return new Date(year, month, 1).getDay();
   };
 
-  // Generate calendar days based on the selected view
   const generateCalendarDays = useCallback((): CalendarDay[] => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
-    // Month view
     if (view === 'month') {
       const daysInMonth = getDaysInMonth(year, month);
       const firstDayOfMonth = getFirstDayOfMonth(year, month);
       
-      // Get days from previous month
       const prevMonth = month === 0 ? 11 : month - 1;
       const prevMonthYear = month === 0 ? year - 1 : year;
       const daysInPrevMonth = getDaysInMonth(prevMonthYear, prevMonth);
       
       const calendarDays: CalendarDay[] = [];
       
-      // Add days from previous month
       for (let i = 0; i < firstDayOfMonth; i++) {
         const date = new Date(prevMonthYear, prevMonth, daysInPrevMonth - firstDayOfMonth + i + 1);
         calendarDays.push({
@@ -97,26 +87,21 @@ const Calendar = () => {
         });
       }
       
-      // Add days from current month
       for (let i = 1; i <= daysInMonth; i++) {
         const date = new Date(year, month, i);
         
-        // Filter meetings for this day
         const dayMeetings = meetings.filter(meeting => 
           isSameDay(new Date(meeting.date), date)
         );
         
-        // Filter follow-up meetings for this day
         const dayFollowUps = meetings.filter(meeting => 
           meeting.followUpScheduled && 
           meeting.followUpDate && 
           isSameDay(new Date(meeting.followUpDate), date)
         );
         
-        // Combine regular meetings and follow-ups
         const allMeetings = [...dayMeetings, ...dayFollowUps];
         
-        // Filter tasks for this day
         const dayTasks = tasks.filter(task => 
           task.dueDate && isSameDay(new Date(task.dueDate), date)
         );
@@ -130,9 +115,8 @@ const Calendar = () => {
         });
       }
       
-      // Add days from next month
       const totalDaysAdded = calendarDays.length;
-      const daysToAdd = 42 - totalDaysAdded; // 6 rows of 7 days
+      const daysToAdd = 42 - totalDaysAdded;
       
       const nextMonth = month === 11 ? 0 : month + 1;
       const nextMonthYear = month === 11 ? year + 1 : year;
@@ -151,29 +135,24 @@ const Calendar = () => {
       return calendarDays;
     }
     
-    // Week view
     if (view === 'week') {
       const weekStart = startOfWeek(currentDate);
       const weekEnd = endOfWeek(currentDate);
       const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
       
       return days.map(date => {
-        // Filter meetings for this day
         const dayMeetings = meetings.filter(meeting => 
           isSameDay(new Date(meeting.date), date)
         );
         
-        // Filter follow-up meetings for this day
         const dayFollowUps = meetings.filter(meeting => 
           meeting.followUpScheduled && 
           meeting.followUpDate && 
           isSameDay(new Date(meeting.followUpDate), date)
         );
         
-        // Combine regular meetings and follow-ups
         const allMeetings = [...dayMeetings, ...dayFollowUps];
         
-        // Filter tasks for this day
         const dayTasks = tasks.filter(task => 
           task.dueDate && isSameDay(new Date(task.dueDate), date)
         );
@@ -188,38 +167,31 @@ const Calendar = () => {
       });
     }
     
-    // Day view
     if (view === 'day') {
       const date = currentDate;
       
-      // Filter meetings for this day
       const dayMeetings = meetings.filter(meeting => 
         isSameDay(new Date(meeting.date), date)
       );
       
-      // Filter follow-up meetings for this day
       const dayFollowUps = meetings.filter(meeting => 
         meeting.followUpScheduled && 
         meeting.followUpDate && 
         isSameDay(new Date(meeting.followUpDate), date)
       );
       
-      // Combine regular meetings and follow-ups
       const allMeetings = [...dayMeetings, ...dayFollowUps];
       
-      // Sort meetings by time
       allMeetings.sort((a, b) => {
         const aTime = a.time || "";
         const bTime = b.time || "";
         return aTime.localeCompare(bTime);
       });
       
-      // Filter tasks for this day
       const dayTasks = tasks.filter(task => 
         task.dueDate && isSameDay(new Date(task.dueDate), date)
       );
       
-      // Sort tasks by priority
       dayTasks.sort((a, b) => {
         const priorities = { high: 0, medium: 1, low: 2 };
         return priorities[(a.priority || 'low') as 'high' | 'medium' | 'low'] - 
@@ -238,7 +210,6 @@ const Calendar = () => {
     return [];
   }, [currentDate, meetings, tasks, view]);
 
-  // Handle day click
   const handleDayClick = (day: CalendarDay) => {
     setSelectedDate(day.date);
     if (view === 'month') {
@@ -246,19 +217,16 @@ const Calendar = () => {
     }
   };
 
-  // Handle meeting click - navigate to meeting details
   const handleMeetingClick = (e: React.MouseEvent, meetingId: string) => {
     e.stopPropagation();
     navigate(`/meetings/${meetingId}`);
   };
 
-  // Handle task click - navigate to task details
   const handleTaskClick = (e: React.MouseEvent, taskId: string) => {
     e.stopPropagation();
     navigate(`/tasks/${taskId}`);
   };
 
-  // Format title based on view
   const getViewTitle = () => {
     if (view === 'month') {
       return format(currentDate, 'MMMM yyyy');
@@ -271,15 +239,10 @@ const Calendar = () => {
     }
   };
 
-  // Render calendar
-  const calendarDays = generateCalendarDays();
-  
-  // Render appropriate view
   const renderCalendarView = () => {
     if (view === 'month') {
       return (
         <>
-          {/* Calendar header - days of week */}
           <div className="grid grid-cols-7 mb-2 text-sm font-medium text-muted-foreground">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
               <div key={day} className="px-2 py-4 text-center">
@@ -288,7 +251,6 @@ const Calendar = () => {
             ))}
           </div>
           
-          {/* Calendar grid - month view */}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((day, index) => (
               <div
@@ -358,7 +320,6 @@ const Calendar = () => {
     } else if (view === 'week') {
       return (
         <>
-          {/* Calendar header - days of week */}
           <div className="grid grid-cols-7 mb-2 text-sm font-medium">
             {calendarDays.map((day, index) => (
               <div key={index} className="px-2 py-2 text-center">
@@ -379,7 +340,6 @@ const Calendar = () => {
             ))}
           </div>
           
-          {/* Week view grid */}
           <div className="grid grid-cols-7 gap-1 mt-2">
             {calendarDays.map((day, index) => (
               <div
@@ -414,7 +374,7 @@ const Calendar = () => {
                                 ? `Follow-up (${meeting.followUpTime || 'No time'})` 
                                 : `${meeting.type} (${meeting.time || 'No time'})`}
                             </div>
-                            <div className="truncate">{meeting.contactName}</div>
+                            <div className="truncate">{meeting.contactName || 'No contact'}</div>
                           </div>
                         ))}
                       </div>
@@ -442,6 +402,7 @@ const Calendar = () => {
                             <div className="font-medium">{task.title}</div>
                             <div className="truncate">
                               {task.priority && `Priority: ${task.priority}`}
+                              {task.contactName && ` • ${task.contactName}`}
                             </div>
                           </div>
                         ))}
@@ -461,7 +422,6 @@ const Calendar = () => {
         </>
       );
     } else {
-      // Day view
       const day = calendarDays[0];
       return (
         <div className="border rounded-md p-4">
@@ -564,7 +524,7 @@ const Calendar = () => {
       );
     }
   };
-  
+
   return (
     <>
       <Helmet>

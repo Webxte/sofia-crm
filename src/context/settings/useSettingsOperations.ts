@@ -1,34 +1,20 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-export interface Settings {
-  companyName: string;
-  companyEmail: string;
-  companyPhone: string;
-  companyAddress: string;
-  terms: string;
-  termsEnabled: boolean;
-  defaultEmailSubject?: string;
-  defaultEmailMessage?: string;
-  catalogUrl?: string;
-  priceListUrl?: string;
-  defaultContactEmailMessage?: string;
-  customLinks?: Array<{ description: string; url: string }>;
-  emailFooter?: string;
-  emailSenderName?: string;
-}
+import { Settings, CustomLink } from "@/types";
 
 export const DEFAULT_SETTINGS: Settings = {
   companyName: "CRM System",
   companyEmail: "",
   companyPhone: "",
   companyAddress: "",
-  terms: "",
+  terms: "", // Changed from defaultTermsAndConditions
   termsEnabled: false,
   customLinks: [],
   emailFooter: "This is an automated message from your CRM system.",
-  emailSenderName: "CRM System"
+  emailSenderName: "CRM System",
+  defaultVatRate: 0
 };
 
 export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean) => {
@@ -67,19 +53,27 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           }
         }
 
+        // Ensure customLinks is an array of objects
+        if (!Array.isArray(customLinks)) {
+          customLinks = [];
+        }
+
         setSettings({
+          id: data.id,
           companyName: data.company_name || DEFAULT_SETTINGS.companyName,
           companyEmail: data.company_email || DEFAULT_SETTINGS.companyEmail,
           companyPhone: data.company_phone || DEFAULT_SETTINGS.companyPhone,
           companyAddress: data.company_address || DEFAULT_SETTINGS.companyAddress,
-          terms: data.terms || DEFAULT_SETTINGS.terms,
-          termsEnabled: data.terms_enabled || DEFAULT_SETTINGS.termsEnabled,
+          terms: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
+          termsEnabled: Boolean(data.terms_enabled) || DEFAULT_SETTINGS.termsEnabled,
+          defaultTermsAndConditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.defaultTermsAndConditions,
+          defaultVatRate: data.default_vat_rate !== null ? Number(data.default_vat_rate) : 0,
           defaultEmailSubject: data.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
           defaultEmailMessage: data.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
           defaultContactEmailMessage: data.default_contact_email_message || DEFAULT_SETTINGS.defaultContactEmailMessage,
           catalogUrl: data.catalog_url || DEFAULT_SETTINGS.catalogUrl,
           priceListUrl: data.price_list_url || DEFAULT_SETTINGS.priceListUrl,
-          customLinks: customLinks || DEFAULT_SETTINGS.customLinks,
+          customLinks: customLinks as CustomLink[] || DEFAULT_SETTINGS.customLinks,
           emailFooter: data.email_footer || DEFAULT_SETTINGS.emailFooter,
           emailSenderName: data.email_sender_name || DEFAULT_SETTINGS.emailSenderName,
         });
@@ -108,8 +102,9 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           company_email: updates.companyEmail,
           company_phone: updates.companyPhone,
           company_address: updates.companyAddress,
-          terms: updates.terms,
+          default_terms_and_conditions: updates.terms || updates.defaultTermsAndConditions,
           terms_enabled: updates.termsEnabled,
+          default_vat_rate: updates.defaultVatRate?.toString(),
           default_email_subject: updates.defaultEmailSubject,
           default_email_message: updates.defaultEmailMessage,
           default_contact_email_message: updates.defaultContactEmailMessage,

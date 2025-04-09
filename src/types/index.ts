@@ -21,6 +21,7 @@ export interface Contact {
 export interface Meeting {
   id: string;
   contactId: string;
+  contactName?: string; // Add contactName property
   type: "meeting" | "phone" | "email" | "online" | "other";
   date: Date;
   time: string;
@@ -47,6 +48,7 @@ export interface Task {
   priority: "low" | "medium" | "high";
   status: "active" | "completed";
   contactId?: string;
+  contactName?: string; // Add contactName property
   agentId?: string;
   agentName?: string;
   createdAt: Date;
@@ -114,18 +116,21 @@ export interface CustomLink {
 
 // Settings types
 export interface Settings {
-  id: string;
+  id?: string;
   companyName: string;
   companyAddress: string;
   companyPhone: string;
   companyEmail: string;
-  defaultTermsAndConditions: string;
-  defaultVatRate: number;
+  terms?: string; // Renamed from defaultTermsAndConditions
+  termsEnabled?: boolean; // Added to match database
+  defaultTermsAndConditions?: string; // Keep for backward compatibility
+  defaultVatRate?: number;
   defaultEmailSubject?: string;
   defaultEmailMessage?: string;
   defaultContactEmailMessage?: string;
   catalogUrl?: string;
   priceListUrl?: string;
-  // New fields for custom links (10 custom links)
   customLinks?: CustomLink[];
+  emailFooter?: string;
+  emailSenderName?: string;
 }

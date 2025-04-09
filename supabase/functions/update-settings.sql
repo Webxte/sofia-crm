@@ -22,3 +22,11 @@ ADD COLUMN IF NOT EXISTS email_footer TEXT DEFAULT 'This is an automated message
 -- Add email_sender_name column if it doesn't exist
 ALTER TABLE public.settings
 ADD COLUMN IF NOT EXISTS email_sender_name TEXT DEFAULT 'CRM System';
+
+-- Add terms_enabled column if it doesn't exist
+ALTER TABLE public.settings
+ADD COLUMN IF NOT EXISTS terms_enabled BOOLEAN DEFAULT false;
+
+-- Ensure default_vat_rate exists
+ALTER TABLE public.settings
+ADD COLUMN IF NOT EXISTS default_vat_rate NUMERIC DEFAULT 0;

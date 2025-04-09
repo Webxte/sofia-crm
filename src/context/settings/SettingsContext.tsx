@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, ReactNode } from "react";
 import { SettingsContextType } from "./types";
 import { useSettingsOperations } from "./useSettingsOperations";
 import { useAuth } from "../AuthContext";
+import { Settings } from "@/types";
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
@@ -19,7 +20,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     if (isAuthenticated) {
       refreshSettings();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, refreshSettings]);
 
   return (
     <SettingsContext.Provider
