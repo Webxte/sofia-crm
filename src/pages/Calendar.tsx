@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
@@ -239,6 +240,9 @@ const Calendar = () => {
     }
   };
 
+  // Generate calendar days
+  const calendarDays = generateCalendarDays();
+
   const renderCalendarView = () => {
     if (view === 'month') {
       return (
@@ -460,7 +464,7 @@ const Calendar = () => {
                         </div>
                       </div>
                       <div className="text-sm mt-1">
-                        {meeting.contactName} 
+                        {meeting.contactName || 'No contact'} 
                         {meeting.location && ` • ${meeting.location}`}
                       </div>
                       {meeting.notes && (

@@ -43,7 +43,8 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
       if (data) {
         // Parse custom_links if it's a string
-        let customLinks = data.custom_links;
+        let customLinks: any[] = data.custom_links || [];
+        
         if (typeof customLinks === 'string') {
           try {
             customLinks = JSON.parse(customLinks);
@@ -66,8 +67,8 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           companyAddress: data.company_address || DEFAULT_SETTINGS.companyAddress,
           terms: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
           termsEnabled: Boolean(data.terms_enabled) || DEFAULT_SETTINGS.termsEnabled,
-          defaultTermsAndConditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.defaultTermsAndConditions,
-          defaultVatRate: data.default_vat_rate !== null ? Number(data.default_vat_rate) : 0,
+          defaultTermsAndConditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
+          defaultVatRate: data.default_vat_rate !== null ? Number(data.default_vat_rate) : DEFAULT_SETTINGS.defaultVatRate,
           defaultEmailSubject: data.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
           defaultEmailMessage: data.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
           defaultContactEmailMessage: data.default_contact_email_message || DEFAULT_SETTINGS.defaultContactEmailMessage,
@@ -104,13 +105,13 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           company_address: updates.companyAddress,
           default_terms_and_conditions: updates.terms || updates.defaultTermsAndConditions,
           terms_enabled: updates.termsEnabled,
-          default_vat_rate: updates.defaultVatRate?.toString(),
+          default_vat_rate: updates.defaultVatRate,
           default_email_subject: updates.defaultEmailSubject,
           default_email_message: updates.defaultEmailMessage,
           default_contact_email_message: updates.defaultContactEmailMessage,
           catalog_url: updates.catalogUrl,
           price_list_url: updates.priceListUrl,
-          custom_links: updates.customLinks,
+          custom_links: updates.customLinks || [],
           email_footer: updates.emailFooter,
           email_sender_name: updates.emailSenderName,
         })
