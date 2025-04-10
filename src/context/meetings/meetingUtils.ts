@@ -6,6 +6,7 @@ import { format } from "date-fns";
 export const supabaseToMeeting = (meeting: any): Meeting => ({
   id: meeting.id,
   contactId: meeting.contact_id,
+  contactName: meeting.contact_name || "",
   type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",
   date: new Date(meeting.date),
   time: meeting.time,
@@ -27,6 +28,7 @@ export const meetingToSupabase = (meetingData: Partial<Meeting>) => {
   const updateData: any = {};
   
   if (meetingData.contactId !== undefined) updateData.contact_id = meetingData.contactId;
+  if (meetingData.contactName !== undefined) updateData.contact_name = meetingData.contactName;
   if (meetingData.type !== undefined) updateData.type = meetingData.type;
   if (meetingData.date !== undefined) updateData.date = format(meetingData.date, 'yyyy-MM-dd');
   if (meetingData.time !== undefined) updateData.time = meetingData.time;
@@ -45,6 +47,7 @@ export const meetingToSupabase = (meetingData: Partial<Meeting>) => {
 export const newMeetingToSupabase = (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">, agentData: { agent_id: string; agent_name: string }) => {
   return {
     contact_id: meetingData.contactId,
+    contact_name: meetingData.contactName,
     type: meetingData.type,
     date: format(meetingData.date, 'yyyy-MM-dd'),
     time: meetingData.time,

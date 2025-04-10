@@ -43,19 +43,25 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
       if (data) {
         // Parse custom_links if needed
-        let customLinks = [];
+        let customLinks: CustomLink[] = [];
         
         if (data.custom_links) {
           if (typeof data.custom_links === 'string') {
             try {
-              customLinks = JSON.parse(data.custom_links);
+              customLinks = JSON.parse(data.custom_links) as CustomLink[];
             } catch (e) {
               console.error("Failed to parse custom_links:", e);
               customLinks = [];
             }
           } else {
-            // Already an object, no need to parse
-            customLinks = data.custom_links as CustomLink[];
+            // Already an object, convert to our type
+            const rawLinks = data.custom_links as any;
+            if (Array.isArray(rawLinks)) {
+              customLinks = rawLinks.map((link: any) => ({
+                url: link.url || '',
+                description: link.description || ''
+              }));
+            }
           }
         }
 
@@ -79,7 +85,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           defaultContactEmailMessage: data.default_contact_email_message || DEFAULT_SETTINGS.defaultContactEmailMessage,
           catalogUrl: data.catalog_url || DEFAULT_SETTINGS.catalogUrl,
           priceListUrl: data.price_list_url || DEFAULT_SETTINGS.priceListUrl,
-          customLinks: customLinks as CustomLink[],
+          customLinks: customLinks,
           emailFooter: data.email_footer || DEFAULT_SETTINGS.emailFooter,
           emailSenderName: data.email_sender_name || DEFAULT_SETTINGS.emailSenderName,
         });
@@ -116,7 +122,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           default_contact_email_message: updates.defaultContactEmailMessage,
           catalog_url: updates.catalogUrl,
           price_list_url: updates.priceListUrl,
-          custom_links: Array.isArray(updates.customLinks) ? updates.customLinks : [],
+          custom_links: updates.customLinks ? JSON.stringify(updates.customLinks) : JSON.stringify([]),
           email_footer: updates.emailFooter,
           email_sender_name: updates.emailSenderName,
         })

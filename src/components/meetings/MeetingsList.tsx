@@ -1,8 +1,7 @@
 
 import { Meeting } from "@/types";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Trash2 } from "lucide-react";
-import { useContacts } from "@/context/ContactsContext";
+import { ShoppingCart, Trash2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
@@ -25,30 +24,53 @@ interface MeetingsListProps {
 }
 
 export const MeetingsList = ({ meetings, onViewMeeting, onCreateOrder, onDeleteMeeting }: MeetingsListProps) => {
-  const { getContactById } = useContacts();
   const { isAdmin } = useAuth();
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
 
-  const getContactName = (contactId: string) => {
-    const contact = getContactById(contactId);
-    if (!contact) return "Unknown Contact";
-    return contact.company || contact.fullName || "Unknown Contact";
-  };
+  // Sort meetings by time
+  const sortedMeetings = [...meetings].sort((a, b) => {
+    // First compare by date
+    const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+    
+    // If dates are the same, compare by time
+    if (dateComparison === 0) {
+      const timeA = a.time ? a.time.split(':').map(Number) : [0, 0];
+      const timeB = b.time ? b.time.split(':').map(Number) : [0, 0];
+      
+      // Compare hours first
+      if (timeA[0] !== timeB[0]) {
+        return timeA[0] - timeB[0];
+      }
+      
+      // If hours are the same, compare minutes
+      return timeA[1] - timeB[1];
+    }
+    
+    return dateComparison;
+  });
 
   return (
     <div className="space-y-4">
-      {meetings.map((meeting) => (
+      {sortedMeetings.map((meeting) => (
         <div 
           key={meeting.id} 
           className="border rounded-lg p-3 hover:border-primary transition-colors cursor-pointer"
           onClick={() => onViewMeeting(meeting.id)}
         >
           <div className="flex justify-between items-start">
-            <div>
-              <p className="font-medium">{getContactName(meeting.contactId)}</p>
-              <p className="text-sm text-muted-foreground">
-                {format(new Date(meeting.date), 'PPP')} at {meeting.time}
+            <div className="space-y-1">
+              <p className="font-medium">
+                {meeting.contactName || "Unknown Contact"} - {meeting.type.charAt(0).toUpperCase() + meeting.type.slice(1)}
               </p>
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 mr-1" />
+                {format(new Date(meeting.date), 'PPP')} at {meeting.time}
+              </div>
+              {meeting.notes && (
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {meeting.notes}
+                </p>
+              )}
               {isAdmin && meeting.agentName && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Agent: {meeting.agentName}

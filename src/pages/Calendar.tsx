@@ -1,9 +1,9 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
-import { format, isSameDay, isSameMonth, isToday, parseISO, addDays, startOfWeek, endOfWeek, startOfDay, endOfDay, eachDayOfInterval } from "date-fns";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Grid, Grid3X3, List } from "lucide-react";
+import { format, isSameDay, isSameMonth, isToday, addDays, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Grid, Grid3X3, List, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { useMeetings } from "@/context/meetings";
 import { useTasks } from "@/context/TasksContext";
 import { Meeting, Task } from "@/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useToast } from "@/hooks/use-toast";
 
 type CalendarDay = {
   date: Date;
@@ -29,6 +30,15 @@ const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [view, setView] = useState<CalendarView>('month');
+  const [isOfflineAvailable, setIsOfflineAvailable] = useState(false);
+  const { toast } = useToast();
+
+  // Check if service worker is available
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'caches' in window) {
+      setIsOfflineAvailable(true);
+    }
+  }, []);
 
   const previous = () => {
     if (view === 'month') {
@@ -154,6 +164,13 @@ const Calendar = () => {
         
         const allMeetings = [...dayMeetings, ...dayFollowUps];
         
+        // Sort meetings by time
+        allMeetings.sort((a, b) => {
+          const aTime = a.time || "";
+          const bTime = b.time || "";
+          return aTime.localeCompare(bTime);
+        });
+        
         const dayTasks = tasks.filter(task => 
           task.dueDate && isSameDay(new Date(task.dueDate), date)
         );
@@ -183,6 +200,7 @@ const Calendar = () => {
       
       const allMeetings = [...dayMeetings, ...dayFollowUps];
       
+      // Sort meetings by time
       allMeetings.sort((a, b) => {
         const aTime = a.time || "";
         const bTime = b.time || "";
@@ -240,6 +258,41 @@ const Calendar = () => {
     }
   };
 
+  const enableOfflineAccess = async () => {
+    try {
+      // Register the service worker if not already registered
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('Service Worker registered with scope:', registration.scope);
+        
+        // Cache the current app data
+        if ('caches' in window) {
+          const cache = await caches.open('crm-app-v1');
+          const urlsToCache = [
+            '/',
+            '/index.html',
+            '/src/main.tsx',
+            '/src/App.tsx',
+            // Add other important assets
+          ];
+          await cache.addAll(urlsToCache);
+          
+          toast({
+            title: "Offline Mode Enabled",
+            description: "The app has been cached for offline use. You can now use it without an internet connection.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+      toast({
+        title: "Offline Mode Failed",
+        description: "Failed to enable offline mode. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Generate calendar days
   const calendarDays = generateCalendarDays();
 
@@ -288,12 +341,12 @@ const Calendar = () => {
                         )}
                         onClick={(e) => handleMeetingClick(e, meeting.id)}
                         title={meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day.date) 
-                          ? `Follow-up: ${meeting.type} ${meeting.time || ''}`
-                          : `${meeting.type} ${meeting.time || ''}`}
+                          ? `Follow-up: ${meeting.contactName} - ${meeting.type} ${meeting.followUpTime || ''}`
+                          : `${meeting.contactName} - ${meeting.type} ${meeting.time || ''}`}
                       >
                         {meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day.date) 
-                          ? `📅 Follow-up ${meeting.followUpTime || ''}`
-                          : `🤝 ${meeting.type} ${meeting.time || ''}`}
+                          ? `📅 ${meeting.contactName || 'Contact'} - ${meeting.followUpTime || ''}`
+                          : `🤝 ${meeting.contactName || 'Contact'} - ${meeting.time || ''}`}
                       </div>
                     ))}
                     {day.tasks.map((task) => (
@@ -374,11 +427,14 @@ const Calendar = () => {
                             onClick={(e) => handleMeetingClick(e, meeting.id)}
                           >
                             <div className="font-medium">
-                              {meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day.date) 
-                                ? `Follow-up (${meeting.followUpTime || 'No time'})` 
-                                : `${meeting.type} (${meeting.time || 'No time'})`}
+                              {meeting.contactName || 'Unknown'} - {meeting.type}
                             </div>
-                            <div className="truncate">{meeting.contactName || 'No contact'}</div>
+                            <div className="text-xs">
+                              {meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day.date)
+                                ? `Follow-up: ${meeting.followUpTime || 'No time'}`
+                                : meeting.time || 'No time'}
+                            </div>
+                            {meeting.agentName && <div className="text-xs">Agent: {meeting.agentName}</div>}
                           </div>
                         ))}
                       </div>
@@ -453,9 +509,7 @@ const Calendar = () => {
                     >
                       <div className="flex justify-between">
                         <div className="font-medium">
-                          {meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day.date) 
-                            ? `Follow-up Meeting` 
-                            : meeting.type}
+                          {meeting.contactName || 'Unknown'} - {meeting.type}
                         </div>
                         <div className="text-sm font-medium">
                           {meeting.followUpDate && isSameDay(new Date(meeting.followUpDate), day.date)
@@ -463,10 +517,16 @@ const Calendar = () => {
                             : meeting.time || 'No time'}
                         </div>
                       </div>
-                      <div className="text-sm mt-1">
-                        {meeting.contactName || 'No contact'} 
-                        {meeting.location && ` • ${meeting.location}`}
-                      </div>
+                      {meeting.agentName && (
+                        <div className="text-sm mt-1">
+                          Agent: {meeting.agentName}
+                        </div>
+                      )}
+                      {meeting.location && (
+                        <div className="text-sm mt-1">
+                          Location: {meeting.location}
+                        </div>
+                      )}
                       {meeting.notes && (
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {meeting.notes}
@@ -538,6 +598,17 @@ const Calendar = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h1 className="text-2xl font-bold">Calendar</h1>
           <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+            {isOfflineAvailable && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={enableOfflineAccess}
+                className="whitespace-nowrap"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Enable Offline Access
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

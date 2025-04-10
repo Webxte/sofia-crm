@@ -1,14 +1,15 @@
-
 import { useState } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseToMeeting, meetingToSupabase, newMeetingToSupabase } from "./meetingUtils";
+import { useContacts } from "@/context/ContactsContext";
 
 export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { getContactById } = useContacts();
 
   // Function to fetch meetings from Supabase
   const refreshMeetings = async (isAuthenticated = true) => {
@@ -36,12 +37,22 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       }
       
       // Transform the Supabase data to match our Meeting type
-      const formattedMeetings: Meeting[] = data.map(supabaseToMeeting);
+      let formattedMeetings: Meeting[] = data.map(supabaseToMeeting);
+      
+      // Add contact names if not present
+      formattedMeetings = formattedMeetings.map(meeting => {
+        if (!meeting.contactName) {
+          const contact = getContactById(meeting.contactId);
+          const contactName = contact ? (contact.company || contact.fullName || "Unknown") : "Unknown";
+          return { ...meeting, contactName };
+        }
+        return meeting;
+      });
       
       // Sort meetings by date AND time
       const sortedMeetings = formattedMeetings.sort((a, b) => {
         // First compare by date
-        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+        const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
         
         // If dates are the same, compare by time
         if (dateComparison === 0) {
@@ -51,11 +62,11 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
           
           // Compare hours first
           if (timeA[0] !== timeB[0]) {
-            return timeB[0] - timeA[0];
+            return timeA[0] - timeB[0];
           }
           
           // If hours are the same, compare minutes
-          return timeB[1] - timeA[1];
+          return timeA[1] - timeB[1];
         }
         
         return dateComparison;
@@ -83,6 +94,12 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
           variant: "destructive",
         });
         return;
+      }
+      
+      // Add contact name if not present
+      if (!meetingData.contactName) {
+        const contact = getContactById(meetingData.contactId);
+        meetingData.contactName = contact ? (contact.company || contact.fullName || "Unknown") : "Unknown";
       }
       
       // Add agent information
@@ -118,7 +135,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         const updatedMeetings = [...prevMeetings, newMeeting];
         return updatedMeetings.sort((a, b) => {
           // First compare by date
-          const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+          const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
           
           // If dates are the same, compare by time
           if (dateComparison === 0) {
@@ -127,11 +144,11 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
             
             // Compare hours first
             if (timeA[0] !== timeB[0]) {
-              return timeB[0] - timeA[0];
+              return timeA[0] - timeB[0];
             }
             
             // If hours are the same, compare minutes
-            return timeB[1] - timeA[1];
+            return timeA[1] - timeB[1];
           }
           
           return dateComparison;
@@ -235,7 +252,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       .filter(meeting => meeting.contactId === contactId)
       .sort((a, b) => {
         // First compare by date
-        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+        const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
         
         // If dates are the same, compare by time
         if (dateComparison === 0) {
@@ -244,11 +261,11 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
           
           // Compare hours first
           if (timeA[0] !== timeB[0]) {
-            return timeB[0] - timeA[0];
+            return timeA[0] - timeB[0];
           }
           
           // If hours are the same, compare minutes
-          return timeB[1] - timeA[1];
+          return timeA[1] - timeB[1];
         }
         
         return dateComparison;
@@ -260,78 +277,8 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
     loading,
     refreshMeetings,
     addMeeting,
-    updateMeeting: async (id: string, meetingData: Partial<Meeting>) => {
-      try {
-        // Convert Meeting type to Supabase table format
-        const updateData = meetingToSupabase(meetingData);
-        
-        // Add updated_at
-        updateData.updated_at = new Date().toISOString();
-        
-        const { error } = await supabase
-          .from('meetings')
-          .update(updateData)
-          .eq('id', id);
-        
-        if (error) {
-          console.error('Error updating meeting:', error);
-          toast({
-            title: "Error",
-            description: "Failed to update meeting",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Refresh meetings to get updated data
-        await refreshMeetings();
-        
-        toast({
-          title: "Success",
-          description: "Meeting updated successfully",
-        });
-      } catch (err) {
-        console.error('Unexpected error updating meeting:', err);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        });
-      }
-    },
-    deleteMeeting: async (id: string) => {
-      try {
-        const { error } = await supabase
-          .from('meetings')
-          .delete()
-          .eq('id', id);
-        
-        if (error) {
-          console.error('Error deleting meeting:', error);
-          toast({
-            title: "Error",
-            description: "Failed to delete meeting",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Remove the meeting from state
-        setMeetings(prevMeetings => prevMeetings.filter(meeting => meeting.id !== id));
-        
-        toast({
-          title: "Success",
-          description: "Meeting deleted successfully",
-        });
-      } catch (err) {
-        console.error('Unexpected error deleting meeting:', err);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        });
-      }
-    },
+    updateMeeting,
+    deleteMeeting,
     getMeetingById,
     getMeetingsByContactId,
   };
