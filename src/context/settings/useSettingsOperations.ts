@@ -127,8 +127,9 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         email_sender_name: updates.emailSenderName,
       };
       
-      // Handle VAT rate specifically to ensure proper type conversion
+      // Explicitly handle the VAT rate as a string for the database
       if (updates.defaultVatRate !== undefined) {
+        // Convert the number to a string for the database
         dbUpdates.default_vat_rate = String(updates.defaultVatRate);
       }
       
