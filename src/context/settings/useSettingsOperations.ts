@@ -129,7 +129,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
       
       // Explicitly handle the VAT rate as a string for the database
       if (updates.defaultVatRate !== undefined) {
-        // Convert the number to a string for the database
+        // Convert the number to a string for the database using String()
         dbUpdates.default_vat_rate = String(updates.defaultVatRate);
       }
       
