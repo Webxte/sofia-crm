@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS: Settings = {
   companyEmail: "",
   companyPhone: "",
   companyAddress: "",
-  terms: "", // Changed from defaultTermsAndConditions
+  terms: "", // Now corresponds to an existing property in Settings interface
   termsEnabled: false,
   customLinks: [],
   emailFooter: "This is an automated message from your CRM system.",

@@ -15,6 +15,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { BulkEmailDialog } from "@/components/contacts/BulkEmailDialog";
 import { useContactSorting } from "@/hooks/use-contact-sorting";
+import { useContactFilters, groupContactsByFirstLetter } from "@/utils/contactUtils";
+import { ContactSortingMenu } from "@/components/contacts/ContactSortingMenu";
 
 const Contacts = () => {
   const navigate = useNavigate();

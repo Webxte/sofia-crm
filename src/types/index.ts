@@ -1,3 +1,4 @@
+
 // Contact types
 export interface Contact {
   id: string;
@@ -120,6 +121,7 @@ export interface Settings {
   companyEmail?: string;
   companyPhone?: string;
   companyAddress?: string;
+  terms?: string; // Added terms property
   defaultTermsAndConditions?: string;
   termsEnabled?: boolean;
   defaultVatRate?: number;
