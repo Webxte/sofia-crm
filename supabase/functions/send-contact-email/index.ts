@@ -1,8 +1,15 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { Resend } from "npm:resend@2.0.0";
 
+// Initialize Resend with API key
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Define CORS headers
 const corsHeaders = {
@@ -18,6 +25,7 @@ interface ContactEmailRequest {
   contactName: string;
   contactCompany?: string;
   cc?: string[];
+  bcc?: string[];
   fromName?: string;
   fromEmail?: string;
 }
@@ -42,6 +50,7 @@ serve(async (req) => {
       contactName: body.contactName,
       contactCompany: body.contactCompany,
       cc: body.cc || [],
+      bcc: body.bcc || [],
       fromName: body.fromName,
       fromEmail: body.fromEmail
     });
@@ -58,13 +67,33 @@ serve(async (req) => {
       throw new Error("Missing required fields: to, subject, message");
     }
     
+    // Fetch settings for email customization
+    const { data: settings, error: settingsError } = await supabase
+      .from("settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+    
+    if (settingsError) {
+      console.error("Settings fetch error:", settingsError);
+    }
+    
+    // Set up email configuration based on settings
+    const emailSenderName = settings?.email_sender_name || "CRM System";
+    const emailFooter = settings?.email_footer || "This is an automated message from your CRM system.";
+    
+    console.log("Using email settings:", {
+      senderName: emailSenderName,
+      footer: emailFooter
+    });
+    
     // Replace placeholders in message
     let processedMessage = body.message;
     if (body.contactName) {
-      processedMessage = processedMessage.replace(/\{name\}/g, body.contactName);
+      processedMessage = processedMessage.replace(/\[Name\]/g, body.contactName);
     }
     if (body.contactCompany) {
-      processedMessage = processedMessage.replace(/\{company\}/g, body.contactCompany);
+      processedMessage = processedMessage.replace(/\[Company\]/g, body.contactCompany);
     }
     
     // Format message with proper line breaks for HTML
@@ -72,26 +101,43 @@ serve(async (req) => {
     
     console.log("Sending contact email with Resend API");
     
-    // Prepare email config - matching the order email configuration
-    const emailConfig = {
+    // Prepare email HTML with footer from settings
+    const emailContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        ${htmlMessage}
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
+          <p>${emailFooter}</p>
+        </div>
+      </div>
+    `;
+    
+    // Use settings for sender name
+    const fromEmail = "info@belmorso.eu";
+    const senderName = emailSenderName;
+    const fromAddress = `${senderName} <${fromEmail}>`;
+    
+    console.log(`Using sender name: ${senderName}`);
+    console.log(`Email from address: ${fromAddress}`);
+    
+    // Configure email options
+    const emailConfig: any = {
+      from: fromAddress,
       to: body.to,
       subject: body.subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${htmlMessage}
-        </div>
-      `,
-      cc: body.cc,
+      html: emailContent,
+      reply_to: fromEmail,
     };
     
-    // Use the same from address as the order email function uses
-    if (body.fromEmail && body.fromName) {
-      emailConfig.from = `${body.fromName} <${body.fromEmail}>`;
-      console.log(`Using custom from address: ${emailConfig.from}`);
-    } else {
-      // Use the same verified domain as in the orders email function
-      emailConfig.from = "CRM System <info@belmorso.eu>";
-      console.log(`Using default from address: ${emailConfig.from}`);
+    // Add CC if provided
+    if (body.cc && body.cc.length > 0) {
+      emailConfig.cc = body.cc;
+    }
+    
+    // Add BCC if provided - for bulk emails
+    if (body.bcc && body.bcc.length > 0) {
+      emailConfig.bcc = body.bcc;
+      console.log(`Adding ${body.bcc.length} recipients to BCC`);
     }
     
     // Send email using Resend

@@ -1,8 +1,15 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { Resend } from "npm:resend@2.0.0";
 
+// Initialize Resend with API key
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Define CORS headers
 const corsHeaders = {
@@ -58,40 +65,64 @@ serve(async (req) => {
       throw new Error("Missing required fields: to, subject, message");
     }
     
+    // Fetch settings for email customization
+    const { data: settings, error: settingsError } = await supabase
+      .from("settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+    
+    if (settingsError) {
+      console.error("Settings fetch error:", settingsError);
+    }
+    
+    // Set up email configuration based on settings
+    const emailSenderName = settings?.email_sender_name || "CRM System";
+    const emailFooter = settings?.email_footer || "This is an automated message from your CRM system.";
+    
+    console.log("Using email settings:", {
+      senderName: emailSenderName,
+      footer: emailFooter
+    });
+    
     // Format message with proper line breaks for HTML
     const htmlMessage = body.message.replace(/\n/g, "<br />");
     
     console.log("Sending meeting email with Resend API");
     
-    // Prepare email config - using the same verified domain as in orders
-    const emailConfig = {
-      to: body.to,
-      subject: body.subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>${body.subject}</h2>
-          <p>Meeting Type: ${body.meetingType}</p>
-          <p>Date: ${body.meetingDate}</p>
-          <div style="margin-top: 20px;">
-            ${htmlMessage}
-          </div>
+    // Prepare email HTML with footer
+    const emailContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>${body.subject}</h2>
+        <p>Meeting Type: ${body.meetingType}</p>
+        <p>Date: ${body.meetingDate}</p>
+        <div style="margin-top: 20px;">
+          ${htmlMessage}
         </div>
-      `,
-      cc: body.cc,
-    };
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
+          <p>${emailFooter}</p>
+        </div>
+      </div>
+    `;
     
-    // Use custom from email if provided
-    if (body.fromEmail && body.fromName) {
-      emailConfig.from = `${body.fromName} <${body.fromEmail}>`;
-      console.log(`Using custom from address: ${emailConfig.from}`);
-    } else {
-      // Use the same verified domain as in the orders email
-      emailConfig.from = "CRM System <info@belmorso.eu>";
-      console.log(`Using default from address: ${emailConfig.from}`);
-    }
+    // Use settings for sender name
+    const fromEmail = "info@belmorso.eu";
+    const senderName = emailSenderName;
+    const fromAddress = `${senderName} <${fromEmail}>`;
+    
+    console.log(`Using sender name: ${senderName}`);
+    console.log(`Email from address: ${fromAddress}`);
     
     // Send email using Resend
-    const { data, error } = await resend.emails.send(emailConfig);
+    const { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: body.to,
+      subject: body.subject,
+      html: emailContent,
+      cc: body.cc,
+      reply_to: fromEmail,
+    });
     
     if (error) {
       console.error("Resend API error:", error);

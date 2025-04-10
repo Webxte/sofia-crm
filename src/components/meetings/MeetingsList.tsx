@@ -1,7 +1,7 @@
 
 import { Meeting } from "@/types";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Trash2, Clock } from "lucide-react";
+import { ShoppingCart, Trash2, Clock, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { MeetingEmailDialog } from "./email/MeetingEmailDialog";
 
 interface MeetingsListProps {
   meetings: Meeting[];
@@ -26,13 +27,15 @@ interface MeetingsListProps {
 export const MeetingsList = ({ meetings, onViewMeeting, onCreateOrder, onDeleteMeeting }: MeetingsListProps) => {
   const { isAdmin } = useAuth();
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   // We'll use the meetings as they're passed in, already sorted by the parent component
-  const sortedMeetings = meetings;
+  // (No additional sorting needed here)
 
   return (
     <div className="space-y-4">
-      {sortedMeetings.map((meeting) => (
+      {meetings.map((meeting) => (
         <div 
           key={meeting.id} 
           className="border rounded-lg p-3 hover:border-primary transition-colors cursor-pointer"
@@ -64,6 +67,17 @@ export const MeetingsList = ({ meetings, onViewMeeting, onCreateOrder, onDeleteM
                 onViewMeeting(meeting.id);
               }}>
                 View
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedMeeting(meeting);
+                  setShowEmailDialog(true);
+                }}
+              >
+                <Mail className="h-4 w-4 mr-1" /> Email
               </Button>
               <Button 
                 variant="outline" 
@@ -119,6 +133,14 @@ export const MeetingsList = ({ meetings, onViewMeeting, onCreateOrder, onDeleteM
           </div>
         </div>
       ))}
+      
+      {selectedMeeting && (
+        <MeetingEmailDialog
+          meeting={selectedMeeting}
+          open={showEmailDialog}
+          onOpenChange={setShowEmailDialog}
+        />
+      )}
     </div>
   );
 };

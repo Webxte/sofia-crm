@@ -13,6 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { MeetingsFilter } from '@/components/meetings/MeetingsFilter';
 import { MeetingsList } from '@/components/meetings/MeetingsList';
 import { MeetingsGrid } from '@/components/meetings/MeetingsGrid';
+import { MeetingEmailDialog } from '@/components/meetings/email/MeetingEmailDialog';
 
 const Meetings = () => {
   const { meetings, deleteMeeting } = useMeetings();
@@ -24,6 +25,10 @@ const Meetings = () => {
   const [selectedMeetingType, setSelectedMeetingType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
+  
+  // State for email dialog
+  const [selectedMeeting, setSelectedMeeting] = useState<any | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   // Update view mode when screen size changes
   React.useEffect(() => {
@@ -53,9 +58,9 @@ const Meetings = () => {
     const dateB = new Date(b.date).getTime();
     
     if (selectedSort === 'newest') {
-      return dateB - dateA;
+      return dateB - dateA; // Sort by newest first
     } else {
-      return dateA - dateB;
+      return dateA - dateB; // Sort by oldest first
     }
   });
   
@@ -73,6 +78,11 @@ const Meetings = () => {
 
   const handleCreateOrder = (contactId: string) => {
     navigate(`/orders/new?contactId=${contactId}`);
+  };
+  
+  const handleSendEmail = (meeting: any) => {
+    setSelectedMeeting(meeting);
+    setShowEmailDialog(true);
   };
 
   return (
@@ -128,6 +138,7 @@ const Meetings = () => {
                 meetings={sortedMeetings}
                 onViewDetails={handleViewMeeting}
                 onCreateOrder={handleCreateOrder}
+                onSendEmail={handleSendEmail}
               />
             ) : (
               <EmptyState
@@ -140,6 +151,14 @@ const Meetings = () => {
             )}
           </TabsContent>
         </Tabs>
+        
+        {selectedMeeting && (
+          <MeetingEmailDialog
+            meeting={selectedMeeting}
+            open={showEmailDialog}
+            onOpenChange={setShowEmailDialog}
+          />
+        )}
       </div>
     </>
   );

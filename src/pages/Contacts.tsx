@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
 import { Contact } from "@/types";
 import { EmptyState } from "@/components/EmptyState";
-import { Users, ArrowDownUp } from "lucide-react";
+import { Users, ArrowDownUp, Mail } from "lucide-react";
 import ContactImporter from "@/components/contacts/ContactImporter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ContactsHeader } from "@/components/contacts/ContactsHeader";
@@ -14,6 +13,7 @@ import { ContactsGrid } from "@/components/contacts/ContactsGrid";
 import { useAuth } from "@/context/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { BulkEmailDialog } from "@/components/contacts/BulkEmailDialog";
 
 type SortField = "fullName" | "company" | "email" | "phone" | "source";
 type SortDirection = "asc" | "desc";
@@ -29,6 +29,7 @@ const Contacts = () => {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
   const [showAllContacts, setShowAllContacts] = useState(false);
+  const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
   
   // Add sorting state
   const [sortField, setSortField] = useState<SortField>("company");
@@ -233,35 +234,48 @@ const Contacts = () => {
           isRefreshing={isRefreshing}
         />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="ml-0 sm:ml-2 mt-2 sm:mt-0">
-              <ArrowDownUp className="h-4 w-4 mr-2" />
-              Sort: {sortField === "company" ? "Company" : 
-                    sortField === "fullName" ? "Name" : 
-                    sortField === "email" ? "Email" :
-                    sortField === "phone" ? "Phone" : "Source"}
-              {sortDirection === "asc" ? " (A-Z)" : " (Z-A)"}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleSortChange("company")}>
-              Sort by Company
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("fullName")}>
-              Sort by Name
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("email")}>
-              Sort by Email
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("phone")}>
-              Sort by Phone
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("source")}>
-              Sort by Source
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex gap-2 items-center mt-2 sm:mt-0">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowBulkEmailDialog(true)}
+            disabled={filteredContacts.length === 0}
+            className="mr-2"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            Bulk Email ({filteredContacts.length})
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <ArrowDownUp className="h-4 w-4 mr-2" />
+                Sort: {sortField === "company" ? "Company" : 
+                      sortField === "fullName" ? "Name" : 
+                      sortField === "email" ? "Email" :
+                      sortField === "phone" ? "Phone" : "Source"}
+                {sortDirection === "asc" ? " (A-Z)" : " (Z-A)"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleSortChange("company")}>
+                Sort by Company
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("fullName")}>
+                Sort by Name
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("email")}>
+                Sort by Email
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("phone")}>
+                Sort by Phone
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("source")}>
+                Sort by Source
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       
       {filteredContacts.length === 0 ? (
@@ -301,6 +315,14 @@ const Contacts = () => {
         <ContactImporter 
           open={showImporter} 
           onOpenChange={setShowImporter} 
+        />
+      )}
+      
+      {showBulkEmailDialog && (
+        <BulkEmailDialog
+          contacts={filteredContacts}
+          open={showBulkEmailDialog}
+          onOpenChange={setShowBulkEmailDialog}
         />
       )}
     </div>

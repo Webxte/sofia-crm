@@ -3,16 +3,17 @@ import { Meeting } from "@/types";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { CalendarDays, User, MapPin, ShoppingCart } from "lucide-react";
+import { CalendarDays, User, MapPin, ShoppingCart, Mail } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface MeetingCardProps {
   meeting: Meeting;
   onViewDetails: () => void;
   onCreateOrder?: () => void;
+  onSendEmail?: () => void;
 }
 
-export const MeetingCard = ({ meeting, onViewDetails, onCreateOrder }: MeetingCardProps) => {
+export const MeetingCard = ({ meeting, onViewDetails, onCreateOrder, onSendEmail }: MeetingCardProps) => {
   const { isAdmin } = useAuth();
 
   const meetingDate = new Date(meeting.date);
@@ -57,6 +58,14 @@ export const MeetingCard = ({ meeting, onViewDetails, onCreateOrder }: MeetingCa
         <Button variant="ghost" size="sm" onClick={onViewDetails}>
           View Details
         </Button>
+        {onSendEmail && (
+          <Button variant="outline" size="sm" onClick={(e) => {
+            e.stopPropagation();
+            onSendEmail();
+          }}>
+            <Mail className="h-4 w-4 mr-1" /> Email
+          </Button>
+        )}
         {onCreateOrder && (
           <Button variant="outline" size="sm" onClick={(e) => {
             e.stopPropagation();
