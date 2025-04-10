@@ -65,9 +65,9 @@ export const prepareSettingsForDb = (updates: Partial<any>): any => {
   if (updates.catalogUrl !== undefined) dbUpdates.catalog_url = updates.catalogUrl;
   if (updates.priceListUrl !== undefined) dbUpdates.price_list_url = updates.priceListUrl;
   
-  // Explicitly handle the VAT rate
+  // Handle the VAT rate - make sure it's stored as a number in the database
   if (updates.defaultVatRate !== undefined) {
-    dbUpdates.default_vat_rate = String(updates.defaultVatRate);
+    dbUpdates.default_vat_rate = Number(updates.defaultVatRate);
   }
   
   console.log("Prepared DB updates:", dbUpdates);

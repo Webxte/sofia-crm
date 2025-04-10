@@ -93,9 +93,11 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
         default_email_message: DEFAULT_SETTINGS.defaultEmailMessage,
         terms_enabled: DEFAULT_SETTINGS.termsEnabled,
         custom_links: JSON.stringify(DEFAULT_SETTINGS.customLinks),
-        default_vat_rate: String(DEFAULT_SETTINGS.defaultVatRate)
+        // Convert to number for database compatibility
+        default_vat_rate: DEFAULT_SETTINGS.defaultVatRate
       };
       
+      console.log("Inserting initial settings:", initialSettings);
       const { error } = await supabase
         .from("settings")
         .insert(initialSettings)
