@@ -101,7 +101,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
     setLoading(true);
     try {
-      // Convert defaultVatRate to string for Supabase and back to number for our app
+      // Convert defaultVatRate to string for Supabase
       const { error } = await supabase
         .from("settings")
         .update({
@@ -111,7 +111,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           company_address: updates.companyAddress,
           default_terms_and_conditions: updates.terms,
           terms_enabled: updates.termsEnabled,
-          default_vat_rate: updates.defaultVatRate !== undefined ? updates.defaultVatRate : null,
+          default_vat_rate: updates.defaultVatRate !== undefined ? String(updates.defaultVatRate) : null,
           custom_links: updates.customLinks ? JSON.stringify(updates.customLinks) : JSON.stringify([]),
           email_footer: updates.emailFooter,
           email_sender_name: updates.emailSenderName,
