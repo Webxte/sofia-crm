@@ -89,7 +89,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           customLinks: customLinks,
           emailFooter: data.email_footer || DEFAULT_SETTINGS.emailFooter,
           emailSenderName: data.email_sender_name || DEFAULT_SETTINGS.emailSenderName,
-          defaultVatRate: vatRate, // Using our parsed value
+          defaultVatRate: vatRate, // Using our parsed number value
         });
       }
     } finally {
@@ -109,7 +109,11 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
     setLoading(true);
     try {
-      // Always convert defaultVatRate to string for Supabase
+      // Explicitly convert defaultVatRate to string for Supabase
+      const vatRateString = updates.defaultVatRate !== undefined 
+        ? String(updates.defaultVatRate) 
+        : null;
+      
       const { error } = await supabase
         .from("settings")
         .update({
@@ -119,7 +123,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           company_address: updates.companyAddress,
           default_terms_and_conditions: updates.terms,
           terms_enabled: updates.termsEnabled,
-          default_vat_rate: updates.defaultVatRate !== undefined ? String(updates.defaultVatRate) : null,
+          default_vat_rate: vatRateString,
           custom_links: updates.customLinks ? JSON.stringify(updates.customLinks) : JSON.stringify([]),
           email_footer: updates.emailFooter,
           email_sender_name: updates.emailSenderName,
