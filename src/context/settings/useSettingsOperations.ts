@@ -42,19 +42,24 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
       }
 
       if (data) {
-        // Parse custom_links if it's a string
-        let customLinks: any[] = data.custom_links || [];
+        // Parse custom_links if needed
+        let customLinks = [];
         
-        if (typeof customLinks === 'string') {
-          try {
-            customLinks = JSON.parse(customLinks);
-          } catch (e) {
-            console.error("Failed to parse custom_links:", e);
-            customLinks = [];
+        if (data.custom_links) {
+          if (typeof data.custom_links === 'string') {
+            try {
+              customLinks = JSON.parse(data.custom_links);
+            } catch (e) {
+              console.error("Failed to parse custom_links:", e);
+              customLinks = [];
+            }
+          } else {
+            // Already an object, no need to parse
+            customLinks = data.custom_links as CustomLink[];
           }
         }
 
-        // Ensure customLinks is an array of objects
+        // Ensure customLinks is an array
         if (!Array.isArray(customLinks)) {
           customLinks = [];
         }
@@ -66,7 +71,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           companyPhone: data.company_phone || DEFAULT_SETTINGS.companyPhone,
           companyAddress: data.company_address || DEFAULT_SETTINGS.companyAddress,
           terms: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
-          termsEnabled: Boolean(data.terms_enabled) || DEFAULT_SETTINGS.termsEnabled,
+          termsEnabled: data.terms_enabled !== null ? Boolean(data.terms_enabled) : DEFAULT_SETTINGS.termsEnabled,
           defaultTermsAndConditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
           defaultVatRate: data.default_vat_rate !== null ? Number(data.default_vat_rate) : DEFAULT_SETTINGS.defaultVatRate,
           defaultEmailSubject: data.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
@@ -74,7 +79,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           defaultContactEmailMessage: data.default_contact_email_message || DEFAULT_SETTINGS.defaultContactEmailMessage,
           catalogUrl: data.catalog_url || DEFAULT_SETTINGS.catalogUrl,
           priceListUrl: data.price_list_url || DEFAULT_SETTINGS.priceListUrl,
-          customLinks: customLinks as CustomLink[] || DEFAULT_SETTINGS.customLinks,
+          customLinks: customLinks as CustomLink[],
           emailFooter: data.email_footer || DEFAULT_SETTINGS.emailFooter,
           emailSenderName: data.email_sender_name || DEFAULT_SETTINGS.emailSenderName,
         });
@@ -111,7 +116,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           default_contact_email_message: updates.defaultContactEmailMessage,
           catalog_url: updates.catalogUrl,
           price_list_url: updates.priceListUrl,
-          custom_links: updates.customLinks || [],
+          custom_links: Array.isArray(updates.customLinks) ? updates.customLinks : [],
           email_footer: updates.emailFooter,
           email_sender_name: updates.emailSenderName,
         })

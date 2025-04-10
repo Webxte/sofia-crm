@@ -318,8 +318,11 @@ export type Database = {
           default_email_subject: string | null
           default_terms_and_conditions: string | null
           default_vat_rate: number | null
+          email_footer: string | null
+          email_sender_name: string | null
           id: string
           price_list_url: string | null
+          terms_enabled: boolean | null
           updated_at: string
         }
         Insert: {
@@ -335,8 +338,11 @@ export type Database = {
           default_email_subject?: string | null
           default_terms_and_conditions?: string | null
           default_vat_rate?: number | null
+          email_footer?: string | null
+          email_sender_name?: string | null
           id?: string
           price_list_url?: string | null
+          terms_enabled?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -352,8 +358,11 @@ export type Database = {
           default_email_subject?: string | null
           default_terms_and_conditions?: string | null
           default_vat_rate?: number | null
+          email_footer?: string | null
+          email_sender_name?: string | null
           id?: string
           price_list_url?: string | null
+          terms_enabled?: boolean | null
           updated_at?: string
         }
         Relationships: []
