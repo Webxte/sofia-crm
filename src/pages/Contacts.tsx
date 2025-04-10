@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
 import { Contact } from "@/types";
 import { EmptyState } from "@/components/EmptyState";
-import { Users, ArrowDownUp, Mail } from "lucide-react";
+import { Users, Mail } from "lucide-react";
 import ContactImporter from "@/components/contacts/ContactImporter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ContactsHeader } from "@/components/contacts/ContactsHeader";
@@ -11,12 +12,9 @@ import { ContactsFilter } from "@/components/contacts/ContactsFilter";
 import { ContactsList } from "@/components/contacts/ContactsList";
 import { ContactsGrid } from "@/components/contacts/ContactsGrid";
 import { useAuth } from "@/context/AuthContext";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { BulkEmailDialog } from "@/components/contacts/BulkEmailDialog";
-
-type SortField = "fullName" | "company" | "email" | "phone" | "source";
-type SortDirection = "asc" | "desc";
+import { useContactSorting } from "@/hooks/use-contact-sorting";
 
 const Contacts = () => {
   const navigate = useNavigate();
@@ -31,9 +29,7 @@ const Contacts = () => {
   const [showAllContacts, setShowAllContacts] = useState(false);
   const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
   
-  // Add sorting state
-  const [sortField, setSortField] = useState<SortField>("company");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const { sortField, sortDirection, handleSortChange, toggleSortDirection } = useContactSorting();
 
   const sources = React.useMemo(() => {
     const allSources = new Set<string>();
@@ -61,132 +57,21 @@ const Contacts = () => {
     setIsRefreshing(false);
   };
   
-  const filteredContacts = contacts.filter(contact => {
-    // Filter by agent ID first if not showing all contacts
-    if (!showAllContacts && user && user.id !== contact.agentId) {
-      return false;
-    }
-    
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch = (
-        (contact.fullName?.toLowerCase().includes(query)) ||
-        (contact.email?.toLowerCase().includes(query)) ||
-        (contact.company?.toLowerCase().includes(query)) ||
-        (contact.phone?.toLowerCase().includes(query))
-      );
-      
-      if (!matchesSearch) return false;
-    }
-    
-    // Filter by source if selected
-    if (selectedSource && contact.source) {
-      const contactSources = contact.source.split(',').map(s => s.trim());
-      return contactSources.includes(selectedSource);
-    }
-    
-    return true;
-  }).sort((a, b) => {
-    // Sort by selected field
-    let valueA: string | undefined;
-    let valueB: string | undefined;
-    
-    switch (sortField) {
-      case "company":
-        valueA = a.company || a.fullName || "";
-        valueB = b.company || b.fullName || "";
-        break;
-      case "fullName":
-        valueA = a.fullName || a.company || "";
-        valueB = b.fullName || b.company || "";
-        break;
-      case "email":
-        valueA = a.email || "";
-        valueB = b.email || "";
-        break;
-      case "phone":
-        valueA = a.phone || "";
-        valueB = b.phone || "";
-        break;
-      case "source":
-        valueA = a.source || "";
-        valueB = b.source || "";
-        break;
-      default:
-        valueA = a.company || a.fullName || "";
-        valueB = b.company || b.fullName || "";
-    }
-    
-    // Apply sort direction
-    return sortDirection === "asc" 
-      ? valueA.localeCompare(valueB) 
-      : valueB.localeCompare(valueA);
-  });
+  const filteredContacts = React.useMemo(() => {
+    return useContactFilters(contacts, {
+      showAllContacts,
+      userId: user?.id,
+      searchQuery,
+      selectedSource,
+      sortField,
+      sortDirection
+    });
+  }, [contacts, showAllContacts, user?.id, searchQuery, selectedSource, sortField, sortDirection]);
 
   // Group contacts for grid view
-  const groupedContacts = React.useMemo(() => {
-    const groups: Record<string, Contact[]> = {};
-    
-    filteredContacts.forEach(contact => {
-      let firstChar = '#';
-      
-      // Get the first character of the sorting field
-      if (sortField === "company") {
-        firstChar = (contact.company || contact.fullName || "#").charAt(0).toUpperCase();
-      } else if (sortField === "fullName") {
-        firstChar = (contact.fullName || contact.company || "#").charAt(0).toUpperCase();
-      } else {
-        // For other sort fields, still group by name or company
-        firstChar = (contact.company || contact.fullName || "#").charAt(0).toUpperCase();
-      }
-      
-      if (!/[A-Z]/.test(firstChar)) {
-        firstChar = '#';
-      }
-      
-      if (!groups[firstChar]) {
-        groups[firstChar] = [];
-      }
-      
-      groups[firstChar].push(contact);
-    });
-    
-    // Sort contacts within each group by the sorting field
-    Object.keys(groups).forEach(key => {
-      groups[key].sort((a, b) => {
-        let valueA: string | undefined;
-        let valueB: string | undefined;
-        
-        switch (sortField) {
-          case "company":
-            valueA = a.company || a.fullName || "";
-            valueB = b.company || b.fullName || "";
-            break;
-          case "fullName":
-            valueA = a.fullName || a.company || "";
-            valueB = b.fullName || b.company || "";
-            break;
-          default:
-            valueA = a.company || a.fullName || "";
-            valueB = b.company || b.fullName || "";
-        }
-        
-        return sortDirection === "asc"
-          ? valueA.localeCompare(valueB)
-          : valueB.localeCompare(valueA);
-      });
-    });
-    
-    return groups;
+  const { groupedContacts, sortedGroups } = React.useMemo(() => {
+    return groupContactsByFirstLetter(filteredContacts, sortField, sortDirection);
   }, [filteredContacts, sortField, sortDirection]);
-  
-  // Sort the group keys based on sortDirection
-  const sortedGroups = Object.keys(groupedContacts).sort((a, b) => {
-    return sortDirection === "asc" 
-      ? a.localeCompare(b) 
-      : b.localeCompare(a);
-  });
   
   const handleScheduleMeeting = (contactId: string) => {
     navigate(`/meetings/new?contactId=${contactId}`);
@@ -198,21 +83,6 @@ const Contacts = () => {
 
   const handleCreateOrder = (contactId: string) => {
     navigate(`/orders/new?contactId=${contactId}`);
-  };
-
-  const toggleSortDirection = () => {
-    setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-  };
-  
-  const handleSortChange = (field: SortField) => {
-    if (sortField === field) {
-      // If clicking the same field, toggle direction
-      toggleSortDirection();
-    } else {
-      // If clicking a new field, set it as the sort field and reset direction to asc
-      setSortField(field);
-      setSortDirection("asc");
-    }
   };
   
   return (
@@ -246,35 +116,11 @@ const Contacts = () => {
             Bulk Email ({filteredContacts.length})
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <ArrowDownUp className="h-4 w-4 mr-2" />
-                Sort: {sortField === "company" ? "Company" : 
-                      sortField === "fullName" ? "Name" : 
-                      sortField === "email" ? "Email" :
-                      sortField === "phone" ? "Phone" : "Source"}
-                {sortDirection === "asc" ? " (A-Z)" : " (Z-A)"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleSortChange("company")}>
-                Sort by Company
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("fullName")}>
-                Sort by Name
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("email")}>
-                Sort by Email
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("phone")}>
-                Sort by Phone
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("source")}>
-                Sort by Source
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ContactSortingMenu 
+            sortField={sortField} 
+            sortDirection={sortDirection} 
+            onSortChange={handleSortChange} 
+          />
         </div>
       </div>
       

@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface StatCardProps {
   title: string;
@@ -22,25 +22,27 @@ export const StatCard = ({
   return (
     <Link to={viewAllLink} className="block">
       <Card 
-        className="h-full hover:shadow-md transition-shadow border-border"
+        className="hover:shadow-md transition-shadow border-border"
         style={{
           animationDelay: `${animationDelay}ms`,
         }}
       >
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-start">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              {icon}
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 rounded-lg">
+                {icon}
+              </div>
+              <div>
+                <h3 className="text-sm font-medium">{title}</h3>
+                <span className="text-xl font-bold">{value}</span>
+              </div>
             </div>
-            <span className="text-3xl font-bold">{value}</span>
+            <span className="text-primary hover:text-primary/80 transition-colors text-xs flex items-center gap-1">
+              View <ArrowRight size={12} />
+            </span>
           </div>
-          <h3 className="text-lg font-medium mt-2">{title}</h3>
         </CardContent>
-        <CardFooter className="border-t p-3 text-primary hover:text-primary/80 transition-colors">
-          <span className="text-sm flex items-center gap-1">
-            View all <ArrowRight size={14} />
-          </span>
-        </CardFooter>
       </Card>
     </Link>
   );

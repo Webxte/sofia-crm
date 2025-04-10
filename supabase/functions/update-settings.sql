@@ -30,3 +30,11 @@ ADD COLUMN IF NOT EXISTS terms_enabled BOOLEAN DEFAULT false;
 -- Ensure default_vat_rate exists
 ALTER TABLE public.settings
 ADD COLUMN IF NOT EXISTS default_vat_rate NUMERIC DEFAULT 0;
+
+-- Add show_footer_in_emails column if it doesn't exist
+ALTER TABLE public.settings
+ADD COLUMN IF NOT EXISTS show_footer_in_emails BOOLEAN DEFAULT true;
+
+-- Add bulk_email_template column if it doesn't exist
+ALTER TABLE public.settings
+ADD COLUMN IF NOT EXISTS bulk_email_template TEXT;

@@ -1,5 +1,5 @@
 
-project_id = "CRM-app"
+project_id = 'your-project-id'
 
 [api]
 enabled = true
@@ -9,18 +9,26 @@ schemas = ["public", "storage", "graphql_public"]
 [db]
 port = 54322
 
-[realtime]
+[studio]
 enabled = true
+port = 54323
+api_url = "http://127.0.0.1:54321"
 
 [storage]
 enabled = true
 
-[functions.send-email]
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:5173"
+
+[realtime]
 enabled = true
 
 [functions.send-order-email]
-enabled = true
+verify_jwt = true
 
 [functions.send-contact-email]
-enabled = true
+verify_jwt = true
 
+[functions.send-meeting-email]
+verify_jwt = true

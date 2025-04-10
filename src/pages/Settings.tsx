@@ -9,8 +9,7 @@ import TermsSettings from "@/components/settings/TermsSettings";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
-import EmailTemplates from "@/components/settings/EmailTemplates";
-import ContactEmailTemplates from "@/components/settings/ContactEmailTemplates";
+import UnifiedEmailSettings from "@/components/settings/UnifiedEmailSettings";
 import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
 
 const Settings = () => {
@@ -41,8 +40,7 @@ const Settings = () => {
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="data">Data Import</TabsTrigger>
           <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
-          <TabsTrigger value="email">Order Emails</TabsTrigger>
-          <TabsTrigger value="contact-email">Contact Emails</TabsTrigger>
+          <TabsTrigger value="email">Email Templates</TabsTrigger>
           <TabsTrigger value="custom-links">Custom Links</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
@@ -71,14 +69,7 @@ const Settings = () => {
         </TabsContent>
         
         <TabsContent value="email">
-          <EmailTemplates
-            initialSettings={settings}
-            onSubmit={handleUpdateSettings}
-          />
-        </TabsContent>
-        
-        <TabsContent value="contact-email">
-          <ContactEmailTemplates
+          <UnifiedEmailSettings
             initialSettings={settings}
             onSubmit={handleUpdateSettings}
           />

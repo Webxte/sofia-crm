@@ -1,4 +1,3 @@
-
 // Contact types
 export interface Contact {
   id: string;
@@ -117,20 +116,21 @@ export interface CustomLink {
 // Settings types
 export interface Settings {
   id?: string;
-  companyName: string;
-  companyAddress: string;
-  companyPhone: string;
-  companyEmail: string;
-  terms?: string; // Renamed from defaultTermsAndConditions
-  termsEnabled?: boolean; // Added to match database
-  defaultTermsAndConditions?: string; // Keep for backward compatibility
+  companyName?: string;
+  companyEmail?: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  defaultTermsAndConditions?: string;
+  termsEnabled?: boolean;
   defaultVatRate?: number;
   defaultEmailSubject?: string;
   defaultEmailMessage?: string;
   defaultContactEmailMessage?: string;
+  emailFooter?: string;
+  emailSenderName?: string;
+  showFooterInEmails?: boolean;
   catalogUrl?: string;
   priceListUrl?: string;
   customLinks?: CustomLink[];
-  emailFooter?: string;
-  emailSenderName?: string;
+  bulkEmailTemplate?: string;
 }

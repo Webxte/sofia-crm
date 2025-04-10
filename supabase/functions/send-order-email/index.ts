@@ -2,6 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { Resend } from "npm:resend@2.0.0";
+import { formatEmailContent } from "./email-formatter.ts";
+import { OrderEmailRequest } from "./types.ts";
 
 // Initialize Resend with API key
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -26,7 +28,8 @@ serve(async (req) => {
   try {
     console.log("Received order email request");
     
-    const { orderId, recipient, subject, message, includeOrderDetails = true, cc = [] } = await req.json();
+    const requestData: OrderEmailRequest = await req.json();
+    const { orderId, recipient, subject, message, includeOrderDetails = true, cc = [] } = requestData;
     
     console.log("Order email details:", {
       orderId,
@@ -42,8 +45,6 @@ serve(async (req) => {
       console.error("Missing RESEND_API_KEY environment variable");
       throw new Error("Email service is not properly configured. Please set the RESEND_API_KEY.");
     }
-    
-    console.log("Using RESEND_API_KEY:", resendApiKey.substring(0, 5) + "...");
     
     // Validate required fields
     if (!orderId) {
@@ -93,124 +94,18 @@ serve(async (req) => {
       console.error("Settings fetch error:", settingsError);
     }
     
-    // Set up email configuration based on settings
+    // Format the email HTML content
+    const emailContent = formatEmailContent(
+      order,
+      contact,
+      settings,
+      subject,
+      message,
+      includeOrderDetails
+    );
+    
+    // Get sender name from settings
     const emailSenderName = settings?.email_sender_name || "CRM System";
-    const emailFooter = settings?.email_footer || "This is an automated message from your CRM system.";
-    
-    console.log("Using email settings:", {
-      senderName: emailSenderName,
-      footer: emailFooter
-    });
-    
-    // Generate order HTML
-    let orderDetailsHtml = "";
-    if (includeOrderDetails) {
-      // Generate order items table
-      let itemsHtml = "";
-      let totalVat = 0;
-      
-      for (const item of order.order_items) {
-        const vatAmount = item.vat ? (item.subtotal * item.vat / 100) : 0;
-        totalVat += vatAmount;
-        
-        itemsHtml += `
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;">${item.code}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${item.description}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">€${item.price.toFixed(2)}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${item.vat ? `${item.vat}%` : '0%'}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">€${item.subtotal.toFixed(2)}</td>
-          </tr>
-        `;
-      }
-      
-      // Format the date
-      const orderDate = new Date(order.date).toLocaleDateString("en-IE", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      });
-      
-      orderDetailsHtml = `
-        <div style="margin-top: 20px; margin-bottom: 20px;">
-          <h2 style="color: #333;">Order Details</h2>
-          <p><strong>Order Reference:</strong> ${order.reference || orderId.slice(0, 8).toUpperCase()}</p>
-          <p><strong>Date:</strong> ${orderDate}</p>
-          <p><strong>Status:</strong> ${order.status}</p>
-          
-          <h3>Items</h3>
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-            <thead>
-              <tr style="background-color: #f2f2f2;">
-                <th style="padding: 8px; border: 1px solid #ddd;">Code</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Description</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Qty</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Price</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">VAT %</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-            <tfoot>
-              <tr style="background-color: #f9f9f9;">
-                <td colspan="5" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Subtotal:</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>€${(order.total - (order.vat_total || 0)).toFixed(2)}</strong></td>
-              </tr>
-              <tr style="background-color: #f9f9f9;">
-                <td colspan="5" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>VAT:</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>€${(order.vat_total || totalVat).toFixed(2)}</strong></td>
-              </tr>
-              <tr style="background-color: #f2f2f2;">
-                <td colspan="5" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Total:</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>€${order.total.toFixed(2)}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-          
-          ${order.notes ? `<h3>Notes</h3><p>${order.notes}</p>` : ''}
-          
-          ${order.terms_and_conditions ? 
-            `<h3>Terms and Conditions</h3>
-             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px;">
-               ${order.terms_and_conditions}
-             </div>` : ''
-          }
-        </div>
-      `;
-    }
-
-    // Replace [Company] placeholder with contact's company name or an empty string
-    const processedSubject = subject.replace(/\[Company\]/g, contact?.company || "");
-    const processedMessage = message.replace(/\[Company\]/g, contact?.company || "");
-    
-    // Prepare email HTML - don't include the message as unformatted text
-    const emailContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${processedSubject}</title>
-      </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto;">
-        <div style="padding: 20px;">
-          <h1 style="color: #0EA5E9;">${processedSubject}</h1>
-          
-          <div style="margin-bottom: 20px;">
-            ${processedMessage.replace(/\n/g, '<br>')}
-          </div>
-          
-          ${orderDetailsHtml}
-          
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
-            <p>${emailFooter}</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
     
     // Send email with the sender name from settings
     console.log("Sending email to:", recipient);
@@ -221,7 +116,7 @@ serve(async (req) => {
       const { data, error } = await resend.emails.send({
         from: `${emailSenderName} <info@belmorso.eu>`,
         to: recipient,
-        subject: processedSubject,
+        subject: subject.replace(/\[Company\]/g, contact?.company || ""),
         html: emailContent,
         cc: cc.length > 0 ? cc : undefined,
         reply_to: "info@belmorso.eu",
@@ -246,7 +141,7 @@ serve(async (req) => {
       throw new Error(`Failed to send email: ${sendError.message}`);
     }
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in send-order-email function:", error);
     
     return new Response(

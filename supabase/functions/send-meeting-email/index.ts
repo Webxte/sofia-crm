@@ -79,10 +79,12 @@ serve(async (req) => {
     // Set up email configuration based on settings
     const emailSenderName = settings?.email_sender_name || "CRM System";
     const emailFooter = settings?.email_footer || "This is an automated message from your CRM system.";
+    const showFooterInEmails = settings?.show_footer_in_emails !== false; // Default to true if not set
     
     console.log("Using email settings:", {
       senderName: emailSenderName,
-      footer: emailFooter
+      footer: emailFooter,
+      showFooter: showFooterInEmails
     });
     
     // Format message with proper line breaks for HTML
@@ -90,7 +92,7 @@ serve(async (req) => {
     
     console.log("Sending meeting email with Resend API");
     
-    // Prepare email HTML with footer
+    // Prepare email HTML with footer if enabled
     const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>${body.subject}</h2>
@@ -100,9 +102,11 @@ serve(async (req) => {
           ${htmlMessage}
         </div>
         
+        ${showFooterInEmails ? `
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
           <p>${emailFooter}</p>
         </div>
+        ` : ''}
       </div>
     `;
     

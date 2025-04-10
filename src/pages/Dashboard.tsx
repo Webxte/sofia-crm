@@ -49,6 +49,12 @@ const Dashboard = () => {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3);
 
+  // Map contacts to their IDs for quick lookup
+  const contactsMap = contacts.reduce((map, contact) => {
+    map[contact.id] = contact;
+    return map;
+  }, {} as Record<string, typeof contacts[0]>);
+
   return (
     <div className="space-y-6">
       <div>
@@ -78,16 +84,27 @@ const Dashboard = () => {
         >
           {upcomingMeetings.length > 0 ? (
             <div className="space-y-4">
-              {upcomingMeetings.map(meeting => (
-                <Link key={meeting.id} to={`/meetings/edit/${meeting.id}`} className="block">
-                  <div className="border rounded-lg p-3 hover:border-primary transition-colors">
-                    <p className="font-medium">{meeting.type.charAt(0).toUpperCase() + meeting.type.slice(1)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(meeting.date).toLocaleDateString()} at {meeting.time}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+              {upcomingMeetings.map(meeting => {
+                const contactInfo = contactsMap[meeting.contactId];
+                return (
+                  <Link key={meeting.id} to={`/meetings/edit/${meeting.id}`} className="block">
+                    <div className="border rounded-lg p-3 hover:border-primary transition-colors">
+                      <p className="font-medium">{meeting.type.charAt(0).toUpperCase() + meeting.type.slice(1)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(meeting.date).toLocaleDateString()} at {meeting.time}
+                      </p>
+                      <p className="text-sm mt-1 font-medium">
+                        {contactInfo ? (contactInfo.company || contactInfo.fullName) : meeting.contactName || "Unknown Contact"}
+                      </p>
+                      {meeting.location && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Location: {meeting.location}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <EmptyState
@@ -106,18 +123,36 @@ const Dashboard = () => {
         >
           {pendingTasks.length > 0 ? (
             <div className="space-y-4">
-              {pendingTasks.map(task => (
-                <Link key={task.id} to={`/tasks/edit/${task.id}`} className="block">
-                  <div className="border rounded-lg p-3 hover:border-primary transition-colors">
-                    <p className="font-medium">{task.title}</p>
-                    {task.dueDate && (
-                      <p className="text-sm text-muted-foreground">
-                        Due: {new Date(task.dueDate).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              ))}
+              {pendingTasks.map(task => {
+                const contactInfo = task.contactId ? contactsMap[task.contactId] : null;
+                return (
+                  <Link key={task.id} to={`/tasks/edit/${task.id}`} className="block">
+                    <div className="border rounded-lg p-3 hover:border-primary transition-colors">
+                      <p className="font-medium">{task.title}</p>
+                      {task.dueDate && (
+                        <p className="text-sm text-muted-foreground">
+                          Due: {new Date(task.dueDate).toLocaleDateString()}
+                        </p>
+                      )}
+                      {contactInfo && (
+                        <p className="text-sm mt-1">
+                          For: {contactInfo.company || contactInfo.fullName}
+                        </p>
+                      )}
+                      {task.priority && (
+                        <p className="text-xs mt-1">
+                          <span className={`px-2 py-0.5 rounded-full text-white ${
+                            task.priority === 'high' ? 'bg-red-500' : 
+                            task.priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                          }`}>
+                            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <EmptyState
@@ -138,21 +173,34 @@ const Dashboard = () => {
       >
         {recentOrders.length > 0 ? (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {recentOrders.map(order => (
-              <Link key={order.id} to={`/orders/edit/${order.id}`} className="block">
-                <div className="border rounded-lg p-4 hover:border-primary transition-colors">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">Order #{order.reference || order.id.slice(0, 6).toUpperCase()}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.date).toLocaleDateString()}
-                      </p>
+            {recentOrders.map(order => {
+              const contactInfo = contactsMap[order.contactId];
+              return (
+                <Link key={order.id} to={`/orders/edit/${order.id}`} className="block">
+                  <div className="border rounded-lg p-4 hover:border-primary transition-colors">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-medium">Order #{order.reference || order.id.slice(0, 6).toUpperCase()}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.date).toLocaleDateString()}
+                        </p>
+                        {contactInfo && (
+                          <p className="text-sm mt-1">
+                            {contactInfo.company || contactInfo.fullName}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">€{order.total.toFixed(2)}</p>
+                        <p className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full mt-1 inline-block">
+                          {order.status}
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-medium">€{order.total.toFixed(2)}</p>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <EmptyState
