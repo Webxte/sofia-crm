@@ -81,6 +81,26 @@ serve(async (req) => {
     if (contactError) {
       console.error("Contact fetch error:", contactError);
     }
+
+    // Fetch settings for email customization
+    const { data: settings, error: settingsError } = await supabase
+      .from("settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+    
+    if (settingsError) {
+      console.error("Settings fetch error:", settingsError);
+    }
+    
+    // Set up email configuration based on settings
+    const emailSenderName = settings?.email_sender_name || "CRM System";
+    const emailFooter = settings?.email_footer || "This is an automated message from your CRM system.";
+    
+    console.log("Using email settings:", {
+      senderName: emailSenderName,
+      footer: emailFooter
+    });
     
     // Generate order HTML
     let orderDetailsHtml = "";
@@ -161,6 +181,10 @@ serve(async (req) => {
         </div>
       `;
     }
+
+    // Replace [Company] placeholder with contact's company name or an empty string
+    const processedSubject = subject.replace(/\[Company\]/g, contact?.company || "");
+    const processedMessage = message.replace(/\[Company\]/g, contact?.company || "");
     
     // Prepare email HTML - don't include the message as unformatted text
     const emailContent = `
@@ -168,35 +192,36 @@ serve(async (req) => {
       <html>
       <head>
         <meta charset="utf-8">
-        <title>${subject}</title>
+        <title>${processedSubject}</title>
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto;">
         <div style="padding: 20px;">
-          <h1 style="color: #0EA5E9;">${subject}</h1>
+          <h1 style="color: #0EA5E9;">${processedSubject}</h1>
           
           <div style="margin-bottom: 20px;">
-            ${message.replace(/\n/g, '<br>')}
+            ${processedMessage.replace(/\n/g, '<br>')}
           </div>
           
           ${orderDetailsHtml}
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
-            <p>This is an automated message from your CRM system.</p>
+            <p>${emailFooter}</p>
           </div>
         </div>
       </body>
       </html>
     `;
     
-    // Send email with the verified domain
+    // Send email with the sender name from settings
     console.log("Sending email to:", recipient);
     console.log("CC recipients:", cc);
+    console.log("Using sender name:", emailSenderName);
     
     try {
       const { data, error } = await resend.emails.send({
-        from: "CRM System <info@belmorso.eu>",
+        from: `${emailSenderName} <info@belmorso.eu>`,
         to: recipient,
-        subject: subject,
+        subject: processedSubject,
         html: emailContent,
         cc: cc.length > 0 ? cc : undefined,
         reply_to: "info@belmorso.eu",
