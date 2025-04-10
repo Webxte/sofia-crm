@@ -68,7 +68,7 @@ export const useUpdateSettings = (
         console.log("No settings found, creating new settings");
         result = await supabase
           .from("settings")
-          .insert([dbUpdates])
+          .insert(dbUpdates)
           .select();
       }
       

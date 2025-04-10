@@ -85,18 +85,20 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
     
     try {
       console.log("Creating initial settings...");
+      const initialSettings = {
+        company_name: DEFAULT_SETTINGS.companyName,
+        email_footer: DEFAULT_SETTINGS.emailFooter,
+        email_sender_name: DEFAULT_SETTINGS.emailSenderName,
+        default_email_subject: DEFAULT_SETTINGS.defaultEmailSubject,
+        default_email_message: DEFAULT_SETTINGS.defaultEmailMessage,
+        terms_enabled: DEFAULT_SETTINGS.termsEnabled,
+        custom_links: JSON.stringify(DEFAULT_SETTINGS.customLinks),
+        default_vat_rate: String(DEFAULT_SETTINGS.defaultVatRate)
+      };
+      
       const { error } = await supabase
         .from("settings")
-        .insert([{
-          company_name: DEFAULT_SETTINGS.companyName,
-          email_footer: DEFAULT_SETTINGS.emailFooter,
-          email_sender_name: DEFAULT_SETTINGS.emailSenderName,
-          default_email_subject: DEFAULT_SETTINGS.defaultEmailSubject,
-          default_email_message: DEFAULT_SETTINGS.defaultEmailMessage,
-          terms_enabled: DEFAULT_SETTINGS.termsEnabled,
-          custom_links: JSON.stringify(DEFAULT_SETTINGS.customLinks),
-          default_vat_rate: String(DEFAULT_SETTINGS.defaultVatRate)
-        }])
+        .insert(initialSettings)
         .select();
 
       if (error) {
