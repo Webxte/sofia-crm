@@ -40,7 +40,7 @@ export const MeetingCard = ({ meeting, onViewDetails, onCreateOrder }: MeetingCa
           </div>
         )}
         
-        {isAdmin && meeting.agentName && (
+        {meeting.agentName && (
           <div className="flex items-center mt-2 text-xs text-muted-foreground">
             <User className="h-3.5 w-3.5 mr-1" />
             <span>Agent: {meeting.agentName}</span>

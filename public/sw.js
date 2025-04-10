@@ -56,6 +56,12 @@ self.addEventListener('fetch', (event) => {
               });
 
             return response;
+          })
+          .catch(() => {
+            // If network request fails and we have no cache, return a fallback
+            if (event.request.url.includes('/assets/')) {
+              return caches.match('/fallback.html');
+            }
           });
       })
   );
@@ -90,6 +96,16 @@ async function syncPendingData() {
   try {
     // Logic to sync data would go here
     console.log('Syncing pending data...');
+    
+    // Example: Retrieve stored data from IndexedDB
+    // const db = await openDB('offline-crm', 1);
+    // const pendingData = await db.getAll('pending-changes');
+    
+    // Process each item and sync with server
+    // for (const item of pendingData) {
+    //   await syncItemWithServer(item);
+    //   await db.delete('pending-changes', item.id);
+    // }
   } catch (error) {
     console.error('Error syncing data:', error);
   }

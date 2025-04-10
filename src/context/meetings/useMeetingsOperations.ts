@@ -11,6 +11,32 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
   const { toast } = useToast();
   const { getContactById } = useContacts();
 
+  // Helper function to sort meetings by date and time
+  const sortMeetingsByDateTime = (meetingsToSort: Meeting[]) => {
+    return [...meetingsToSort].sort((a, b) => {
+      // First compare by date
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      const dateComparison = dateA.getTime() - dateB.getTime();
+      
+      // If dates are the same, compare by time
+      if (dateComparison === 0) {
+        const timeA = a.time ? a.time.split(':').map(Number) : [0, 0];
+        const timeB = b.time ? b.time.split(':').map(Number) : [0, 0];
+        
+        // Compare hours first
+        if (timeA[0] !== timeB[0]) {
+          return timeA[0] - timeB[0];
+        }
+        
+        // If hours are the same, compare minutes
+        return timeA[1] - timeB[1];
+      }
+      
+      return dateComparison;
+    });
+  };
+
   // Function to fetch meetings from Supabase
   const refreshMeetings = async (isAuthenticated = true) => {
     try {
@@ -50,27 +76,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       });
       
       // Sort meetings by date AND time
-      const sortedMeetings = formattedMeetings.sort((a, b) => {
-        // First compare by date
-        const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
-        
-        // If dates are the same, compare by time
-        if (dateComparison === 0) {
-          // Extract hours and minutes from time strings (format: "HH:MM")
-          const timeA = a.time ? a.time.split(':').map(Number) : [0, 0];
-          const timeB = b.time ? b.time.split(':').map(Number) : [0, 0];
-          
-          // Compare hours first
-          if (timeA[0] !== timeB[0]) {
-            return timeA[0] - timeB[0];
-          }
-          
-          // If hours are the same, compare minutes
-          return timeA[1] - timeB[1];
-        }
-        
-        return dateComparison;
-      });
+      const sortedMeetings = sortMeetingsByDateTime(formattedMeetings);
       
       setMeetings(sortedMeetings);
     } catch (err) {
@@ -248,28 +254,8 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
   };
 
   const getMeetingsByContactId = (contactId: string) => {
-    return meetings
-      .filter(meeting => meeting.contactId === contactId)
-      .sort((a, b) => {
-        // First compare by date
-        const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
-        
-        // If dates are the same, compare by time
-        if (dateComparison === 0) {
-          const timeA = a.time ? a.time.split(':').map(Number) : [0, 0];
-          const timeB = b.time ? b.time.split(':').map(Number) : [0, 0];
-          
-          // Compare hours first
-          if (timeA[0] !== timeB[0]) {
-            return timeA[0] - timeB[0];
-          }
-          
-          // If hours are the same, compare minutes
-          return timeA[1] - timeB[1];
-        }
-        
-        return dateComparison;
-      });
+    const contactMeetings = meetings.filter(meeting => meeting.contactId === contactId);
+    return sortMeetingsByDateTime(contactMeetings);
   };
 
   return {

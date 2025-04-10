@@ -13,5 +13,10 @@
       "sizes": "64x64",
       "type": "image/x-icon"
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "screenshots": [],
+  "categories": ["business", "productivity"],
+  "orientation": "any"
 }

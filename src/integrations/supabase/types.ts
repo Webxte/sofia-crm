@@ -65,6 +65,7 @@ export type Database = {
           agent_id: string | null
           agent_name: string | null
           contact_id: string
+          contact_name: string | null
           created_at: string
           date: string
           follow_up_date: string | null
@@ -83,6 +84,7 @@ export type Database = {
           agent_id?: string | null
           agent_name?: string | null
           contact_id: string
+          contact_name?: string | null
           created_at?: string
           date: string
           follow_up_date?: string | null
@@ -101,6 +103,7 @@ export type Database = {
           agent_id?: string | null
           agent_name?: string | null
           contact_id?: string
+          contact_name?: string | null
           created_at?: string
           date?: string
           follow_up_date?: string | null
