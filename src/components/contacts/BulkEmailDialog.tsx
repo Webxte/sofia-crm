@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -12,9 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/SettingsContext";
+import { Contact } from "@/types";
 
 interface BulkEmailDialogProps {
-  contacts: { id: string; email: string }[];
+  contacts: Contact[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -29,6 +31,10 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
   const { toast } = useToast();
   const { settings } = useSettings();
   const [isSending, setIsSending] = useState(false);
+  
+  // Filter out contacts without email addresses
+  const validContacts = contacts.filter(contact => contact.email);
+  const contactCount = validContacts.length;
 
   useEffect(() => {
     if (settings) {
@@ -47,49 +53,56 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
   }, [settings, subject]);
 
   const handleSendEmails = async () => {
+    if (contactCount === 0) {
+      toast({
+        title: "No Valid Recipients",
+        description: "None of the selected contacts have email addresses.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSending(true);
     try {
-      const emailPromises = contacts.map(async (contact) => {
-        const apiUrl = `/functions/send-contact-email`;
-        const emailData = {
-          to: contact.email,
-          subject: subject,
-          message: message,
-        };
+      // Collect all valid email addresses
+      const emailAddresses = validContacts.map(contact => contact.email as string);
+      
+      // Send a single email with all recipients in BCC
+      const apiUrl = `/functions/send-contact-email`;
+      const emailData = {
+        to: settings?.companyEmail || emailAddresses[0], // Send to company email or first contact
+        bcc: emailAddresses, // Add all contacts as BCC
+        subject: subject,
+        message: message,
+      };
 
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(emailData),
-        });
-
-        if (!response.ok) {
-          console.error(`Failed to send email to ${contact.email}`);
-          return false;
-        }
-        return true;
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
       });
 
-      const results = await Promise.all(emailPromises);
-      const successCount = results.filter(Boolean).length;
-      const failureCount = contacts.length - successCount;
+      if (!response.ok) {
+        throw new Error("Failed to send bulk email");
+      }
 
       toast({
-        title: "Email Send Results",
-        description: `Successfully sent to ${successCount} contacts. Failed to send to ${failureCount} contacts.`,
+        title: "Bulk Email Sent",
+        description: `Successfully sent to ${contactCount} contacts as BCC.`,
       });
+      
+      onOpenChange(false);
     } catch (error) {
       console.error("Error sending emails:", error);
       toast({
         title: "Error",
-        description: "Failed to send emails. Please try again.",
+        description: "Failed to send bulk email. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSending(false);
-      onOpenChange(false);
     }
   };
 
@@ -99,7 +112,12 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Send Bulk Email</DialogTitle>
           <DialogDescription>
-            Send an email to {contacts.length} contacts.
+            Send an email to {contactCount} contacts as BCC.
+            {contactCount < contacts.length && (
+              <p className="text-yellow-600 mt-1">
+                Note: {contacts.length - contactCount} contacts without email addresses will be excluded.
+              </p>
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -130,7 +148,11 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleSendEmails} disabled={isSending}>
+          <Button 
+            type="button" 
+            onClick={handleSendEmails} 
+            disabled={isSending || contactCount === 0}
+          >
             {isSending ? "Sending..." : "Send Emails"}
           </Button>
         </DialogFooter>
