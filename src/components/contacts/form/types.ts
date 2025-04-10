@@ -8,7 +8,7 @@ export const contactFormSchema = z.object({
   position: z.string().optional(),
   email: z.string().email({
     message: "Please enter a valid email address.",
-  }).optional().nullable(),
+  }).optional().or(z.literal('')).nullable(),
   phone: z.string().optional().nullable(),
   mobile: z.string().optional().nullable(),
   address: z.string().optional().nullable(),

@@ -14,7 +14,9 @@ export const DEFAULT_SETTINGS: Settings = {
   customLinks: [],
   emailFooter: "This is an automated message from your CRM system.",
   emailSenderName: "CRM System",
-  defaultVatRate: 0
+  defaultVatRate: 0,
+  defaultEmailSubject: "Order Confirmation - Ref: [Reference]",
+  defaultEmailMessage: "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business."
 };
 
 export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean) => {
@@ -95,6 +97,11 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           emailFooter: data.email_footer || DEFAULT_SETTINGS.emailFooter,
           emailSenderName: data.email_sender_name || DEFAULT_SETTINGS.emailSenderName,
           defaultVatRate: vatRate,
+          defaultEmailSubject: data.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
+          defaultEmailMessage: data.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
+          defaultContactEmailMessage: data.default_contact_email_message,
+          catalogUrl: data.catalog_url,
+          priceListUrl: data.price_list_url,
         });
       }
     } finally {
@@ -114,6 +121,8 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
     setLoading(true);
     try {
+      console.log("Updating settings with:", updates);
+      
       // Prepare database update object
       const dbUpdates: any = {
         company_name: updates.companyName,
@@ -125,6 +134,11 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
         custom_links: updates.customLinks ? JSON.stringify(updates.customLinks) : JSON.stringify([]),
         email_footer: updates.emailFooter,
         email_sender_name: updates.emailSenderName,
+        default_email_subject: updates.defaultEmailSubject,
+        default_email_message: updates.defaultEmailMessage,
+        default_contact_email_message: updates.defaultContactEmailMessage,
+        catalog_url: updates.catalogUrl,
+        price_list_url: updates.priceListUrl,
       };
       
       // Explicitly handle the VAT rate as a string for the database
@@ -150,7 +164,14 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           title: "Success",
           description: "Settings updated successfully!",
         });
-        await refreshSettings(); // Refresh settings after update
+        
+        // Update local state with the changes before refreshing from the server
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          ...updates
+        }));
+        
+        await refreshSettings(); // Refresh settings after update to ensure data consistency
       }
     } finally {
       setLoading(false);

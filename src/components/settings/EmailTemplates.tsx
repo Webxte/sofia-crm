@@ -19,8 +19,8 @@ interface EmailTemplatesProps {
   onSubmit: (data: { 
     emailFooter: string;
     emailSenderName: string;
-    defaultEmailSubject?: string;
-    defaultEmailMessage?: string;
+    defaultEmailSubject: string;
+    defaultEmailMessage: string;
   }) => Promise<void>;
 }
 

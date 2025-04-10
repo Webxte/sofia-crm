@@ -27,27 +27,8 @@ export const MeetingsList = ({ meetings, onViewMeeting, onCreateOrder, onDeleteM
   const { isAdmin } = useAuth();
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
 
-  // Sort meetings by time
-  const sortedMeetings = [...meetings].sort((a, b) => {
-    // First compare by date
-    const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
-    
-    // If dates are the same, compare by time
-    if (dateComparison === 0) {
-      const timeA = a.time ? a.time.split(':').map(Number) : [0, 0];
-      const timeB = b.time ? b.time.split(':').map(Number) : [0, 0];
-      
-      // Compare hours first
-      if (timeA[0] !== timeB[0]) {
-        return timeA[0] - timeB[0];
-      }
-      
-      // If hours are the same, compare minutes
-      return timeA[1] - timeB[1];
-    }
-    
-    return dateComparison;
-  });
+  // We'll use the meetings as they're passed in, already sorted by the parent component
+  const sortedMeetings = meetings;
 
   return (
     <div className="space-y-4">
