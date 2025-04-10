@@ -16,9 +16,11 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
 
     setLoading(true);
     try {
+      console.log("Fetching settings...");
       const { data, error } = await supabase
         .from("settings")
         .select("*")
+        .eq("id", "1") // Using string to match the update method
         .single();
 
       if (error) {
@@ -28,8 +30,10 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
           description: "Failed to load settings.",
           variant: "destructive",
         });
+        return;
       }
 
+      console.log("Fetched settings data:", data);
       if (data) {
         // Parse custom_links
         const customLinks = parseCustomLinks(data.custom_links);
@@ -56,6 +60,13 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
           priceListUrl: data.price_list_url,
         });
       }
+    } catch (err) {
+      console.error("Exception during settings fetch:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while loading settings.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

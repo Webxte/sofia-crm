@@ -47,7 +47,7 @@ export const useUpdateSettings = (
       const { error, data } = await supabase
         .from("settings")
         .update(dbUpdates)
-        .eq("id", 1) // Using a number here instead of a string
+        .eq("id", "1") // Using a string here as required by TypeScript
         .select();
 
       if (error) {
