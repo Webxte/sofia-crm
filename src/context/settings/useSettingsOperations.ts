@@ -109,10 +109,11 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
     setLoading(true);
     try {
-      // Explicitly convert defaultVatRate to string for Supabase
-      const vatRateString = updates.defaultVatRate !== undefined 
-        ? String(updates.defaultVatRate) 
-        : null;
+      // Convert defaultVatRate to string for Supabase if it exists
+      let vatRateForDb: string | null = null;
+      if (updates.defaultVatRate !== undefined) {
+        vatRateForDb = String(updates.defaultVatRate);
+      }
       
       const { error } = await supabase
         .from("settings")
@@ -123,7 +124,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           company_address: updates.companyAddress,
           default_terms_and_conditions: updates.terms,
           terms_enabled: updates.termsEnabled,
-          default_vat_rate: vatRateString,
+          default_vat_rate: vatRateForDb,
           custom_links: updates.customLinks ? JSON.stringify(updates.customLinks) : JSON.stringify([]),
           email_footer: updates.emailFooter,
           email_sender_name: updates.emailSenderName,
