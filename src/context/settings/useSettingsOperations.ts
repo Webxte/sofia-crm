@@ -136,7 +136,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
       const { error } = await supabase
         .from("settings")
         .update(dbUpdates)
-        .eq("id", 1); // Assuming there's only one row for settings
+        .eq("id", "1"); // Using a string here instead of a number
 
       if (error) {
         console.error("Error updating settings:", error);
