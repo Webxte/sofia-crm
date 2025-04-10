@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Settings } from "@/types";
@@ -12,16 +12,19 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
   const { toast } = useToast();
 
   const refreshSettings = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      console.log("User not authenticated, skipping settings fetch");
+      return;
+    }
 
     setLoading(true);
     try {
-      console.log("Fetching settings...");
+      console.log("Fetching settings from Supabase...");
       const { data, error } = await supabase
         .from("settings")
         .select("*")
-        .eq("id", "1") // Using string to match the update method
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching settings:", error);
@@ -59,6 +62,10 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
           catalogUrl: data.catalog_url,
           priceListUrl: data.price_list_url,
         });
+      } else {
+        console.log("No settings data found, using defaults");
+        // If no settings are found, create initial settings
+        createInitialSettings();
       }
     } catch (err) {
       console.error("Exception during settings fetch:", err);
@@ -71,6 +78,37 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
       setLoading(false);
     }
   }, [isAuthenticated, toast]);
+  
+  // Function to create initial settings if none exist
+  const createInitialSettings = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      console.log("Creating initial settings...");
+      const { error } = await supabase
+        .from("settings")
+        .insert([{
+          company_name: DEFAULT_SETTINGS.companyName,
+          email_footer: DEFAULT_SETTINGS.emailFooter,
+          email_sender_name: DEFAULT_SETTINGS.emailSenderName,
+          default_email_subject: DEFAULT_SETTINGS.defaultEmailSubject,
+          default_email_message: DEFAULT_SETTINGS.defaultEmailMessage,
+          terms_enabled: DEFAULT_SETTINGS.termsEnabled,
+          custom_links: JSON.stringify(DEFAULT_SETTINGS.customLinks),
+          default_vat_rate: String(DEFAULT_SETTINGS.defaultVatRate)
+        }])
+        .select();
+
+      if (error) {
+        console.error("Error creating initial settings:", error);
+      } else {
+        console.log("Initial settings created successfully");
+        refreshSettings();
+      }
+    } catch (err) {
+      console.error("Exception during initial settings creation:", err);
+    }
+  };
   
   return { settings, setSettings, loading, refreshSettings };
 };

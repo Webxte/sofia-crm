@@ -44,11 +44,35 @@ export const useUpdateSettings = (
         return;
       }
       
-      const { error, data } = await supabase
+      // First, check if settings exist
+      const { data: existingSettings, error: checkError } = await supabase
         .from("settings")
-        .update(dbUpdates)
-        .eq("id", "1") // Using a string here as required by TypeScript
-        .select();
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+        
+      if (checkError) {
+        console.error("Error checking settings existence:", checkError);
+        throw new Error(`Failed to check settings: ${checkError.message}`);
+      }
+      
+      let result;
+      if (existingSettings) {
+        console.log("Updating existing settings with ID:", existingSettings.id);
+        result = await supabase
+          .from("settings")
+          .update(dbUpdates)
+          .eq("id", existingSettings.id)
+          .select();
+      } else {
+        console.log("No settings found, creating new settings");
+        result = await supabase
+          .from("settings")
+          .insert([dbUpdates])
+          .select();
+      }
+      
+      const { error, data } = result;
 
       if (error) {
         console.error("Error updating settings:", error);

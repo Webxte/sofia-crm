@@ -17,6 +17,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   } = useSettingsOperations(isAuthenticated, isAdmin);
 
   useEffect(() => {
+    console.log("SettingsProvider: Authentication state changed", { isAuthenticated });
     if (isAuthenticated) {
       refreshSettings();
     }
