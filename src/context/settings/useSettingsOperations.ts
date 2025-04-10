@@ -78,16 +78,10 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           companyAddress: data.company_address || DEFAULT_SETTINGS.companyAddress,
           terms: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
           termsEnabled: data.terms_enabled !== null ? Boolean(data.terms_enabled) : DEFAULT_SETTINGS.termsEnabled,
-          defaultTermsAndConditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
-          defaultVatRate: data.default_vat_rate !== null ? Number(data.default_vat_rate) : DEFAULT_SETTINGS.defaultVatRate,
-          defaultEmailSubject: data.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
-          defaultEmailMessage: data.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
-          defaultContactEmailMessage: data.default_contact_email_message || DEFAULT_SETTINGS.defaultContactEmailMessage,
-          catalogUrl: data.catalog_url || DEFAULT_SETTINGS.catalogUrl,
-          priceListUrl: data.price_list_url || DEFAULT_SETTINGS.priceListUrl,
           customLinks: customLinks,
           emailFooter: data.email_footer || DEFAULT_SETTINGS.emailFooter,
           emailSenderName: data.email_sender_name || DEFAULT_SETTINGS.emailSenderName,
+          defaultVatRate: data.default_vat_rate !== null ? Number(data.default_vat_rate) : DEFAULT_SETTINGS.defaultVatRate,
         });
       }
     } finally {
@@ -107,6 +101,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
 
     setLoading(true);
     try {
+      // Convert the default_vat_rate to string before sending to Supabase
       const { error } = await supabase
         .from("settings")
         .update({
@@ -114,14 +109,9 @@ export const useSettingsOperations = (isAuthenticated: boolean, isAdmin: boolean
           company_email: updates.companyEmail,
           company_phone: updates.companyPhone,
           company_address: updates.companyAddress,
-          default_terms_and_conditions: updates.terms || updates.defaultTermsAndConditions,
+          default_terms_and_conditions: updates.terms,
           terms_enabled: updates.termsEnabled,
-          default_vat_rate: updates.defaultVatRate,
-          default_email_subject: updates.defaultEmailSubject,
-          default_email_message: updates.defaultEmailMessage,
-          default_contact_email_message: updates.defaultContactEmailMessage,
-          catalog_url: updates.catalogUrl,
-          price_list_url: updates.priceListUrl,
+          default_vat_rate: updates.defaultVatRate?.toString(), // Convert to string
           custom_links: updates.customLinks ? JSON.stringify(updates.customLinks) : JSON.stringify([]),
           email_footer: updates.emailFooter,
           email_sender_name: updates.emailSenderName,
