@@ -1,4 +1,3 @@
-
 import { CustomLink } from "@/types";
 import { DEFAULT_SETTINGS } from "./constants";
 
@@ -55,6 +54,8 @@ export const prepareSettingsForDb = (updates: Partial<any>): any => {
   if (updates.terms !== undefined) dbUpdates.default_terms_and_conditions = updates.terms;
   if (updates.termsEnabled !== undefined) dbUpdates.terms_enabled = updates.termsEnabled;
   if (updates.customLinks !== undefined) dbUpdates.custom_links = JSON.stringify(updates.customLinks || []);
+  
+  // Explicitly handle all email-related fields
   if (updates.emailFooter !== undefined) dbUpdates.email_footer = updates.emailFooter;
   if (updates.emailSenderName !== undefined) dbUpdates.email_sender_name = updates.emailSenderName;
   if (updates.defaultEmailSubject !== undefined) dbUpdates.default_email_subject = updates.defaultEmailSubject;
@@ -68,5 +69,6 @@ export const prepareSettingsForDb = (updates: Partial<any>): any => {
     dbUpdates.default_vat_rate = String(updates.defaultVatRate);
   }
   
+  console.log("Prepared DB updates:", dbUpdates);
   return dbUpdates;
 };

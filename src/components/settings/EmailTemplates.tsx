@@ -24,6 +24,8 @@ interface EmailTemplatesProps {
 }
 
 const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubmit }) => {
+  console.log("EmailTemplates initialSettings:", initialSettings);
+  
   const form = useForm({
     defaultValues: {
       defaultEmailSubject: initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
@@ -53,6 +55,7 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubm
   
   // Reset form when initialSettings change
   React.useEffect(() => {
+    console.log("Resetting form with initialSettings:", initialSettings);
     form.reset({
       defaultEmailSubject: initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
       defaultEmailMessage: initialSettings.defaultEmailMessage || 

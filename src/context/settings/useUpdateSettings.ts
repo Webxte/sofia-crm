@@ -32,17 +32,29 @@ export const useUpdateSettings = (
       const dbUpdates = prepareSettingsForDb(updates);
       console.log("Prepared DB updates:", dbUpdates);
       
+      // Check if there are any updates to make
+      if (Object.keys(dbUpdates).length === 0) {
+        console.warn("No updates to apply - empty update object");
+        toast({
+          title: "Warning",
+          description: "No settings changes were detected to update.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
       const { error, data } = await supabase
         .from("settings")
         .update(dbUpdates)
-        .eq("id", "1") // Using a string here instead of a number
+        .eq("id", 1) // Using a number here instead of a string
         .select();
 
       if (error) {
         console.error("Error updating settings:", error);
         toast({
           title: "Error",
-          description: "Failed to update settings.",
+          description: `Failed to update settings: ${error.message}`,
           variant: "destructive",
         });
       } else {
