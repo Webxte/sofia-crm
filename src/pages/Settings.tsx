@@ -44,7 +44,7 @@ const Settings = () => {
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="data">Data Import</TabsTrigger>
           <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
-          <TabsTrigger value="email">Email Templates</TabsTrigger>
+          <TabsTrigger value="email">Order Emails</TabsTrigger>
           <TabsTrigger value="contact-email">Contact Emails</TabsTrigger>
           <TabsTrigger value="custom-links">Custom Links</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>

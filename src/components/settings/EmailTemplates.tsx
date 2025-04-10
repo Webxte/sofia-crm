@@ -17,10 +17,10 @@ interface EmailTemplatesProps {
     emailSenderName?: string;
   };
   onSubmit: (data: { 
-    defaultEmailSubject: string; 
-    defaultEmailMessage: string;
     emailFooter: string;
     emailSenderName: string;
+    defaultEmailSubject?: string;
+    defaultEmailMessage?: string;
   }) => Promise<void>;
 }
 
@@ -43,13 +43,18 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubm
     emailFooter: string;
     emailSenderName: string;
   }) => {
-    await onSubmit(data);
+    await onSubmit({
+      defaultEmailSubject: data.defaultEmailSubject,
+      defaultEmailMessage: data.defaultEmailMessage,
+      emailFooter: data.emailFooter,
+      emailSenderName: data.emailSenderName
+    });
   };
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Email Templates</CardTitle>
+        <CardTitle>Order Email Templates</CardTitle>
         <CardDescription>
           Configure default email templates for order communications
         </CardDescription>
