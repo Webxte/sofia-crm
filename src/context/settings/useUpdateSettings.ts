@@ -30,11 +30,13 @@ export const useUpdateSettings = (
       
       // Prepare database update object
       const dbUpdates = prepareSettingsForDb(updates);
+      console.log("Prepared DB updates:", dbUpdates);
       
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from("settings")
         .update(dbUpdates)
-        .eq("id", "1"); // Using a string here instead of a number
+        .eq("id", "1") // Using a string here instead of a number
+        .select();
 
       if (error) {
         console.error("Error updating settings:", error);
@@ -44,19 +46,28 @@ export const useUpdateSettings = (
           variant: "destructive",
         });
       } else {
+        console.log("Settings updated successfully:", data);
         toast({
           title: "Success",
           description: "Settings updated successfully!",
         });
         
-        // Update local state with the changes before refreshing from the server
+        // Update local state with the changes 
         setSettings(prevSettings => ({
           ...prevSettings,
           ...updates
         }));
         
-        await refreshSettings(); // Refresh settings after update to ensure data consistency
+        // Refresh settings from the server to ensure data consistency
+        await refreshSettings();
       }
+    } catch (err) {
+      console.error("Exception during settings update:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

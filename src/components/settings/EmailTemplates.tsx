@@ -1,6 +1,5 @@
 
 import React from "react";
-import { useSettings } from "@/context/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -43,6 +42,7 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubm
     emailFooter: string;
     emailSenderName: string;
   }) => {
+    console.log("Submitting email template data:", data);
     await onSubmit({
       defaultEmailSubject: data.defaultEmailSubject,
       defaultEmailMessage: data.defaultEmailMessage,
@@ -50,6 +50,17 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ initialSettings, onSubm
       emailSenderName: data.emailSenderName
     });
   };
+  
+  // Reset form when initialSettings change
+  React.useEffect(() => {
+    form.reset({
+      defaultEmailSubject: initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
+      defaultEmailMessage: initialSettings.defaultEmailMessage || 
+        "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business.",
+      emailFooter: initialSettings.emailFooter || "This is an automated message from your CRM system.",
+      emailSenderName: initialSettings.emailSenderName || "CRM System"
+    });
+  }, [initialSettings]);
   
   return (
     <Card>

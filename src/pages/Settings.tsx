@@ -23,11 +23,8 @@ const Settings = () => {
   }, []);
   
   const handleUpdateSettings = async (formData: Partial<typeof settings>) => {
+    console.log("Updating settings with form data:", formData);
     await updateSettings(formData);
-    toast({
-      title: "Settings Saved",
-      description: "Your settings have been updated successfully",
-    });
   };
   
   return (

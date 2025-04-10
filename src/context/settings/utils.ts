@@ -45,26 +45,26 @@ export const parseVatRate = (vatRateData: any): number => {
 };
 
 export const prepareSettingsForDb = (updates: Partial<any>): any => {
-  const dbUpdates: any = {
-    company_name: updates.companyName,
-    company_email: updates.companyEmail,
-    company_phone: updates.companyPhone,
-    company_address: updates.companyAddress,
-    default_terms_and_conditions: updates.terms,
-    terms_enabled: updates.termsEnabled,
-    custom_links: updates.customLinks ? JSON.stringify(updates.customLinks) : JSON.stringify([]),
-    email_footer: updates.emailFooter,
-    email_sender_name: updates.emailSenderName,
-    default_email_subject: updates.defaultEmailSubject,
-    default_email_message: updates.defaultEmailMessage,
-    default_contact_email_message: updates.defaultContactEmailMessage,
-    catalog_url: updates.catalogUrl,
-    price_list_url: updates.priceListUrl,
-  };
+  const dbUpdates: any = {};
   
-  // Explicitly handle the VAT rate as a string for the database
+  // Only include fields that are actually present in the updates object
+  if (updates.companyName !== undefined) dbUpdates.company_name = updates.companyName;
+  if (updates.companyEmail !== undefined) dbUpdates.company_email = updates.companyEmail;
+  if (updates.companyPhone !== undefined) dbUpdates.company_phone = updates.companyPhone;
+  if (updates.companyAddress !== undefined) dbUpdates.company_address = updates.companyAddress;
+  if (updates.terms !== undefined) dbUpdates.default_terms_and_conditions = updates.terms;
+  if (updates.termsEnabled !== undefined) dbUpdates.terms_enabled = updates.termsEnabled;
+  if (updates.customLinks !== undefined) dbUpdates.custom_links = JSON.stringify(updates.customLinks || []);
+  if (updates.emailFooter !== undefined) dbUpdates.email_footer = updates.emailFooter;
+  if (updates.emailSenderName !== undefined) dbUpdates.email_sender_name = updates.emailSenderName;
+  if (updates.defaultEmailSubject !== undefined) dbUpdates.default_email_subject = updates.defaultEmailSubject;
+  if (updates.defaultEmailMessage !== undefined) dbUpdates.default_email_message = updates.defaultEmailMessage;
+  if (updates.defaultContactEmailMessage !== undefined) dbUpdates.default_contact_email_message = updates.defaultContactEmailMessage;
+  if (updates.catalogUrl !== undefined) dbUpdates.catalog_url = updates.catalogUrl;
+  if (updates.priceListUrl !== undefined) dbUpdates.price_list_url = updates.priceListUrl;
+  
+  // Explicitly handle the VAT rate
   if (updates.defaultVatRate !== undefined) {
-    // Convert the number to a string for the database using String()
     dbUpdates.default_vat_rate = String(updates.defaultVatRate);
   }
   
