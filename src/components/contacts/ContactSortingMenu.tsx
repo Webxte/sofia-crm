@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { SortAscending, SortDescending, ChevronDown } from "lucide-react";
+import { ArrowUpDown, ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,9 +52,9 @@ export const ContactSortingMenu = ({
         <Button variant="outline" size="sm" className="flex items-center">
           <span className="mr-1">Sort by {getFieldDisplayName(sortField)}</span>
           {sortDirection === "asc" ? (
-            <SortAscending className="h-4 w-4" />
+            <ArrowUp className="h-4 w-4" />
           ) : (
-            <SortDescending className="h-4 w-4" />
+            <ArrowDown className="h-4 w-4" />
           )}
           <ChevronDown className="ml-1 h-4 w-4" />
         </Button>
@@ -76,9 +76,9 @@ export const ContactSortingMenu = ({
                 <span className="flex-1">{getFieldDisplayName(field)}</span>
                 {sortField === field && (
                   sortDirection === "asc" ? (
-                    <SortAscending className="h-4 w-4 ml-2" />
+                    <ArrowUp className="h-4 w-4 ml-2" />
                   ) : (
-                    <SortDescending className="h-4 w-4 ml-2" />
+                    <ArrowDown className="h-4 w-4 ml-2" />
                   )
                 )}
               </DropdownMenuItem>
