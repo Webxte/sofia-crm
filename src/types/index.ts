@@ -121,7 +121,7 @@ export interface Settings {
   companyEmail?: string;
   companyPhone?: string;
   companyAddress?: string;
-  terms?: string; // Added terms property
+  terms?: string; // Terms property
   defaultTermsAndConditions?: string;
   termsEnabled?: boolean;
   defaultVatRate?: number;

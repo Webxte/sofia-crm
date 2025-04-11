@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 
-export type SortField = "fullName" | "company" | "email" | "phone" | "source";
+export type SortField = "fullName" | "company" | "email" | "phone" | "source" | "createdAt" | "updatedAt";
 export type SortDirection = "asc" | "desc";
 
 export const useContactSorting = () => {

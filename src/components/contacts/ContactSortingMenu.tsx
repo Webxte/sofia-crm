@@ -1,9 +1,17 @@
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowDownUp } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { SortAscending, SortDescending, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SortField, SortDirection } from "@/hooks/use-contact-sorting";
+import { cn } from "@/lib/utils";
 
 interface ContactSortingMenuProps {
   sortField: SortField;
@@ -11,39 +19,72 @@ interface ContactSortingMenuProps {
   onSortChange: (field: SortField) => void;
 }
 
-export const ContactSortingMenu: React.FC<ContactSortingMenuProps> = ({ 
-  sortField, 
-  sortDirection, 
-  onSortChange 
-}) => {
+export const ContactSortingMenu = ({
+  sortField,
+  sortDirection,
+  onSortChange,
+}: ContactSortingMenuProps) => {
+  // Helper function to get field display name
+  const getFieldDisplayName = (field: SortField) => {
+    switch (field) {
+      case "fullName":
+        return "Name";
+      case "company":
+        return "Company";
+      case "email":
+        return "Email";
+      case "phone":
+        return "Phone";
+      case "source":
+        return "Source";
+      case "createdAt":
+        return "Created Date";
+      case "updatedAt":
+        return "Modified Date";
+      default:
+        return field;
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          <ArrowDownUp className="h-4 w-4 mr-2" />
-          Sort: {sortField === "company" ? "Company" : 
-                sortField === "fullName" ? "Name" : 
-                sortField === "email" ? "Email" :
-                sortField === "phone" ? "Phone" : "Source"}
-          {sortDirection === "asc" ? " (A-Z)" : " (Z-A)"}
+        <Button variant="outline" size="sm" className="flex items-center">
+          <span className="mr-1">Sort by {getFieldDisplayName(sortField)}</span>
+          {sortDirection === "asc" ? (
+            <SortAscending className="h-4 w-4" />
+          ) : (
+            <SortDescending className="h-4 w-4" />
+          )}
+          <ChevronDown className="ml-1 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onSortChange("company")}>
-          Sort by Company
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("fullName")}>
-          Sort by Name
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("email")}>
-          Sort by Email
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("phone")}>
-          Sort by Phone
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("source")}>
-          Sort by Source
-        </DropdownMenuItem>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel>Sort Contacts</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {(["company", "fullName", "email", "phone", "source", "createdAt", "updatedAt"] as SortField[]).map(
+            (field) => (
+              <DropdownMenuItem
+                key={field}
+                className={cn(
+                  "flex items-center cursor-pointer",
+                  sortField === field && "font-medium"
+                )}
+                onClick={() => onSortChange(field)}
+              >
+                <span className="flex-1">{getFieldDisplayName(field)}</span>
+                {sortField === field && (
+                  sortDirection === "asc" ? (
+                    <SortAscending className="h-4 w-4 ml-2" />
+                  ) : (
+                    <SortDescending className="h-4 w-4 ml-2" />
+                  )
+                )}
+              </DropdownMenuItem>
+            )
+          )}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

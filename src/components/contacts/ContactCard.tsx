@@ -1,116 +1,120 @@
 
 import { Contact } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CalendarPlus, ClipboardList, ShoppingCart, MoreHorizontal } from "lucide-react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Calendar, ListTodo, Mail, User, Building, Phone, ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/context/AuthContext";
+import { ContactEmailDialog } from "./email/ContactEmailDialog";
 
-export interface ContactCardProps {
+interface ContactCardProps {
   contact: Contact;
   onScheduleMeeting: (contactId: string) => void;
   onCreateTask: (contactId: string) => void;
   onCreateOrder: (contactId: string) => void;
 }
 
-const ContactCard = ({ contact, onScheduleMeeting, onCreateTask, onCreateOrder }: ContactCardProps) => {
+const ContactCard = ({
+  contact,
+  onScheduleMeeting,
+  onCreateTask,
+  onCreateOrder,
+}: ContactCardProps) => {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   
-  const handleViewDetails = () => {
-    navigate(`/contacts/${contact.id}`);
-  };
-
-  const handleEdit = () => {
-    navigate(`/contacts/${contact.id}/edit`);
-  };
-
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h3 className="font-medium leading-none">
-              {contact.fullName}
+    <>
+      <Card className="h-full flex flex-col">
+        <CardContent className="pt-6 flex-1">
+          <div className="mb-4">
+            <h3 className="font-semibold text-lg truncate">
+              {contact.fullName || "Unknown Contact"}
             </h3>
             {contact.company && (
-              <p className="text-sm text-muted-foreground">
-                {contact.company}
-              </p>
-            )}
-            {contact.position && (
-              <p className="text-xs text-muted-foreground">
-                {contact.position}
-              </p>
+              <div className="flex items-center text-muted-foreground mt-1">
+                <Building className="h-4 w-4 mr-1" />
+                <span className="text-sm truncate">{contact.company}</span>
+              </div>
             )}
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={handleViewDetails}>
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleEdit}>
-                Edit Contact
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        <div className="mt-2 space-y-2">
+          
           {contact.email && (
-            <p className="text-sm">
-              <span className="font-medium">Email:</span> {contact.email}
-            </p>
+            <div className="flex items-start mt-2">
+              <Mail className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+              <p className="text-sm truncate">{contact.email}</p>
+            </div>
           )}
+          
           {contact.phone && (
-            <p className="text-sm">
-              <span className="font-medium">Phone:</span> {contact.phone}
-            </p>
+            <div className="flex items-start mt-2">
+              <Phone className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+              <p className="text-sm">{contact.phone}</p>
+            </div>
           )}
-        </div>
-        
-        <div className="mt-4 flex flex-wrap gap-2">
+          
+          {contact.source && (
+            <div className="mt-4 pt-3 border-t">
+              <div className="text-xs text-muted-foreground flex items-center">
+                <span className="mr-1">Source:</span>
+                <span className="font-medium">{contact.source}</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="border-t bg-muted/30 p-3 flex flex-wrap gap-2 justify-end">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(`/contacts/${contact.id}`)}
+          >
+            <User className="h-4 w-4 mr-1" /> View
+          </Button>
+          
+          {contact.email && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowEmailDialog(true)}
+            >
+              <Mail className="h-4 w-4 mr-1" /> Email
+            </Button>
+          )}
+          
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1"
             onClick={() => onScheduleMeeting(contact.id)}
           >
-            <CalendarPlus className="mr-1 h-4 w-4" /> Meeting
+            <Calendar className="h-4 w-4 mr-1" /> Meeting
           </Button>
+          
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1"
             onClick={() => onCreateTask(contact.id)}
           >
-            <ClipboardList className="mr-1 h-4 w-4" /> Task
+            <ListTodo className="h-4 w-4 mr-1" /> Task
           </Button>
+          
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1"
             onClick={() => onCreateOrder(contact.id)}
           >
-            <ShoppingCart className="mr-1 h-4 w-4" /> Order
+            <ShoppingCart className="h-4 w-4 mr-1" /> Order
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardFooter>
+      </Card>
+      
+      {showEmailDialog && (
+        <ContactEmailDialog
+          contact={contact}
+          open={showEmailDialog}
+          onOpenChange={setShowEmailDialog}
+        />
+      )}
+    </>
   );
 };
 

@@ -37,29 +37,41 @@ export const OrdersListView = ({ orders, companyNameMap }: OrdersListViewProps) 
           <div 
             key={order.id} 
             className="border rounded-md p-3 bg-card"
-            onClick={() => navigate(`/orders/${order.id}`)}
           >
             <div className="flex justify-between items-start mb-2">
-              <div className="font-medium">{order.reference || `Order ${order.id.slice(0, 8)}`}</div>
-              <OrderStatusBadge status={order.status} />
+              <div 
+                className="font-medium cursor-pointer"
+                onClick={() => navigate(`/orders/${order.id}`)}
+              >
+                {order.reference || `Order ${order.id.slice(0, 8)}`}
+              </div>
+              <OrderStatusChanger orderId={order.id} currentStatus={order.status} />
             </div>
-            <div className="text-sm text-muted-foreground mb-1">
+            <div 
+              className="text-sm text-muted-foreground mb-1 cursor-pointer"
+              onClick={() => navigate(`/orders/${order.id}`)}
+            >
               {companyNameMap[order.contactId] || "Unknown"}
             </div>
-            <div className="text-sm text-muted-foreground mb-2">
+            <div 
+              className="text-sm text-muted-foreground mb-2 cursor-pointer"
+              onClick={() => navigate(`/orders/${order.id}`)}
+            >
               {format(new Date(order.date), "MMM d, yyyy")}
             </div>
             <div className="flex justify-between items-center">
-              <div className="font-semibold">{formatCurrency(order.total)}</div>
+              <div 
+                className="font-semibold cursor-pointer"
+                onClick={() => navigate(`/orders/${order.id}`)}
+              >
+                {formatCurrency(order.total)}
+              </div>
               <div className="flex gap-1">
                 <Button 
                   variant="outline" 
                   size="icon"
                   className="h-7 w-7"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/orders/${order.id}/edit`);
-                  }}
+                  onClick={() => navigate(`/orders/${order.id}/edit`)}
                 >
                   <Edit className="h-3.5 w-3.5" />
                 </Button>

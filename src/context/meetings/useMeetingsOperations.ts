@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +50,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       
       const { data, error } = await supabase
         .from('meetings')
-        .select('*')
+        .select('*, contacts(full_name, company)')
         .order('date', { ascending: false });
       
       if (error) {
@@ -63,11 +64,21 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       }
       
       // Transform the Supabase data to match our Meeting type
-      let formattedMeetings: Meeting[] = data.map(supabaseToMeeting);
+      let formattedMeetings: Meeting[] = data.map(meeting => {
+        const contactName = meeting.contacts ? 
+          (meeting.contacts.company || meeting.contacts.full_name) : 
+          meeting.contact_name;
+          
+        // Create meeting with contact name from join or existing contact_name
+        const formattedMeeting = supabaseToMeeting(meeting);
+        formattedMeeting.contactName = contactName || "Unknown";
+        
+        return formattedMeeting;
+      });
       
-      // Add contact names if not present
+      // Add contact names if still not present
       formattedMeetings = formattedMeetings.map(meeting => {
-        if (!meeting.contactName) {
+        if (!meeting.contactName || meeting.contactName === "Unknown") {
           const contact = getContactById(meeting.contactId);
           const contactName = contact ? (contact.company || contact.fullName || "Unknown") : "Unknown";
           return { ...meeting, contactName };
