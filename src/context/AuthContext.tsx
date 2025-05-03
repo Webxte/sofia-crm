@@ -6,6 +6,7 @@ import { Session, User } from "@supabase/supabase-js";
 // Extend the User type to include the name property
 interface ExtendedUser extends User {
   name?: string;
+  organizationId?: string;
 }
 
 interface AuthContextType {
@@ -106,6 +107,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // First clear state so the UI updates immediately
       setUser(null);
       setSession(null);
+      
+      // Clear organization data
+      localStorage.removeItem('currentOrganizationId');
       
       // Then sign out from supabase
       const { error } = await supabase.auth.signOut();

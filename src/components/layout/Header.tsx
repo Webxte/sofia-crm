@@ -1,9 +1,8 @@
 
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { BellIcon, UserCircle, FileText, UserCog, LogOut, Upload, Menu } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,134 +11,155 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import ProductImporter from "@/components/orders/ProductImporter";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/AuthContext";
+import { Menu, Settings, LogOut, Building } from "lucide-react";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { OrganizationSwitcher } from "@/components/organizations/OrganizationSwitcher";
 
-const getPageTitle = (pathname: string): string => {
-  const path = pathname.split("/")[1];
-  
-  switch (path) {
-    case "":
-      return "Dashboard";
-    case "contacts":
-      return "Contacts";
-    case "meetings":
-      return "Meetings";
-    case "tasks":
-      return "Tasks";
-    case "orders":
-      return "Orders";
-    case "calendar":
-      return "Calendar";
-    case "profile":
-      return "Profile";
-    case "reports":
-      return "Reports";
-    default:
-      return "Dashboard";
-  }
-};
+interface HeaderProps {
+  onMenuClick: () => void;
+}
 
-export const Header = () => {
-  const location = useLocation();
-  const [pageTitle, setPageTitle] = useState(getPageTitle(location.pathname));
-  const { user, logout, isAdmin } = useAuth();
-  const navigate = useNavigate();
-  const [showImporter, setShowImporter] = useState(false);
-  
-  useEffect(() => {
-    setPageTitle(getPageTitle(location.pathname));
-  }, [location.pathname]);
+export function Header({ onMenuClick }: HeaderProps) {
+  const isMobile = useIsMobile();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { currentOrganization } = useOrganizations();
+  const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred during logout",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
-  return (
-    <header className="border-b border-border px-4 py-3 flex items-center justify-between bg-white">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="md:hidden mr-2" />
-        <h1 className="text-xl font-semibold">{pageTitle}</h1>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-muted-foreground">
-              <BellIcon size={20} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            Notifications (Coming Soon)
-          </TooltipContent>
-        </Tooltip>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative flex items-center gap-2">
-              <UserCircle className="h-6 w-6" />
-              <span className="hidden sm:inline-block">{user?.name || "User"}</span>
-              {isAdmin && (
-                <span className="hidden sm:inline-flex text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">Admin</span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/profile")}>
-              <UserCog className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            {isAdmin && (
-              <>
-                <DropdownMenuItem onClick={() => setShowImporter(true)}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import Products
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/reports")}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Reports
-                </DropdownMenuItem>
-              </>
-            )}
-            {!isAdmin && (
-              <DropdownMenuItem onClick={() => navigate("/reports")}>
-                <FileText className="mr-2 h-4 w-4" />
-                Reports
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+  const userInitials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : "U";
 
-      <Dialog open={showImporter} onOpenChange={setShowImporter}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Import Products</DialogTitle>
-            <DialogDescription>
-              Import your products from a CSV file. The file should contain code, description, price, and cost columns.
-            </DialogDescription>
-          </DialogHeader>
-          <ProductImporter onClose={() => setShowImporter(false)} />
-        </DialogContent>
-      </Dialog>
+  return (
+    <header className="border-b">
+      <div className="flex h-16 items-center px-4 gap-4">
+        <div className="flex items-center">
+          {isMobile && (
+            <Button
+              variant="ghost"
+              className="mr-2"
+              size="icon"
+              onClick={onMenuClick}
+            >
+              <Menu className="h-6 w-6" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
+          )}
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-semibold text-lg"
+          >
+            {currentOrganization?.logoUrl ? (
+              <img
+                src={currentOrganization.logoUrl}
+                alt={currentOrganization.name}
+                className="h-8"
+              />
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-6 w-6"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+            )}
+            {!isMobile && (
+              <span 
+                style={currentOrganization?.primaryColor ? 
+                  { color: currentOrganization.primaryColor } : 
+                  undefined
+                }
+              >
+                {currentOrganization?.name || "CRM"}
+              </span>
+            )}
+          </Link>
+        </div>
+
+        <div className="flex-1" />
+
+        {isAuthenticated && !isMobile && (
+          <OrganizationSwitcher />
+        )}
+
+        {isAuthenticated && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-9 w-9 cursor-pointer">
+                <AvatarImage src="" alt={user?.name} />
+                <AvatarFallback>{userInitials}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/organizations/settings">
+                  <Building className="mr-2 h-4 w-4" />
+                  <span>Organization</span>
+                </Link>
+              </DropdownMenuItem>
+              {isMobile && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/organizations/new">
+                      <Building className="mr-2 h-4 w-4" />
+                      <span>New Organization</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
     </header>
   );
-};
+}

@@ -13,6 +13,7 @@ export interface Contact {
   agentId?: string;
   agentName?: string;
   source?: string; // Added source/tag field
+  organizationId?: string; // Added for multi-tenancy
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +35,7 @@ export interface Meeting {
   nextSteps?: string[];
   agentId?: string;
   agentName?: string;
+  organizationId?: string; // Added for multi-tenancy
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +53,7 @@ export interface Task {
   contactName?: string; // Add contactName property
   agentId?: string;
   agentName?: string;
+  organizationId?: string; // Added for multi-tenancy
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +69,7 @@ export interface Product {
   caseQuantity?: number;
   firstOrderCommission?: number;
   nextOrdersCommission?: number;
+  organizationId?: string; // Added for multi-tenancy
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,6 +100,7 @@ export interface Order {
   notes?: string;
   termsAndConditions?: string;
   reference?: string;
+  organizationId?: string; // Added for multi-tenancy
   createdAt: Date;
   updatedAt: Date;
 }
@@ -106,6 +111,49 @@ export interface User {
   name: string;
   email: string;
   role: "admin" | "agent";
+  organizationId?: string; // Added for multi-tenancy
+}
+
+// Organization types
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: "owner" | "admin" | "manager" | "member" | "guest";
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OrganizationInvite {
+  id: string;
+  organizationId: string;
+  email: string;
+  role: "owner" | "admin" | "manager" | "member" | "guest";
+  token: string;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Analytics event type
+export interface AnalyticsEvent {
+  id: string;
+  organizationId?: string;
+  userId?: string;
+  eventName: string;
+  eventData?: Record<string, any>;
+  createdAt: Date;
 }
 
 // Custom Link interface for settings
@@ -135,4 +183,5 @@ export interface Settings {
   priceListUrl?: string;
   customLinks?: CustomLink[];
   bulkEmailTemplate?: string;
+  organizationId?: string; // Added for multi-tenancy
 }
