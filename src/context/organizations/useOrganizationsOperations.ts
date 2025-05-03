@@ -9,6 +9,7 @@ import { nanoid } from "nanoid";
 export const useOrganizationsOperations = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null); // New state for single organization
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +63,7 @@ export const useOrganizationsOperations = () => {
         
         if (currentOrg) {
           setCurrentOrganization(currentOrg);
+          setOrganization(currentOrg); // Set the organization state as well
           localStorage.setItem('currentOrganizationId', currentOrg.id);
           await fetchOrganizationMembers(currentOrg.id);
           await fetchOrganizationInvites(currentOrg.id);
@@ -76,6 +78,36 @@ export const useOrganizationsOperations = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Get organization by slug
+  const getOrganizationBySlug = async (slug: string): Promise<Organization | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+      
+      if (error) throw error;
+      
+      const formattedOrg: Organization = {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        logoUrl: data.logo_url || undefined,
+        primaryColor: data.primary_color || undefined,
+        secondaryColor: data.secondary_color || undefined,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at)
+      };
+      
+      setOrganization(formattedOrg);
+      return formattedOrg;
+    } catch (error) {
+      console.error('Error fetching organization by slug:', error);
+      return null;
     }
   };
   
@@ -102,6 +134,18 @@ export const useOrganizationsOperations = () => {
       setMembers(formattedMembers);
     } catch (error) {
       console.error('Error fetching organization members:', error);
+    }
+  };
+
+  // Get organization members by slug
+  const getOrganizationMembers = async (slug: string): Promise<void> => {
+    try {
+      const org = await getOrganizationBySlug(slug);
+      if (org) {
+        await fetchOrganizationMembers(org.id);
+      }
+    } catch (error) {
+      console.error('Error fetching organization members by slug:', error);
     }
   };
   
@@ -499,6 +543,7 @@ export const useOrganizationsOperations = () => {
     } else {
       setOrganizations([]);
       setCurrentOrganization(null);
+      setOrganization(null); // Reset organization state
       setMembers([]);
       setInvites([]);
     }
@@ -507,6 +552,7 @@ export const useOrganizationsOperations = () => {
   return {
     organizations,
     currentOrganization,
+    organization, // Include the organization state
     members,
     invites,
     loading,
@@ -520,5 +566,7 @@ export const useOrganizationsOperations = () => {
     getUserRole,
     canUserPerformAction,
     fetchOrganizations,
+    getOrganizationBySlug, // Include the new function
+    getOrganizationMembers, // Include the new function
   };
 };

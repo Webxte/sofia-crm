@@ -11,7 +11,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   // Initialize organizations when the provider mounts
   useEffect(() => {
     operations.fetchOrganizations();
-  }, [operations.fetchOrganizations]);
+  }, []);
   
   return (
     <OrganizationsContext.Provider value={operations}>
