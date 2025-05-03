@@ -11,7 +11,7 @@ import { ArrowLeft, Edit, Trash2, Calendar, ListTodo, Mail, ShoppingCart } from 
 import { Helmet } from 'react-helmet-async';
 import { ContactDeleteDialog } from '@/components/contacts/ContactDeleteDialog';
 import { ContactEmailDialog } from '@/components/contacts/ContactEmailDialog';
-import { ContactMeetings, ContactOrders } from '@/components/contacts/ContactHistory';
+import ContactHistory from '@/components/contacts/ContactHistory';
 import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -176,8 +176,7 @@ const ContactDetails = () => {
         </Card>
         
         <div className="grid grid-cols-1 gap-6">
-          <ContactMeetings meetings={meetings} />
-          <ContactOrders orders={orders} />
+          {contact && <ContactHistory contact={contact} />}
         </div>
       </div>
     </>
