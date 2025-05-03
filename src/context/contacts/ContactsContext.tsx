@@ -43,7 +43,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when the component mounts and when authentication state changes
+  // Fetch contacts when component mounts and when authentication state changes
   useEffect(() => {
     if (isAuthenticated) {
       console.log("ContactsContext: User authenticated, fetching contacts");
@@ -64,16 +64,21 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isAuthenticated && currentOrganization) {
       console.log("ContactsContext: Organization changed to", currentOrganization.id, "- fetching contacts");
-      fetchContacts().catch(err => {
-        console.error("Error during organization change contacts fetch:", err);
-        toast({
-          title: "Error",
-          description: "Failed to load contacts after organization change. Please try refreshing.",
-          variant: "destructive",
+      // Add a small delay to allow other organization-related operations to complete
+      const timer = setTimeout(() => {
+        fetchContacts().catch(err => {
+          console.error("Error during organization change contacts fetch:", err);
+          toast({
+            title: "Error",
+            description: "Failed to load contacts after organization change. Please try refreshing.",
+            variant: "destructive",
+          });
         });
-      });
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [currentOrganization, isAuthenticated, fetchContacts, toast]);
+  }, [currentOrganization?.id, isAuthenticated, fetchContacts, toast]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {

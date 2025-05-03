@@ -136,8 +136,26 @@ export const useContactsFetch = () => {
         return null;
       }
       
-      console.log("Created Belmorso organization with ID:", newOrg.id);
-      return newOrg.id;
+      // Now create the organization member record to ensure access
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (userId && newOrg) {
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert([{
+            organization_id: newOrg.id,
+            user_id: userId,
+            role: 'owner'
+          }]);
+          
+        if (memberError) {
+          console.error('Error creating organization member:', memberError);
+        } else {
+          console.log(`Created organization member for user ${userId} in organization ${newOrg.id}`);
+        }
+      }
+      
+      console.log("Created Belmorso organization with ID:", newOrg?.id);
+      return newOrg?.id || null;
     } catch (err) {
       console.error("Error ensuring Belmorso organization:", err);
       return null;

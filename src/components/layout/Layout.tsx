@@ -10,17 +10,25 @@ import { useAuth } from "@/context/AuthContext";
 export const Layout = () => {
   const { toggleSidebar } = useSidebar();
   const { user, isAuthenticated } = useAuth();
-  const { currentOrganization, organizations } = useOrganizations();
+  const { currentOrganization, organizations, fetchOrganizations } = useOrganizations();
   const navigate = useNavigate();
   
   // Add smooth scrolling to top when route changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+  
+  // Make sure organizations are loaded
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrganizations();
+    }
+  }, [isAuthenticated, fetchOrganizations]);
 
   // Redirect to create organization page if user has no organizations
   useEffect(() => {
     if (isAuthenticated && user && organizations.length === 0) {
+      console.log("No organizations found, redirecting to create organization page");
       navigate('/organizations/new');
     }
   }, [isAuthenticated, user, organizations, navigate]);
