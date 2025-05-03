@@ -1,11 +1,13 @@
 
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
 export const Layout = () => {
+  const { toggleSidebar } = useSidebar();
+  
   // Add smooth scrolling to top when route changes
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -16,7 +18,7 @@ export const Layout = () => {
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar />
         <div className="flex-1 flex flex-col">
-          <Header />
+          <Header onMenuClick={toggleSidebar} />
           <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
             <Outlet />
           </main>
