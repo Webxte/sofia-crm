@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OrganizationMembers } from "@/components/organizations/OrganizationMembers";
+import OrganizationMembers from "@/components/organizations/OrganizationMembers";
 import { OrganizationBranding } from "@/components/organizations/OrganizationBranding";
 import { OrganizationPassword } from "@/components/organizations/OrganizationPassword";
 

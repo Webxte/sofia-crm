@@ -34,9 +34,10 @@ export const formatTaskForDatabase = (task: Partial<Task>): TaskData => {
     priority: task.priority || "medium",
     status: task.status || "active",
     contact_id: task.contactId === "none" ? null : task.contactId,
-    contact_name: task.contactName,
   };
   
+  // Contact name needs to be added to the TaskData type
+  if (task.contactName) taskData.contact_name = task.contactName;
   if (task.agentId) taskData.agent_id = task.agentId;
   if (task.agentName) taskData.agent_name = task.agentName;
   

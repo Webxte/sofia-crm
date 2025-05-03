@@ -21,6 +21,7 @@ export interface TaskData {
   priority: "low" | "medium" | "high";
   status: "active" | "completed";
   contact_id?: string | null;
+  contact_name?: string;
   agent_id?: string;
   agent_name?: string;
   updated_at?: string;

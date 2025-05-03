@@ -43,3 +43,8 @@ export const formatMeetingForDatabase = (meeting: Partial<Meeting>) => {
     agent_name: meeting.agentName
   };
 };
+
+// Add these missing exports
+export const supabaseToMeeting = formatMeetingFromDatabase;
+export const meetingToSupabase = formatMeetingForDatabase;
+export const newMeetingToSupabase = formatMeetingForDatabase;
