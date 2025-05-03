@@ -1,8 +1,8 @@
-
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 // Define function to process contacts from Supabase response
 const processContacts = (data: any[]): Contact[] => {
@@ -19,6 +19,7 @@ const processContacts = (data: any[]): Contact[] => {
     agentId: item.agent_id,
     agentName: item.agent_name,
     notes: item.notes,
+    organizationId: item.organization_id,
     createdAt: new Date(item.created_at),
     updatedAt: new Date(item.updated_at)
   }));
@@ -37,6 +38,7 @@ const createContact = async (contactData: Omit<Contact, "id" | "createdAt" | "up
     source: contactData.source,
     agent_id: contactData.agentId,
     agent_name: contactData.agentName,
+    organization_id: contactData.organizationId,
     notes: contactData.notes
   }]).select().single();
 
@@ -60,6 +62,7 @@ const createContact = async (contactData: Omit<Contact, "id" | "createdAt" | "up
     agentId: data.agent_id,
     agentName: data.agent_name,
     notes: data.notes,
+    organizationId: data.organization_id,
     createdAt: new Date(data.created_at),
     updatedAt: new Date(data.updated_at)
   };
@@ -108,6 +111,7 @@ const updateContact = async (id: string, contactData: Partial<Contact>): Promise
     agentId: data.agent_id,
     agentName: data.agent_name,
     notes: data.notes,
+    organizationId: data.organization_id,
     createdAt: new Date(data.created_at),
     updatedAt: new Date(data.updated_at)
   };
@@ -206,13 +210,23 @@ export const useContactsOperations = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { currentOrganization } = useOrganizations();
   
   const fetchContacts = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Only fetch contacts if there's a current organization
+      if (!currentOrganization) {
+        setContacts([]);
+        setLoading(false);
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
+        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -230,10 +244,18 @@ export const useContactsOperations = () => {
         description: "Failed to load contacts",
         variant: "destructive",
       });
+      return [];
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, currentOrganization]);
+  
+  // Refetch contacts when the currentOrganization changes
+  useEffect(() => {
+    if (currentOrganization) {
+      fetchContacts();
+    }
+  }, [currentOrganization, fetchContacts]);
   
   const refreshContacts = useCallback(async () => {
     return await fetchContacts();
@@ -241,7 +263,13 @@ export const useContactsOperations = () => {
   
   const addContact = useCallback(async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
     try {
-      const newContact = await createContact(contactData);
+      // Ensure organization_id is set
+      const dataWithOrg = {
+        ...contactData,
+        organizationId: currentOrganization?.id
+      };
+      
+      const newContact = await createContact(dataWithOrg);
       if (newContact) {
         setContacts(prev => [newContact, ...prev]);
       }
@@ -255,7 +283,7 @@ export const useContactsOperations = () => {
       });
       return null;
     }
-  }, [toast]);
+  }, [toast, currentOrganization]);
   
   const updateContactImpl = useCallback(async (id: string, contactData: Partial<Contact>) => {
     try {

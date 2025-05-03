@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode, useEffect } from "react";
 import { useOrganizationsOperations } from "./useOrganizationsOperations";
 import { OrganizationsContextType } from "./types";
 
@@ -7,6 +7,11 @@ const OrganizationsContext = createContext<OrganizationsContextType | undefined>
 
 export const OrganizationsProvider = ({ children }: { children: ReactNode }) => {
   const operations = useOrganizationsOperations();
+  
+  // Initialize organizations when the provider mounts
+  useEffect(() => {
+    operations.fetchOrganizations();
+  }, [operations.fetchOrganizations]);
   
   return (
     <OrganizationsContext.Provider value={operations}>
