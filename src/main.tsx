@@ -14,6 +14,7 @@ if (!rootElement) {
   console.error("Root element not found!");
 } else {
   const root = createRoot(rootElement);
+  // Ensure that React.StrictMode is properly used
   root.render(
     <React.StrictMode>
       <BrowserRouter>
