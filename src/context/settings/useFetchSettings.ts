@@ -45,21 +45,38 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
         const vatRate = parseVatRate(data.default_vat_rate);
 
         setSettings({
+          ...DEFAULT_SETTINGS,
           id: data.id,
+          company_name: data.company_name || DEFAULT_SETTINGS.company_name,
           companyName: data.company_name || DEFAULT_SETTINGS.companyName,
+          company_email: data.company_email || DEFAULT_SETTINGS.company_email,
           companyEmail: data.company_email || DEFAULT_SETTINGS.companyEmail,
+          company_phone: data.company_phone || DEFAULT_SETTINGS.company_phone,
           companyPhone: data.company_phone || DEFAULT_SETTINGS.companyPhone,
+          company_address: data.company_address || DEFAULT_SETTINGS.company_address,
           companyAddress: data.company_address || DEFAULT_SETTINGS.companyAddress,
           terms: data.default_terms_and_conditions || DEFAULT_SETTINGS.terms,
+          default_terms_and_conditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.default_terms_and_conditions,
+          defaultTermsAndConditions: data.default_terms_and_conditions || DEFAULT_SETTINGS.defaultTermsAndConditions,
+          terms_enabled: data.terms_enabled !== null ? Boolean(data.terms_enabled) : DEFAULT_SETTINGS.terms_enabled,
           termsEnabled: data.terms_enabled !== null ? Boolean(data.terms_enabled) : DEFAULT_SETTINGS.termsEnabled,
           customLinks: customLinks,
+          custom_links: customLinks,
+          email_footer: data.email_footer || DEFAULT_SETTINGS.email_footer,
           emailFooter: data.email_footer || DEFAULT_SETTINGS.emailFooter,
+          email_sender_name: data.email_sender_name || DEFAULT_SETTINGS.email_sender_name,
           emailSenderName: data.email_sender_name || DEFAULT_SETTINGS.emailSenderName,
+          default_vat_rate: vatRate,
           defaultVatRate: vatRate,
+          default_email_subject: data.default_email_subject || DEFAULT_SETTINGS.default_email_subject,
           defaultEmailSubject: data.default_email_subject || DEFAULT_SETTINGS.defaultEmailSubject,
+          default_email_message: data.default_email_message || DEFAULT_SETTINGS.default_email_message,
           defaultEmailMessage: data.default_email_message || DEFAULT_SETTINGS.defaultEmailMessage,
+          default_contact_email_message: data.default_contact_email_message,
           defaultContactEmailMessage: data.default_contact_email_message,
+          catalog_url: data.catalog_url,
           catalogUrl: data.catalog_url,
+          price_list_url: data.price_list_url,
           priceListUrl: data.price_list_url,
         });
       } else {
@@ -86,15 +103,15 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
     try {
       console.log("Creating initial settings...");
       const initialSettings = {
-        company_name: DEFAULT_SETTINGS.companyName,
-        email_footer: DEFAULT_SETTINGS.emailFooter,
-        email_sender_name: DEFAULT_SETTINGS.emailSenderName,
-        default_email_subject: DEFAULT_SETTINGS.defaultEmailSubject,
-        default_email_message: DEFAULT_SETTINGS.defaultEmailMessage,
-        terms_enabled: DEFAULT_SETTINGS.termsEnabled,
-        custom_links: JSON.stringify(DEFAULT_SETTINGS.customLinks),
+        company_name: DEFAULT_SETTINGS.company_name,
+        email_footer: DEFAULT_SETTINGS.email_footer,
+        email_sender_name: DEFAULT_SETTINGS.email_sender_name,
+        default_email_subject: DEFAULT_SETTINGS.default_email_subject,
+        default_email_message: DEFAULT_SETTINGS.default_email_message,
+        terms_enabled: DEFAULT_SETTINGS.terms_enabled,
+        custom_links: JSON.stringify(DEFAULT_SETTINGS.custom_links),
         // Convert to number for database compatibility
-        default_vat_rate: DEFAULT_SETTINGS.defaultVatRate
+        default_vat_rate: DEFAULT_SETTINGS.default_vat_rate
       };
       
       console.log("Inserting initial settings:", initialSettings);

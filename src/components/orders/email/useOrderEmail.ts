@@ -34,12 +34,12 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   const defaultValues = {
     recipient: customerEmail || contact?.email || "",
     cc: "",
-    subject: generateDefaultEmailSubject(reference, settings.defaultEmailSubject),
+    subject: generateDefaultEmailSubject(reference, settings.default_email_subject || settings.defaultEmailSubject),
     message: generateDefaultEmailContent(
       order, 
       contactName, 
       reference, 
-      settings.defaultEmailMessage ? settings.defaultEmailMessage : undefined
+      settings.default_email_message || settings.defaultEmailMessage ? settings.default_email_message || settings.defaultEmailMessage : undefined
     ),
   };
   

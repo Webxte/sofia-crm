@@ -357,7 +357,7 @@ ${settings.companyEmail}`;
     try {
       const orderData: Omit<Order, "id" | "createdAt" | "updatedAt"> = {
         contactId: data.contactId,
-        date: data.date,
+        date: format(data.date, 'yyyy-MM-dd'),
         status: data.status,
         notes: data.notes || "",
         items: orderItems,

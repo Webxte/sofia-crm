@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +46,7 @@ export const useOrdersFetch = () => {
       }
       
       // Map items to their respective orders
-      const formattedOrders: Order[] = ordersData.map(order => {
+      const formattedOrders = ordersData.map(order => {
         // Find all items for this order
         const orderItems = itemsData
           .filter(item => item.order_id === order.id)
@@ -81,7 +80,7 @@ export const useOrdersFetch = () => {
           contactId: order.contact_id,
           agentId: order.agent_id,
           agentName: order.agent_name,
-          date: new Date(order.date),
+          date: order.date, // Already a string from the database
           status: order.status as "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled",
           items: orderItems,
           total: order.total,

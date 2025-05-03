@@ -10,11 +10,12 @@ export const formatTaskFromDatabase = (task: any): Task => ({
   id: task.id,
   title: task.title,
   description: task.description || "",
-  dueDate: task.due_date ? new Date(task.due_date) : undefined,
+  dueDate: task.due_date || undefined,
   dueTime: task.due_time || "",
   priority: task.priority as "low" | "medium" | "high",
   status: task.status as "active" | "completed",
   contactId: task.contact_id,
+  contactName: task.contact_name,
   agentId: task.agent_id,
   agentName: task.agent_name,
   createdAt: new Date(task.created_at),
@@ -28,11 +29,12 @@ export const formatTaskForDatabase = (task: Partial<Task>): TaskData => {
   const taskData: TaskData = {
     title: task.title || "",
     description: task.description,
-    due_date: task.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : null,
+    due_date: task.dueDate || null,
     due_time: task.dueTime,
     priority: task.priority || "medium",
     status: task.status || "active",
     contact_id: task.contactId === "none" ? null : task.contactId,
+    contact_name: task.contactName,
   };
   
   if (task.agentId) taskData.agent_id = task.agentId;

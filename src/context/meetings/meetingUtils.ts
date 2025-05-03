@@ -2,62 +2,44 @@
 import { Meeting } from "@/types";
 import { format } from "date-fns";
 
-// Transform Supabase data to Meeting type
-export const supabaseToMeeting = (meeting: any): Meeting => ({
-  id: meeting.id,
-  contactId: meeting.contact_id,
-  contactName: meeting.contact_name || "",
-  type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",
-  date: new Date(meeting.date),
-  time: meeting.time,
-  location: meeting.location || "",
-  notes: meeting.notes,
-  followUpScheduled: meeting.follow_up_scheduled,
-  followUpDate: meeting.follow_up_date ? new Date(meeting.follow_up_date) : null,
-  followUpTime: meeting.follow_up_time || "",
-  followUpNotes: meeting.follow_up_notes || "",
-  nextSteps: meeting.next_steps || [],
-  agentId: meeting.agent_id,
-  agentName: meeting.agent_name,
-  createdAt: new Date(meeting.created_at),
-  updatedAt: new Date(meeting.updated_at),
-});
-
-// Transform Meeting type to Supabase format
-export const meetingToSupabase = (meetingData: Partial<Meeting>) => {
-  const updateData: any = {};
-  
-  if (meetingData.contactId !== undefined) updateData.contact_id = meetingData.contactId;
-  if (meetingData.contactName !== undefined) updateData.contact_name = meetingData.contactName;
-  if (meetingData.type !== undefined) updateData.type = meetingData.type;
-  if (meetingData.date !== undefined) updateData.date = format(meetingData.date, 'yyyy-MM-dd');
-  if (meetingData.time !== undefined) updateData.time = meetingData.time;
-  if (meetingData.location !== undefined) updateData.location = meetingData.location;
-  if (meetingData.notes !== undefined) updateData.notes = meetingData.notes;
-  if (meetingData.followUpScheduled !== undefined) updateData.follow_up_scheduled = meetingData.followUpScheduled;
-  if (meetingData.followUpDate !== undefined) updateData.follow_up_date = meetingData.followUpDate ? format(meetingData.followUpDate, 'yyyy-MM-dd') : null;
-  if (meetingData.followUpTime !== undefined) updateData.follow_up_time = meetingData.followUpTime;
-  if (meetingData.followUpNotes !== undefined) updateData.follow_up_notes = meetingData.followUpNotes;
-  if (meetingData.nextSteps !== undefined) updateData.next_steps = meetingData.nextSteps;
-  
-  return updateData;
+export const formatMeetingFromDatabase = (meeting: any): Meeting => {
+  return {
+    id: meeting.id,
+    contactId: meeting.contact_id,
+    contactName: meeting.contact_name,
+    type: meeting.type,
+    date: meeting.date,
+    time: meeting.time,
+    location: meeting.location || undefined,
+    notes: meeting.notes || "",
+    followUpScheduled: meeting.follow_up_scheduled,
+    followUpDate: meeting.follow_up_date ? new Date(meeting.follow_up_date) : null,
+    followUpTime: meeting.follow_up_time,
+    followUpNotes: meeting.follow_up_notes,
+    nextSteps: meeting.next_steps || [],
+    agentId: meeting.agent_id,
+    agentName: meeting.agent_name,
+    organizationId: meeting.organization_id,
+    createdAt: new Date(meeting.created_at),
+    updatedAt: new Date(meeting.updated_at)
+  };
 };
 
-// Convert new meeting data to Supabase format
-export const newMeetingToSupabase = (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">, agentData: { agent_id: string; agent_name: string }) => {
+export const formatMeetingForDatabase = (meeting: Partial<Meeting>) => {
   return {
-    contact_id: meetingData.contactId,
-    contact_name: meetingData.contactName,
-    type: meetingData.type,
-    date: format(meetingData.date, 'yyyy-MM-dd'),
-    time: meetingData.time,
-    location: meetingData.location,
-    notes: meetingData.notes,
-    follow_up_scheduled: meetingData.followUpScheduled,
-    follow_up_date: meetingData.followUpDate ? format(meetingData.followUpDate, 'yyyy-MM-dd') : null,
-    follow_up_time: meetingData.followUpTime,
-    follow_up_notes: meetingData.followUpNotes,
-    next_steps: meetingData.nextSteps,
-    ...agentData
+    contact_id: meeting.contactId,
+    contact_name: meeting.contactName,
+    type: meeting.type,
+    date: meeting.date,
+    time: meeting.time,
+    location: meeting.location,
+    notes: meeting.notes,
+    follow_up_scheduled: meeting.followUpScheduled || false,
+    follow_up_date: meeting.followUpDate ? format(meeting.followUpDate, 'yyyy-MM-dd') : null,
+    follow_up_time: meeting.followUpTime,
+    follow_up_notes: meeting.followUpNotes,
+    next_steps: meeting.nextSteps || [],
+    agent_id: meeting.agentId,
+    agent_name: meeting.agentName
   };
 };

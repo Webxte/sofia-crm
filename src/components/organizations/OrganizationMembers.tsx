@@ -1,306 +1,299 @@
-
-import { useState } from "react";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useAnalytics } from "@/hooks/use-analytics";
-import { OrganizationMember } from "@/types";
+import { useOrganizations } from "@/context/OrganizationsContext";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserPlus, MoreHorizontal, X } from "lucide-react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Copy, Check, UserPlus, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const inviteSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  role: z.enum(["admin", "manager", "member", "guest"]),
-});
+const OrganizationMembers = () => {
+  const { orgSlug } = useParams();
+  const { user, isAdmin } = useAuth();
+  const {
+    organization,
+    members,
+    inviteMember,
+    updateMemberRole,
+    removeMember,
+    getOrganizationBySlug,
+    getOrganizationMembers,
+  } = useOrganizations();
+  const { toast } = useToast();
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-type InviteFormValues = z.infer<typeof inviteSchema>;
+  useEffect(() => {
+    if (orgSlug) {
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          await getOrganizationBySlug(orgSlug);
+          await getOrganizationMembers(orgSlug);
+        } catch (error) {
+          console.error("Error fetching organization data:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load organization data.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
 
-export const OrganizationMembers = () => {
-  const { members, invites, inviteMember, removeMember, updateMemberRole, getUserRole, canUserPerformAction } = useOrganizations();
-  const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const { trackEvent } = useAnalytics();
-  
-  const userRole = getUserRole();
-  const canInvite = canUserPerformAction('invite');
-  const canRemove = canUserPerformAction('delete');
-  
-  // Form for inviting members
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteSchema),
-    defaultValues: {
-      email: "",
-      role: "member",
-    },
-  });
-  
-  const onInviteSubmit = async (values: InviteFormValues) => {
+      fetchData();
+    }
+  }, [orgSlug, getOrganizationBySlug, getOrganizationMembers, toast]);
+
+  const handleInvite = async () => {
+    if (!inviteEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter an email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsInviting(true);
     try {
-      setIsSubmitting(true);
-      
-      const success = await inviteMember(values.email, values.role as OrganizationMember['role']);
-      
-      if (success) {
-        trackEvent('member_invited', { email: values.email, role: values.role });
-        form.reset();
-        setInviteDialogOpen(false);
+      if (orgSlug) {
+        await inviteMember(orgSlug, inviteEmail, "member");
+        toast({
+          title: "Invite Sent",
+          description: `Invite sent to ${inviteEmail}.`,
+        });
+        setInviteEmail("");
+        setIsInviteDialogOpen(false);
       }
+    } catch (error) {
+      console.error("Error inviting member:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send invite.",
+        variant: "destructive",
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsInviting(false);
     }
   };
-  
-  const handleRemoveMember = async (memberId: string) => {
-    if (confirm("Are you sure you want to remove this member?")) {
-      const success = await removeMember(memberId);
-      if (success) {
-        trackEvent('member_removed', { memberId });
+
+  const handleMemberRoleChange = async (memberId: string, role: "owner" | "admin" | "member" | "manager" | "guest") => {
+    try {
+      if (orgSlug) {
+        await updateMemberRole(orgSlug, memberId, role);
+        toast({
+          title: "Role Updated",
+          description: `Member role updated to ${role}.`,
+        });
       }
+    } catch (error) {
+      console.error("Error updating member role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update member role.",
+        variant: "destructive",
+      });
     }
   };
-  
-  const handleUpdateRole = async (memberId: string, role: OrganizationMember['role']) => {
-    const success = await updateMemberRole(memberId, role);
-    if (success) {
-      trackEvent('member_role_updated', { memberId, role });
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
+      if (orgSlug) {
+        await removeMember(orgSlug, memberId);
+        toast({
+          title: "Member Removed",
+          description: "Member removed from organization.",
+        });
+      }
+    } catch (error) {
+      console.error("Error removing member:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove member.",
+        variant: "destructive",
+      });
     }
   };
-  
-  // Get role display name
-  const getRoleDisplayName = (role: string): string => {
-    const roleMap: Record<string, string> = {
-      owner: "Owner",
-      admin: "Admin",
-      manager: "Manager",
-      member: "Member",
-      guest: "Guest",
-    };
-    return roleMap[role] || role;
+
+  const handleCopyInviteLink = () => {
+    if (organization) {
+      const inviteLink = `${window.location.origin}/orgs/join/${organization.slug}`;
+      navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
-  
+
+  if (loading) {
+    return <div>Loading organization members...</div>;
+  }
+
+  if (!organization) {
+    return <div>Organization not found.</div>;
+  }
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <div>
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>
-            Manage your organization members and pending invites.
-          </CardDescription>
+          <h1 className="text-2xl font-bold">{organization.name} Members</h1>
+          <p className="text-muted-foreground">
+            Manage members and their roles within the organization
+          </p>
         </div>
-        {canInvite && (
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <div>
+          <Button variant="outline" onClick={handleCopyInviteLink} disabled={copied}>
+            {copied ? (
+              <>
+                <Check className="mr-2 h-4 w-4" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Invite Link
+              </>
+            )}
+          </Button>
+          <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button variant="default" className="ml-2">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Invite Member
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Invite Team Member</DialogTitle>
+                <DialogTitle>Invite New Member</DialogTitle>
                 <DialogDescription>
-                  Send an invitation to join your organization.
+                  Enter the email address of the person you want to invite to
+                  the organization.
                 </DialogDescription>
               </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onInviteSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="teammate@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input
+                    type="email"
+                    id="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    className="col-span-3"
                   />
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a role" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="guest">Guest (View Only)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DialogFooter>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? "Sending..." : "Send Invitation"}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
+                </div>
+              </div>
+              <Button type="submit" onClick={handleInvite} disabled={isInviting}>
+                {isInviting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Inviting...
+                  </>
+                ) : (
+                  "Invite Member"
+                )}
+              </Button>
             </DialogContent>
           </Dialog>
-        )}
-      </CardHeader>
-      <CardContent>
+        </div>
+      </div>
+
+      <div className="rounded-md border">
         <Table>
+          <TableCaption>
+            A list of all members within your organization.
+          </TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((member) => {
-              const isCurrentUser = member.userId === user?.id;
-              const isOwner = member.role === 'owner';
-              
-              return (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">
-                    {member.userId}
-                    {isCurrentUser && " (You)"}
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-medium">
-                      {getRoleDisplayName(member.role)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {!isOwner && (userRole === 'owner' || (userRole === 'admin' && member.role !== 'admin')) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {!isCurrentUser && userRole === 'owner' && (
-                            <>
-                              <DropdownMenuItem
-                                onClick={() => handleUpdateRole(member.userId, 'admin')}
-                                disabled={member.role === 'admin'}
-                              >
-                                Make Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleUpdateRole(member.userId, 'manager')}
-                                disabled={member.role === 'manager'}
-                              >
-                                Make Manager
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleUpdateRole(member.userId, 'member')}
-                                disabled={member.role === 'member'}
-                              >
-                                Make Member
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleUpdateRole(member.userId, 'guest')}
-                                disabled={member.role === 'guest'}
-                              >
-                                Make Guest
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          {!isCurrentUser && canRemove && (
-                            <DropdownMenuItem
-                              onClick={() => handleRemoveMember(member.userId)}
-                              className="text-red-600"
-                            >
-                              Remove
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            
-            {/* Pending invites */}
-            {invites.map((invite) => (
-              <TableRow key={invite.id} className="text-muted-foreground">
-                <TableCell className="font-medium">
-                  {invite.email} (Invited)
-                </TableCell>
-                <TableCell>{getRoleDisplayName(invite.role)}</TableCell>
+            {members.map((member) => (
+              <TableRow key={member.id}>
+                <TableCell>{member.userId}</TableCell>
+                <TableCell>{member.userId}</TableCell>
+                <TableCell>{member.role}</TableCell>
                 <TableCell className="text-right">
-                  {canRemove && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeMember(invite.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  {member.role !== "owner" && (
+                    <>
+                      {member.role !== "admin" && (
+                        <Button onClick={() => handleMemberRoleChange(member.id, "admin")} size="sm" variant="outline" className="ml-2">
+                          Make Admin
+                        </Button>
+                      )}
+                      {member.role === "admin" && (
+                        <Button onClick={() => handleMemberRoleChange(member.id, "member")} size="sm" variant="outline" className="ml-2">
+                          Make Member
+                        </Button>
+                      )}
+                      {member.role !== "manager" && (
+                        <Button onClick={() => handleMemberRoleChange(member.id, "manager")} size="sm" variant="outline" className="ml-2">
+                          Make Manager
+                        </Button>
+                      )}
+                      {member.role === "manager" && (
+                        <Button onClick={() => handleMemberRoleChange(member.id, "member")} size="sm" variant="outline" className="ml-2">
+                          Make Member
+                        </Button>
+                      )}
+                      {member.role !== "guest" && (
+                        <Button onClick={() => handleMemberRoleChange(member.id, "guest")} size="sm" variant="outline" className="ml-2">
+                          Make Guest
+                        </Button>
+                      )}
+                      {member.role === "guest" && (
+                        <Button onClick={() => handleMemberRoleChange(member.id, "member")} size="sm" variant="outline" className="ml-2">
+                          Make Member
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => handleRemoveMember(member.id)}
+                        size="sm"
+                        variant="destructive"
+                        className="ml-2"
+                      >
+                        Remove
+                      </Button>
+                    </>
                   )}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
+
+export default OrganizationMembers;

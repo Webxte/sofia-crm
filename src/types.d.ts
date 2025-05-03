@@ -14,7 +14,7 @@ export interface OrganizationMember {
   id: string;
   organizationId: string;
   userId: string;
-  role: 'owner' | 'admin' | 'member';
+  role: 'owner' | 'admin' | 'member' | 'manager' | 'guest';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,6 +72,7 @@ export interface Meeting {
 export interface Task {
   id: string;
   contactId?: string;
+  contactName?: string;
   title: string;
   description?: string;
   dueDate?: string;
@@ -136,12 +137,14 @@ export interface Settings {
   id: string;
   organization_id: string;
   
-  // Renamed properties to match the database column names
-  company_name?: string;
-  company_logo_url?: string;
-  companyName?: string;
+  // Use consistent naming - we'll make both snake_case and camelCase versions available
+  company_name: string;
+  companyName: string;
+  company_email?: string;
   companyEmail?: string;
+  company_phone?: string;
   companyPhone?: string;
+  company_address?: string;
   companyAddress?: string;
   
   primary_color?: string;
@@ -150,27 +153,38 @@ export interface Settings {
   defaultVatRate?: number;
   
   terms_enabled?: boolean;
-  terms_content?: string;
-  terms?: string;
-  defaultTermsAndConditions?: string;
   termsEnabled?: boolean;
+  terms?: string;
+  default_terms_and_conditions?: string;
+  defaultTermsAndConditions?: string;
   
   catalog_url?: string;
-  price_list_url?: string;
   catalogUrl?: string;
+  price_list_url?: string;
   priceListUrl?: string;
   
   custom_links?: CustomLink[];
   customLinks?: CustomLink[];
   
+  bulk_email_template?: string;
+  bulkEmailTemplate?: string;
+  
   default_contact_email_message?: string;
   defaultContactEmailMessage?: string;
   
+  default_email_subject?: string;
+  defaultEmailSubject?: string;
+  
+  default_email_message?: string;
+  defaultEmailMessage?: string;
+  
   email_footer?: string;
+  emailFooter?: string;
+  
   email_sender_name?: string;
+  emailSenderName?: string;
+  
   show_footer_in_emails?: boolean;
-  bulk_email_template?: string;
-  bulkEmailTemplate?: string;
   
   createdAt: Date;
   updatedAt: Date;

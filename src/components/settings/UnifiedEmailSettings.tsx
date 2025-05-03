@@ -21,16 +21,16 @@ const UnifiedEmailSettings: React.FC<UnifiedEmailSettingsProps> = ({ initialSett
   
   const generalForm = useForm({
     defaultValues: {
-      emailSenderName: initialSettings.emailSenderName || "CRM System",
-      emailFooter: initialSettings.emailFooter || "This is an automated message from your CRM system.",
+      emailSenderName: initialSettings.email_sender_name || initialSettings.emailSenderName || "CRM System",
+      emailFooter: initialSettings.email_footer || initialSettings.emailFooter || "This is an automated message from your CRM system.",
       showFooterInEmails: true,
     }
   });
   
   const orderEmailForm = useForm({
     defaultValues: {
-      defaultEmailSubject: initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
-      defaultEmailMessage: initialSettings.defaultEmailMessage || 
+      defaultEmailSubject: initialSettings.default_email_subject || initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
+      defaultEmailMessage: initialSettings.default_email_message || initialSettings.defaultEmailMessage || 
         "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business.",
     }
   });
@@ -54,14 +54,14 @@ const UnifiedEmailSettings: React.FC<UnifiedEmailSettingsProps> = ({ initialSett
   // Reset forms when initialSettings change
   React.useEffect(() => {
     generalForm.reset({
-      emailSenderName: initialSettings.emailSenderName || "CRM System",
-      emailFooter: initialSettings.emailFooter || "This is an automated message from your CRM system.",
+      emailSenderName: initialSettings.email_sender_name || initialSettings.emailSenderName || "CRM System",
+      emailFooter: initialSettings.email_footer || initialSettings.emailFooter || "This is an automated message from your CRM system.",
       showFooterInEmails: true,
     });
     
     orderEmailForm.reset({
-      defaultEmailSubject: initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
-      defaultEmailMessage: initialSettings.defaultEmailMessage || 
+      defaultEmailSubject: initialSettings.default_email_subject || initialSettings.defaultEmailSubject || "Order Confirmation - Ref: [Reference]",
+      defaultEmailMessage: initialSettings.default_email_message || initialSettings.defaultEmailMessage || 
         "Dear [Name],\n\nYour order (Ref: [Reference]) from [Date] has been processed.\n\nThank you for your business.",
     });
     
@@ -80,15 +80,19 @@ const UnifiedEmailSettings: React.FC<UnifiedEmailSettingsProps> = ({ initialSett
   
   const handleSaveGeneral = async (data: any) => {
     await onSubmit({
+      email_sender_name: data.emailSenderName,
       emailSenderName: data.emailSenderName,
+      email_footer: data.emailFooter,
       emailFooter: data.emailFooter,
-      showFooterInEmails: data.showFooterInEmails,
+      show_footer_in_emails: data.showFooterInEmails,
     });
   };
   
   const handleSaveOrderEmail = async (data: any) => {
     await onSubmit({
+      default_email_subject: data.defaultEmailSubject,
       defaultEmailSubject: data.defaultEmailSubject,
+      default_email_message: data.defaultEmailMessage,
       defaultEmailMessage: data.defaultEmailMessage,
     });
   };
