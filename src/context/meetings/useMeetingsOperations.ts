@@ -47,6 +47,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       if (!isAuthenticated) {
         console.log("User not authenticated, skipping meetings fetch");
         setMeetings([]);
+        setLoading(false);
         return;
       }
       
@@ -60,32 +61,56 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         console.error('Error fetching meetings:', error);
         toast({
           title: "Error",
-          description: "Failed to load meetings",
+          description: "Failed to load meetings. Please try again later.",
           variant: "destructive",
         });
+        setMeetings([]);
+        setLoading(false);
         return;
       }
       
-      console.log(`Successfully fetched ${data?.length || 0} meetings`);
+      if (!data || data.length === 0) {
+        console.log("No meetings found");
+        setMeetings([]);
+        setLoading(false);
+        return;
+      }
+      
+      console.log(`Successfully fetched ${data.length} meetings`);
       
       // Transform the Supabase data to match our Meeting type
-      let formattedMeetings: Meeting[] = data.map(meeting => {
-        // Create meeting with basic data
-        const formattedMeeting = supabaseToMeeting(meeting);
-        
-        // Try to get contact name
+      let formattedMeetings: Meeting[] = [];
+      
+      for (const meeting of data) {
         try {
-          const contact = getContactById(meeting.contact_id);
-          formattedMeeting.contactName = contact ? 
-            (contact.company || contact.fullName || "Unknown") : 
-            meeting.contact_name || "Unknown";
+          // Create meeting with basic data
+          const formattedMeeting = supabaseToMeeting(meeting);
+          
+          // Try to get contact name
+          if (meeting.contact_id) {
+            try {
+              const contact = getContactById(meeting.contact_id);
+              
+              if (contact) {
+                formattedMeeting.contactName = contact.company || contact.fullName || "Unknown";
+              } else if (meeting.contact_name) {
+                formattedMeeting.contactName = meeting.contact_name;
+              } else {
+                formattedMeeting.contactName = "Unknown";
+              }
+            } catch (err) {
+              console.warn("Error getting contact name for meeting:", meeting.id, err);
+              formattedMeeting.contactName = meeting.contact_name || "Unknown";
+            }
+          } else {
+            formattedMeeting.contactName = meeting.contact_name || "Unknown";
+          }
+          
+          formattedMeetings.push(formattedMeeting);
         } catch (err) {
-          console.warn("Error getting contact name for meeting:", meeting.id, err);
-          formattedMeeting.contactName = meeting.contact_name || "Unknown";
+          console.error("Error processing meeting data:", err, meeting);
         }
-        
-        return formattedMeeting;
-      });
+      }
       
       // Sort meetings by date AND time
       const sortedMeetings = sortMeetingsByDateTime(formattedMeetings);
@@ -99,6 +124,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         description: "An unexpected error occurred while loading meetings",
         variant: "destructive",
       });
+      setMeetings([]);
     } finally {
       setLoading(false);
     }

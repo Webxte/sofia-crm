@@ -13,10 +13,10 @@ interface ContactHistoryProps {
 }
 
 const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
-  const { meetings } = useMeetings();
+  const { getMeetingsByContactId } = useMeetings();
   const { orders } = useOrders();
   
-  const contactMeetings = meetings.filter(meeting => meeting.contactId === contact.id);
+  const contactMeetings = getMeetingsByContactId(contact.id);
   const contactOrders = orders.filter(order => order.contactId === contact.id);
   
   const sortedMeetings = [...contactMeetings].sort((a, b) => 

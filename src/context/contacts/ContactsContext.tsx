@@ -10,6 +10,7 @@ import {
 } from "./contactUtils";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContactsContextType {
   contacts: Contact[];
@@ -28,8 +29,9 @@ interface ContactsContextType {
 const ContactsContext = createContext<ContactsContextType | undefined>(undefined);
 
 export const ContactsProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { currentOrganization } = useOrganizations();
+  const { toast } = useToast();
   const { 
     contacts, 
     loading, 
@@ -45,33 +47,69 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isAuthenticated) {
       console.log("ContactsContext: User authenticated, fetching contacts");
-      fetchContacts();
+      fetchContacts().catch(err => {
+        console.error("Error during initial contacts fetch:", err);
+        toast({
+          title: "Error",
+          description: "Failed to load contacts on initial load. Please try refreshing.",
+          variant: "destructive",
+        });
+      });
     } else {
       console.log("ContactsContext: User not authenticated, skipping contacts fetch");
     }
-  }, [isAuthenticated, fetchContacts]);
+  }, [isAuthenticated, fetchContacts, toast]);
 
   // Fetch contacts when organization changes
   useEffect(() => {
     if (isAuthenticated && currentOrganization) {
       console.log("ContactsContext: Organization changed to", currentOrganization.id, "- fetching contacts");
-      fetchContacts();
+      fetchContacts().catch(err => {
+        console.error("Error during organization change contacts fetch:", err);
+        toast({
+          title: "Error",
+          description: "Failed to load contacts after organization change. Please try refreshing.",
+          variant: "destructive",
+        });
+      });
     }
-  }, [currentOrganization, isAuthenticated, fetchContacts]);
+  }, [currentOrganization, isAuthenticated, fetchContacts, toast]);
+
+  // Enhanced getContactById that handles missing IDs gracefully
+  const getContactByIdSafe = (id: string): Contact | undefined => {
+    if (!id) return undefined;
+    try {
+      return getContactById(contacts, id);
+    } catch (err) {
+      console.warn(`Error getting contact by ID ${id}:`, err);
+      return undefined;
+    }
+  };
 
   return (
     <ContactsContext.Provider
       value={{
         contacts,
         loading,
-        getContactById: (id: string) => getContactById(contacts, id),
+        getContactById: getContactByIdSafe,
         getContactsByAgentId: (agentId: string) => getContactsByAgentId(contacts, agentId),
         getContactsBySource: (source: string) => getContactsBySource(contacts, source),
         searchContacts: (query: string) => searchContacts(contacts, query),
         addContact,
         updateContact,
         deleteContact,
-        refreshContacts: async () => { await fetchContacts(); },
+        refreshContacts: async () => { 
+          try {
+            await fetchContacts(); 
+          } catch (err) {
+            console.error("Error refreshing contacts:", err);
+            toast({
+              title: "Error",
+              description: "Failed to refresh contacts. Please try again.",
+              variant: "destructive",
+            });
+          }
+        },
         importContactsFromCsv,
       }}
     >
