@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
@@ -17,10 +16,12 @@ import { BulkEmailDialog } from "@/components/contacts/BulkEmailDialog";
 import { useContactSorting } from "@/hooks/use-contact-sorting";
 import { useContactFilters, groupContactsByFirstLetter } from "@/utils/contactUtils";
 import { ContactSortingMenu } from "@/components/contacts/ContactSortingMenu";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 const Contacts = () => {
   const navigate = useNavigate();
-  const { contacts, refreshContacts } = useContacts();
+  const { contacts, refreshContacts, loading } = useContacts();
+  const { currentOrganization } = useOrganizations();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
@@ -33,20 +34,14 @@ const Contacts = () => {
   
   const { sortField, sortDirection, handleSortChange, toggleSortDirection } = useContactSorting();
 
-  const sources = React.useMemo(() => {
-    const allSources = new Set<string>();
-    
-    contacts.forEach(contact => {
-      if (contact.source) {
-        const contactSources = contact.source.split(',').map(s => s.trim());
-        contactSources.forEach(source => {
-          if (source) allSources.add(source);
-        });
-      }
-    });
-    
-    return Array.from(allSources).sort();
-  }, [contacts]);
+  // Add debug console log to help diagnose issues
+  useEffect(() => {
+    console.log("Contacts page mounted");
+    console.log("Current organization:", currentOrganization);
+    console.log("Contacts:", contacts);
+    console.log("User:", user);
+    console.log("Loading state:", loading);
+  }, [contacts, currentOrganization, user, loading]);
 
   // Update view mode when screen size changes
   useEffect(() => {
@@ -54,6 +49,7 @@ const Contacts = () => {
   }, [isMobile]);
   
   const handleRefresh = async () => {
+    console.log("Refreshing contacts...");
     setIsRefreshing(true);
     await refreshContacts();
     setIsRefreshing(false);
@@ -126,7 +122,11 @@ const Contacts = () => {
         </div>
       </div>
       
-      {filteredContacts.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center items-center p-8">
+          <p className="text-muted-foreground">Loading contacts...</p>
+        </div>
+      ) : filteredContacts.length === 0 ? (
         <EmptyState
           icon={<Users size={50} />}
           title="No contacts found"

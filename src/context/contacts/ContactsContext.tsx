@@ -9,6 +9,7 @@ import {
   searchContacts 
 } from "./contactUtils";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 interface ContactsContextType {
   contacts: Contact[];
@@ -17,7 +18,7 @@ interface ContactsContextType {
   getContactsByAgentId: (agentId: string) => Contact[];
   getContactsBySource: (source: string) => Contact[];
   searchContacts: (query: string) => Contact[];
-  addContact: (contactData: Omit<Contact, "id">) => Promise<Contact | null>;
+  addContact: (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => Promise<Contact | null>;
   updateContact: (id: string, contactData: Partial<Contact>) => Promise<Contact | null>;
   deleteContact: (id: string) => Promise<boolean>;
   refreshContacts: () => Promise<void>;
@@ -28,6 +29,7 @@ const ContactsContext = createContext<ContactsContextType | undefined>(undefined
 
 export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
+  const { currentOrganization } = useOrganizations();
   const { 
     contacts, 
     loading, 
@@ -39,12 +41,13 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when the component mounts and when authentication state changes
+  // Fetch contacts when the component mounts, when authentication state changes or organization changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && currentOrganization) {
+      console.log("Fetching contacts for organization:", currentOrganization.id);
       fetchContacts();
     }
-  }, [isAuthenticated, fetchContacts]);
+  }, [isAuthenticated, currentOrganization, fetchContacts]);
 
   return (
     <ContactsContext.Provider
@@ -58,7 +61,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         addContact,
         updateContact,
         deleteContact,
-        refreshContacts: async () => { await fetchContacts(); }, // Fixed to return void
+        refreshContacts: async () => { await fetchContacts(); },
         importContactsFromCsv,
       }}
     >
