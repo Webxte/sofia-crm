@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 
@@ -32,19 +32,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const getUserWithName = (supabaseUser: User | null): ExtendedUser | null => {
     if (!supabaseUser) return null;
     
+    // Get stored organization ID if available
+    const storedOrgId = localStorage.getItem('currentOrganizationId');
+    
     return {
       ...supabaseUser,
       name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || '',
+      organizationId: storedOrgId || undefined
     };
   };
   
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
     // Set up the auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed:", event);
+        const extendedUser = getUserWithName(currentSession?.user ?? null);
+        console.log("User with auth change:", extendedUser ? {
+          id: extendedUser.id, 
+          name: extendedUser.name,
+          organizationId: extendedUser.organizationId
+        } : null);
+        
         setSession(currentSession);
-        setUser(getUserWithName(currentSession?.user ?? null));
+        setUser(extendedUser);
         setIsLoading(false);
       }
     );
@@ -52,8 +65,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
+      const extendedUser = getUserWithName(currentSession?.user ?? null);
+      console.log("User from initial session:", extendedUser ? {
+        id: extendedUser.id, 
+        name: extendedUser.name,
+        organizationId: extendedUser.organizationId
+      } : null);
+      
       setSession(currentSession);
-      setUser(getUserWithName(currentSession?.user ?? null));
+      setUser(extendedUser);
       setIsLoading(false);
     });
 

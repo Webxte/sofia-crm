@@ -5,17 +5,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { processContacts } from "../utils/contactDataProcessing";
+import { useAuth } from "@/context/AuthContext";
 
 export const useContactsFetch = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { currentOrganization } = useOrganizations();
+  const { user } = useAuth();
   
   const fetchContacts = useCallback(async () => {
     try {
+      console.log("Starting contactsFetch...");
+      console.log("Current user:", user?.id);
+      console.log("Current organization:", currentOrganization?.id);
+      
       setLoading(true);
-      console.log("Attempting to fetch contacts...");
+      
+      // Check if user is logged in
+      if (!user?.id) {
+        console.log("No user logged in, skipping contacts fetch");
+        setContacts([]);
+        setLoading(false);
+        return [];
+      }
       
       // First try to get contacts for current organization
       let contactData: any[] = [];
@@ -23,39 +36,103 @@ export const useContactsFetch = () => {
       
       if (organizationId) {
         console.log(`Fetching contacts for organization: ${organizationId}`);
-        const { data, error } = await supabase
-          .from('contacts')
+        
+        // Check first if user is a member of the organization
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('organization_members')
           .select('*')
           .eq('organization_id', organizationId)
-          .order('created_at', { ascending: false });
+          .eq('user_id', user.id)
+          .single();
           
-        if (error) {
-          console.error("Error fetching contacts by organization:", error);
-        } else if (data && data.length > 0) {
-          console.log(`Retrieved ${data.length} contacts for organization ${organizationId}`);
-          contactData = data;
+        if (membershipError) {
+          console.error("Error checking organization membership:", membershipError);
+          // If not a member, don't try to fetch contacts for this org
+        } else if (membershipData) {
+          console.log(`User is a member of organization ${organizationId}, role: ${membershipData.role}`);
+          
+          // Fetch contacts for organization
+          const { data, error } = await supabase
+            .from('contacts')
+            .select('*')
+            .eq('organization_id', organizationId);
+            
+          if (error) {
+            console.error("Error fetching contacts by organization:", error);
+          } else if (data && data.length > 0) {
+            console.log(`Retrieved ${data.length} contacts for organization ${organizationId}`);
+            contactData = data;
+          } else {
+            console.log(`No contacts found for organization ${organizationId}`);
+          }
+        } else {
+          console.log(`User is not a member of organization ${organizationId}`);
         }
       }
       
       // If no contacts found with organization ID or no organization set,
-      // fall back to getting ALL contacts
+      // try to find the Belmorso organization and fetch contacts for it
       if (contactData.length === 0) {
-        console.log("No contacts found with organization ID, fetching all contacts");
+        console.log("No contacts found with organization ID, trying to find Belmorso organization");
+        
+        const { data: belmorsoOrg, error: belmorsoOrgError } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('name', 'Belmorso')
+          .single();
+        
+        if (belmorsoOrgError) {
+          console.error("Error finding Belmorso organization:", belmorsoOrgError);
+        } else if (belmorsoOrg) {
+          console.log(`Found Belmorso organization: ${belmorsoOrg.id}`);
+          
+          // Check if user is a member of Belmorso
+          const { data: membershipData, error: membershipError } = await supabase
+            .from('organization_members')
+            .select('*')
+            .eq('organization_id', belmorsoOrg.id)
+            .eq('user_id', user.id)
+            .single();
+            
+          if (membershipError) {
+            console.error("Error checking Belmorso membership:", membershipError);
+          } else if (membershipData) {
+            console.log(`User is a member of Belmorso, role: ${membershipData.role}`);
+            
+            // Fetch contacts for Belmorso
+            const { data, error } = await supabase
+              .from('contacts')
+              .select('*')
+              .eq('organization_id', belmorsoOrg.id);
+              
+            if (error) {
+              console.error("Error fetching contacts for Belmorso:", error);
+            } else if (data && data.length > 0) {
+              console.log(`Retrieved ${data.length} contacts for Belmorso`);
+              contactData = data;
+            } else {
+              console.log("No contacts found for Belmorso");
+            }
+          } else {
+            console.log("User is not a member of Belmorso organization");
+          }
+        }
+      }
+      
+      // As a last resort, try to fetch all contacts without organization filter
+      if (contactData.length === 0) {
+        console.log("No contacts found for user organizations, trying to fetch all contacts");
         const { data: allContacts, error: allContactsError } = await supabase
           .from('contacts')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('*');
         
         if (allContactsError) {
           console.error('Error fetching all contacts:', allContactsError);
-          throw allContactsError;
-        }
-        
-        if (allContacts && allContacts.length > 0) {
+        } else if (allContacts && allContacts.length > 0) {
           console.log(`Successfully fetched ${allContacts.length} contacts in total`);
           contactData = allContacts;
         } else {
-          console.log("No contacts found in database, checking for Belmorso organization");
+          console.log("No contacts found in database");
         }
       }
       
@@ -66,7 +143,7 @@ export const useContactsFetch = () => {
         return processedContacts;
       }
       
-      // Create or get Belmorso organization as fallback
+      // If we still don't have contacts, create or get Belmorso organization
       let belmorsoOrgId = await ensureBelmorsoOrganization();
       
       // If we have a Belmorso ID, try to update contacts without org IDs
@@ -77,7 +154,7 @@ export const useContactsFetch = () => {
         const { data: updatedContacts } = await supabase
           .from('contacts')
           .select('*')
-          .order('created_at', { ascending: false });
+          .eq('organization_id', belmorsoOrgId);
         
         if (updatedContacts && updatedContacts.length > 0) {
           console.log(`Found ${updatedContacts.length} contacts after assigning to Belmorso`);
@@ -103,7 +180,7 @@ export const useContactsFetch = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization, toast]);
+  }, [currentOrganization, toast, user]);
 
   // Helper function to ensure Belmorso organization exists
   const ensureBelmorsoOrganization = async () => {
@@ -137,7 +214,7 @@ export const useContactsFetch = () => {
       }
       
       // Now create the organization member record to ensure access
-      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const userId = user?.id || (await supabase.auth.getUser()).data.user?.id;
       if (userId && newOrg) {
         const { error: memberError } = await supabase
           .from('organization_members')
