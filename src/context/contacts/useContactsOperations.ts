@@ -10,7 +10,7 @@ export const useContactsOperations = () => {
   const { addContact, updateContact, deleteContact } = useContactCRUD(setContacts);
   
   const refreshContacts = useCallback(async () => {
-    return await fetchContacts();
+    await fetchContacts();
   }, [fetchContacts]);
   
   const { importContactsFromCsv } = useContactImport(refreshContacts);

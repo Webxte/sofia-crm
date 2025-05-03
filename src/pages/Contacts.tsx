@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/ContactsContext";
@@ -33,6 +34,19 @@ const Contacts = () => {
   const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
   
   const { sortField, sortDirection, handleSortChange, toggleSortDirection } = useContactSorting();
+
+  // Extract unique sources from contacts for the source filter
+  const sources = React.useMemo(() => {
+    const sourceSet = new Set<string>();
+    contacts.forEach(contact => {
+      if (contact.source) {
+        contact.source.split(',').forEach(src => {
+          sourceSet.add(src.trim());
+        });
+      }
+    });
+    return Array.from(sourceSet).sort();
+  }, [contacts]);
 
   // Add debug console log to help diagnose issues
   useEffect(() => {
