@@ -13,7 +13,8 @@ const rootElement = document.getElementById("root");
 if (!rootElement) {
   console.error("Root element not found!");
 } else {
-  createRoot(rootElement).render(
+  const root = createRoot(rootElement);
+  root.render(
     <React.StrictMode>
       <BrowserRouter>
         <HelmetProvider>
