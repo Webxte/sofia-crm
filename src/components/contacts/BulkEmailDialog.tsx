@@ -38,8 +38,8 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
 
   useEffect(() => {
     if (settings) {
-      const companyName = settings.companyName || 'Our Company';
-      let defaultMessage = settings.bulkEmailTemplate || 
+      const companyName = settings.company_name || settings.companyName || 'Our Company';
+      let defaultMessage = settings.bulk_email_template || settings.bulkEmailTemplate || 
         "Dear Customers,\n\nWe would like to inform you about [Subject].\n\n[Message]\n\nBest regards,\n[Company Name]";
       
       // Replace placeholders
@@ -70,7 +70,7 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
       // Send a single email with all recipients in BCC
       const apiUrl = `/functions/send-contact-email`;
       const emailData = {
-        to: settings?.companyEmail || emailAddresses[0], // Send to company email or first contact
+        to: (settings.company_email || settings.companyEmail) || emailAddresses[0], // Send to company email or first contact
         bcc: emailAddresses, // Add all contacts as BCC
         subject: subject,
         message: message,
