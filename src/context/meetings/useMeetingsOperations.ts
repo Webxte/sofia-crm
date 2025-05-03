@@ -42,15 +42,18 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
   const refreshMeetings = async (isAuthenticated = true) => {
     try {
       setLoading(true);
+      console.log("Attempting to fetch meetings...");
       
       if (!isAuthenticated) {
+        console.log("User not authenticated, skipping meetings fetch");
         setMeetings([]);
         return;
       }
       
+      // Fetch all meetings without organization_id filter
       const { data, error } = await supabase
         .from('meetings')
-        .select('*, contacts(full_name, company)')
+        .select('*')
         .order('date', { ascending: false });
       
       if (error) {
@@ -63,31 +66,30 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         return;
       }
       
+      console.log(`Successfully fetched ${data?.length || 0} meetings`);
+      
       // Transform the Supabase data to match our Meeting type
       let formattedMeetings: Meeting[] = data.map(meeting => {
-        const contactName = meeting.contacts ? 
-          (meeting.contacts.company || meeting.contacts.full_name) : 
-          meeting.contact_name;
-          
-        // Create meeting with contact name from join or existing contact_name
+        // Create meeting with basic data
         const formattedMeeting = supabaseToMeeting(meeting);
-        formattedMeeting.contactName = contactName || "Unknown";
+        
+        // Try to get contact name
+        try {
+          const contact = getContactById(meeting.contact_id);
+          formattedMeeting.contactName = contact ? 
+            (contact.company || contact.fullName || "Unknown") : 
+            meeting.contact_name || "Unknown";
+        } catch (err) {
+          console.warn("Error getting contact name for meeting:", meeting.id, err);
+          formattedMeeting.contactName = meeting.contact_name || "Unknown";
+        }
         
         return formattedMeeting;
       });
       
-      // Add contact names if still not present
-      formattedMeetings = formattedMeetings.map(meeting => {
-        if (!meeting.contactName || meeting.contactName === "Unknown") {
-          const contact = getContactById(meeting.contactId);
-          const contactName = contact ? (contact.company || contact.fullName || "Unknown") : "Unknown";
-          return { ...meeting, contactName };
-        }
-        return meeting;
-      });
-      
       // Sort meetings by date AND time
       const sortedMeetings = sortMeetingsByDateTime(formattedMeetings);
+      console.log(`Processed ${sortedMeetings.length} meetings`);
       
       setMeetings(sortedMeetings);
     } catch (err) {

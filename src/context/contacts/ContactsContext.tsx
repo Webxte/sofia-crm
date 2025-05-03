@@ -41,13 +41,23 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when the component mounts, when authentication state changes or organization changes
+  // Fetch contacts when the component mounts and when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("ContactsContext: User authenticated, fetching contacts");
+      fetchContacts();
+    } else {
+      console.log("ContactsContext: User not authenticated, skipping contacts fetch");
+    }
+  }, [isAuthenticated, fetchContacts]);
+
+  // Fetch contacts when organization changes
   useEffect(() => {
     if (isAuthenticated && currentOrganization) {
-      console.log("Fetching contacts for organization:", currentOrganization.id);
+      console.log("ContactsContext: Organization changed to", currentOrganization.id, "- fetching contacts");
       fetchContacts();
     }
-  }, [isAuthenticated, currentOrganization, fetchContacts]);
+  }, [currentOrganization, isAuthenticated, fetchContacts]);
 
   return (
     <ContactsContext.Provider

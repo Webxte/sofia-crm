@@ -15,125 +15,75 @@ export const useContactsFetch = () => {
   const fetchContacts = useCallback(async () => {
     try {
       setLoading(true);
+      console.log("Attempting to fetch contacts...");
       
-      // Only fetch contacts if there's a current organization
-      if (!currentOrganization) {
-        console.log("No current organization, not fetching contacts");
-        setContacts([]);
-        setLoading(false);
-        return [];
-      }
-      
-      console.log("Fetching contacts for organization:", currentOrganization.id);
-      
-      // First, try to fetch contacts with the current organization ID
-      const { data: orgContacts, error: orgError } = await supabase
+      // Try to fetch ALL contacts regardless of organization
+      // This ensures we get data even if organization relationships aren't set up correctly
+      const { data: allContacts, error: allContactsError } = await supabase
         .from('contacts')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
       
-      // If there's an error or no contacts found, try fetching contacts with "Belmorso" organization
-      if (orgError || (orgContacts && orgContacts.length === 0)) {
-        console.log("No contacts found for current organization, checking for Belmorso organization");
-        
-        // First, find the Belmorso organization
-        const { data: belmorsoOrg } = await supabase
-          .from('organizations')
-          .select('id')
-          .eq('name', 'Belmorso')
-          .single();
-        
-        if (belmorsoOrg) {
-          console.log("Found Belmorso organization, fetching its contacts");
-          
-          const { data: belmorsoContacts, error: belmorsoError } = await supabase
-            .from('contacts')
-            .select('*')
-            .eq('organization_id', belmorsoOrg.id)
-            .order('created_at', { ascending: false });
-          
-          if (belmorsoError) {
-            console.error('Error fetching Belmorso contacts:', belmorsoError);
-            throw belmorsoError;
-          }
-          
-          console.log(`Fetched ${belmorsoContacts?.length || 0} Belmorso contacts`);
-          const processedContacts = processContacts(belmorsoContacts || []);
-          setContacts(processedContacts);
-          return belmorsoContacts;
-        } else {
-          console.log("Belmorso organization not found, creating it");
-          
-          // Create Belmorso organization if it doesn't exist
-          const { data: newOrg, error: newOrgError } = await supabase
-            .from('organizations')
-            .insert([{
-              name: 'Belmorso',
-              slug: 'belmorso'
-            }])
-            .select()
-            .single();
-          
-          if (newOrgError) {
-            console.error('Error creating Belmorso organization:', newOrgError);
-            throw newOrgError;
-          }
-          
-          // Assign all unassigned contacts to Belmorso
-          const { data: unassignedContacts } = await supabase
-            .from('contacts')
-            .select('*')
-            .is('organization_id', null);
-          
-          if (unassignedContacts && unassignedContacts.length > 0) {
-            const { error: updateError } = await supabase
-              .from('contacts')
-              .update({ organization_id: newOrg.id })
-              .is('organization_id', null);
-            
-            if (updateError) {
-              console.error('Error updating unassigned contacts:', updateError);
-            } else {
-              console.log(`Assigned ${unassignedContacts.length} contacts to Belmorso`);
-              
-              // Fetch the newly assigned contacts
-              const { data: belmorsoContacts } = await supabase
-                .from('contacts')
-                .select('*')
-                .eq('organization_id', newOrg.id)
-                .order('created_at', { ascending: false });
-              
-              console.log(`Fetched ${belmorsoContacts?.length || 0} Belmorso contacts`);
-              const processedContacts = processContacts(belmorsoContacts || []);
-              setContacts(processedContacts);
-              return belmorsoContacts;
-            }
-          }
-        }
-      } else {
-        // Original organization contacts were found
-        console.log(`Fetched ${orgContacts?.length || 0} contacts for current organization`);
-        const processedContacts = processContacts(orgContacts || []);
-        setContacts(processedContacts);
-        return orgContacts;
+      if (allContactsError) {
+        console.error('Error fetching all contacts:', allContactsError);
+        throw allContactsError;
       }
       
-      // If we reach here, either there was an error or no contacts were found
+      if (allContacts && allContacts.length > 0) {
+        console.log(`Successfully fetched ${allContacts.length} contacts`);
+        const processedContacts = processContacts(allContacts || []);
+        setContacts(processedContacts);
+        setLoading(false);
+        return allContacts;
+      }
+      
+      // If we couldn't get any contacts, create a Belmorso organization as fallback
+      console.log("No contacts found, attempting to create Belmorso organization");
+      const { data: existingBelmorso } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('name', 'Belmorso')
+        .single();
+      
+      let belmorsoOrgId = existingBelmorso?.id;
+      
+      if (!belmorsoOrgId) {
+        // Create Belmorso organization if it doesn't exist
+        console.log("Creating Belmorso organization");
+        const { data: newOrg, error: newOrgError } = await supabase
+          .from('organizations')
+          .insert([{
+            name: 'Belmorso',
+            slug: 'belmorso'
+          }])
+          .select()
+          .single();
+        
+        if (newOrgError) {
+          console.error('Error creating Belmorso organization:', newOrgError);
+          throw newOrgError;
+        }
+        
+        belmorsoOrgId = newOrg.id;
+        console.log("Created Belmorso organization with ID:", belmorsoOrgId);
+      }
+      
+      // Return empty contacts since we couldn't find any
       setContacts([]);
       return [];
     } catch (error) {
-      console.error('Error fetching contacts:', error);
+      console.error('Error in fetchContacts:', error);
       toast({
         title: "Error",
-        description: "Failed to load contacts",
+        description: "Failed to load contacts. Please check console for details.",
         variant: "destructive",
       });
+      setContacts([]);
       return [];
     } finally {
       setLoading(false);
     }
-  }, [toast, currentOrganization]);
+  }, [toast]);
 
   return {
     contacts,

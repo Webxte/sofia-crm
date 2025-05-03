@@ -15,15 +15,6 @@ interface ContactMeetingsProps {
 export const ContactMeetings: React.FC<ContactMeetingsProps> = ({ meetings = [] }) => {
   const navigate = useNavigate();
   
-  const formatNotes = (notes: string | null | undefined, maxLines = 3) => {
-    if (!notes) return "";
-    
-    const lines = notes.split("\n");
-    if (lines.length <= maxLines) return notes;
-    
-    return lines.slice(0, maxLines).join("\n") + (lines.length > maxLines ? "..." : "");
-  };
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
