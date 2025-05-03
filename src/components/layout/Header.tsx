@@ -17,16 +17,14 @@ import { useAuth } from "@/context/AuthContext";
 import { Menu, Settings, LogOut, Building } from "lucide-react";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { OrganizationSwitcher } from "@/components/organizations/OrganizationSwitcher";
+import { useSidebar } from "@/components/ui/sidebar";
 
-interface HeaderProps {
-  onMenuClick: () => void;
-}
-
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header() {
   const isMobile = useIsMobile();
   const { user, isAuthenticated, logout } = useAuth();
   const { currentOrganization } = useOrganizations();
   const { toast } = useToast();
+  const { toggleSidebar } = useSidebar();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
@@ -66,7 +64,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               variant="ghost"
               className="mr-2"
               size="icon"
-              onClick={onMenuClick}
+              onClick={toggleSidebar}
             >
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle Menu</span>
