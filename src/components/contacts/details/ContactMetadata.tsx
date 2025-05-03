@@ -1,12 +1,20 @@
 
 import { Contact } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 interface ContactMetadataProps {
   contact: Contact;
 }
 
 export const ContactMetadata = ({ contact }: ContactMetadataProps) => {
+  const { organizations } = useOrganizations();
+  
+  // Find the organization name if organization_id exists
+  const organizationName = contact.organizationId 
+    ? organizations.find(org => org.id === contact.organizationId)?.name || 'Unknown Organization'
+    : 'No Organization';
+  
   return (
     <Card>
       <CardContent className="p-6">
@@ -19,6 +27,10 @@ export const ContactMetadata = ({ contact }: ContactMetadataProps) => {
           <div className="flex justify-between items-center text-sm">
             <span className="text-muted-foreground">Last Updated</span>
             <span>{new Date(contact.updatedAt).toLocaleDateString()}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-muted-foreground">Organization</span>
+            <span>{organizationName}</span>
           </div>
           {contact.agentName && (
             <div className="flex justify-between items-center text-sm">

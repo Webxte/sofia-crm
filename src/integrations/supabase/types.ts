@@ -383,6 +383,38 @@ export type Database = {
           },
         ]
       }
+      organization_passwords: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          password_hash: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          password_hash: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          password_hash?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_passwords_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
@@ -646,6 +678,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      change_organization_password: {
+        Args: { org_id: string; old_password: string; new_password: string }
+        Returns: boolean
+      }
+      check_organization_password: {
+        Args: { org_id: string; password: string }
+        Returns: boolean
+      }
       check_user_organization_role: {
         Args: { _user_id: string; _organization_id: string; _roles: string[] }
         Returns: boolean

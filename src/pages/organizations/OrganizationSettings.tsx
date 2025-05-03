@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrganizationMembers } from "@/components/organizations/OrganizationMembers";
 import { OrganizationBranding } from "@/components/organizations/OrganizationBranding";
+import { OrganizationPassword } from "@/components/organizations/OrganizationPassword";
 
 const formSchema = z.object({
   name: z
@@ -110,6 +111,7 @@ const OrganizationSettings = () => {
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="members">Members</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="branding">Branding</TabsTrigger>
           </TabsList>
           
@@ -178,6 +180,10 @@ const OrganizationSettings = () => {
           
           <TabsContent value="members" className="mt-4">
             <OrganizationMembers />
+          </TabsContent>
+          
+          <TabsContent value="security" className="mt-4">
+            <OrganizationPassword />
           </TabsContent>
           
           <TabsContent value="branding" className="mt-4">
