@@ -20,18 +20,32 @@ import { useNavigate } from "react-router-dom";
 
 interface ContactDeleteDialogProps {
   contact: Contact;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onConfirm?: () => void;
+  contactName?: string;
 }
 
-export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
+export const ContactDeleteDialog = ({ 
+  contact, 
+  open: controlledOpen, 
+  onOpenChange: setControlledOpen,
+  onConfirm,
+  contactName
+}: ContactDeleteDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { deleteContact } = useContacts();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const displayName = contact.company ? 
+  // Use either controlled or uncontrolled state
+  const open = controlledOpen !== undefined ? controlledOpen : isOpen;
+  const setOpen = setControlledOpen || setIsOpen;
+
+  const displayName = contactName || (contact.company ? 
     `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
-    (contact.fullName || "Unnamed Contact");
+    (contact.fullName || "Unnamed Contact"));
 
   const handleDelete = async () => {
     try {
@@ -43,11 +57,16 @@ export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
           title: "Contact deleted",
           description: "The contact has been permanently deleted.",
         });
-        setIsOpen(false);
+        setOpen(false);
         
         // If we're on the contact details page, navigate back to the contacts list
         if (window.location.pathname.includes(`/contacts/${contact.id}`)) {
           navigate('/contacts');
+        }
+        
+        // If there's a custom onConfirm handler, call it
+        if (onConfirm) {
+          onConfirm();
         }
       } else {
         throw new Error("Failed to delete contact");
@@ -65,7 +84,7 @@ export const ContactDeleteDialog = ({ contact }: ContactDeleteDialogProps) => {
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50">
           <Trash2 className="h-4 w-4 mr-2" />

@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useContacts } from '@/context/ContactsContext';
@@ -268,6 +267,7 @@ const ContactDetails = () => {
       
       {/* Dialogs */}
       <ContactDeleteDialog
+        contact={contact}
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDeleteConfirm}
