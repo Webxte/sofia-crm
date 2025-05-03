@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/OrdersContext";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import { useTasks } from "@/context/TasksContext";
 import { format, subMonths } from "date-fns";
 import { Download } from "lucide-react";
@@ -80,8 +80,8 @@ const Reports = () => {
   
   const taskPriorityChartData = Object.values(taskPriorityData);
   
-  // Check if user is admin - THIS WAS THE ISSUE: was checking wrong property
-  const isAdmin = user?.role === "admin";
+  // Check if user is admin based on user_metadata
+  const isAdmin = user?.user_metadata?.role === "admin";
   
   return (
     <div className="space-y-6">

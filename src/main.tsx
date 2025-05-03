@@ -6,12 +6,20 @@ import { HelmetProvider } from 'react-helmet-async'
 import App from './App.tsx'
 import './index.css'
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <HelmetProvider>
-        <App />
-      </HelmetProvider>
-    </BrowserRouter>
-  </StrictMode>
-);
+// Get the root element
+const rootElement = document.getElementById("root");
+
+// Ensure the root element exists before attempting to render
+if (!rootElement) {
+  console.error("Root element not found!");
+} else {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <BrowserRouter>
+        <HelmetProvider>
+          <App />
+        </HelmetProvider>
+      </BrowserRouter>
+    </StrictMode>
+  );
+}

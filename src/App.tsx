@@ -2,7 +2,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { ContactsProvider } from './context/ContactsContext';
+import { ContactsProvider } from './context/contacts/ContactsContext';
 import { MeetingsProvider } from './context/meetings';
 import { TasksProvider } from './context/TasksContext';
 import { ProductsProvider } from './context/products/ProductsContext';

@@ -23,6 +23,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  // Initialize state with explicit null values
   const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,19 +130,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAdmin = !!user && user.user_metadata?.role === "admin";
   const isAuthenticated = !!session;
 
+  const contextValue: AuthContextType = {
+    user,
+    session,
+    isAuthenticated,
+    isAdmin,
+    isLoading,
+    login,
+    createUser,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        isAuthenticated,
-        isAdmin,
-        isLoading,
-        login,
-        createUser,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
