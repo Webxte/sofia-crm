@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -32,13 +31,14 @@ const OrganizationMembers = () => {
   const { orgSlug } = useParams();
   const { user, isAdmin } = useAuth();
   const {
-    organization,
+    currentOrganization,
     members,
     inviteMember,
     updateMemberRole,
     removeMember,
     getOrganizationBySlug,
     getOrganizationMembers,
+    organization,
   } = useOrganizations();
   const { toast } = useToast();
   const [inviteEmail, setInviteEmail] = useState("");
@@ -82,15 +82,14 @@ const OrganizationMembers = () => {
 
     setIsInviting(true);
     try {
-      if (orgSlug) {
-        await inviteMember(orgSlug, inviteEmail, "member");
-        toast({
-          title: "Invite Sent",
-          description: `Invite sent to ${inviteEmail}.`,
-        });
-        setInviteEmail("");
-        setIsInviteDialogOpen(false);
-      }
+      // Fix parameter count: removed orgSlug
+      await inviteMember(inviteEmail, "member");
+      toast({
+        title: "Invite Sent",
+        description: `Invite sent to ${inviteEmail}.`,
+      });
+      setInviteEmail("");
+      setIsInviteDialogOpen(false);
     } catch (error) {
       console.error("Error inviting member:", error);
       toast({
@@ -105,13 +104,12 @@ const OrganizationMembers = () => {
 
   const handleMemberRoleChange = async (memberId: string, role: "owner" | "admin" | "member" | "manager" | "guest") => {
     try {
-      if (orgSlug) {
-        await updateMemberRole(orgSlug, memberId, role);
-        toast({
-          title: "Role Updated",
-          description: `Member role updated to ${role}.`,
-        });
-      }
+      // Fix parameter count: removed orgSlug
+      await updateMemberRole(memberId, role);
+      toast({
+        title: "Role Updated",
+        description: `Member role updated to ${role}.`,
+      });
     } catch (error) {
       console.error("Error updating member role:", error);
       toast({
@@ -124,13 +122,12 @@ const OrganizationMembers = () => {
 
   const handleRemoveMember = async (memberId: string) => {
     try {
-      if (orgSlug) {
-        await removeMember(orgSlug, memberId);
-        toast({
-          title: "Member Removed",
-          description: "Member removed from organization.",
-        });
-      }
+      // Fix parameter count: removed orgSlug
+      await removeMember(memberId);
+      toast({
+        title: "Member Removed",
+        description: "Member removed from organization.",
+      });
     } catch (error) {
       console.error("Error removing member:", error);
       toast({
@@ -162,7 +159,7 @@ const OrganizationMembers = () => {
     <div>
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-2xl font-bold">{organization.name} Members</h1>
+          <h1 className="text-2xl font-bold">{organization?.name} Members</h1>
           <p className="text-muted-foreground">
             Manage members and their roles within the organization
           </p>

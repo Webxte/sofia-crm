@@ -40,11 +40,24 @@ export const formatMeetingForDatabase = (meeting: Partial<Meeting>) => {
     follow_up_notes: meeting.followUpNotes,
     next_steps: meeting.nextSteps || [],
     agent_id: meeting.agentId,
-    agent_name: meeting.agentName
+    agent_name: meeting.agentName,
+    updated_at: new Date().toISOString()
   };
 };
 
-// Add these missing exports
+// Function that takes additional agent data
+export const newMeetingToSupabase = (meetingData: Partial<Meeting>, agentData?: { agent_id: string, agent_name: string }) => {
+  const formatted = formatMeetingForDatabase(meetingData);
+  
+  // Add agent information if provided
+  if (agentData) {
+    formatted.agent_id = agentData.agent_id;
+    formatted.agent_name = agentData.agent_name;
+  }
+  
+  return formatted;
+};
+
+// Add these exports
 export const supabaseToMeeting = formatMeetingFromDatabase;
 export const meetingToSupabase = formatMeetingForDatabase;
-export const newMeetingToSupabase = formatMeetingForDatabase;

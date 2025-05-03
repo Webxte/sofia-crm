@@ -16,4 +16,10 @@ export interface OrganizationsContextType {
   updateMemberRole: (userId: string, role: OrganizationMember['role']) => Promise<boolean>;
   getUserRole: () => OrganizationMember['role'] | null;
   canUserPerformAction: (action: "delete" | "update" | "invite") => boolean;
+  
+  // Add missing properties and methods
+  organization: Organization | null;
+  getOrganizationBySlug: (slug: string) => Promise<Organization | null>;
+  getOrganizationMembers: (slug: string) => Promise<void>;
+  fetchOrganizations: () => Promise<void>;
 }

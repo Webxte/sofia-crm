@@ -1,4 +1,3 @@
-
 export interface Organization {
   id: string;
   name: string;
@@ -14,7 +13,7 @@ export interface OrganizationMember {
   id: string;
   organizationId: string;
   userId: string;
-  role: 'owner' | 'admin' | 'member' | 'manager' | 'guest';
+  role: "owner" | "admin" | "member" | "manager" | "guest";
   createdAt: Date;
   updatedAt: Date;
 }
