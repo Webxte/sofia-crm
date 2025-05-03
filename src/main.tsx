@@ -1,5 +1,5 @@
 
-import React, { StrictMode } from 'react'
+import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
@@ -14,12 +14,12 @@ if (!rootElement) {
   console.error("Root element not found!");
 } else {
   createRoot(rootElement).render(
-    <StrictMode>
+    <React.StrictMode>
       <BrowserRouter>
         <HelmetProvider>
           <App />
         </HelmetProvider>
       </BrowserRouter>
-    </StrictMode>
+    </React.StrictMode>
   );
 }
