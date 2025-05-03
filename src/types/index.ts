@@ -1,3 +1,4 @@
+
 // Contact types
 export interface Contact {
   id: string;
@@ -9,6 +10,9 @@ export interface Contact {
   company?: string;
   position?: string;
   source?: string; // Added source/tag field
+  notes?: string; // Added notes field
+  agentId?: string; // Added agentId field
+  agentName?: string; // Added agentName field
   organizationId?: string; // Added for multi-tenancy
   createdAt: Date;
   updatedAt: Date;
