@@ -5,6 +5,9 @@ import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import App from './App.tsx'
 import './index.css'
+import { AuthProvider } from './context/AuthContext.tsx'
+import { OrganizationsProvider } from './context/organizations/OrganizationsContext.tsx'
+import { Toaster } from "@/components/ui/toaster"
 
 // Get the root element
 const rootElement = document.getElementById("root");
@@ -19,7 +22,12 @@ if (!rootElement) {
     <React.StrictMode>
       <BrowserRouter>
         <HelmetProvider>
-          <App />
+          <AuthProvider>
+            <OrganizationsProvider>
+              <App />
+              <Toaster />
+            </OrganizationsProvider>
+          </AuthProvider>
         </HelmetProvider>
       </BrowserRouter>
     </React.StrictMode>

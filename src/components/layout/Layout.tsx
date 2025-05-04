@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { OrganizationLogin } from "../organizations/OrganizationLogin";
 import { Organization } from "@/types";
+import { toast } from "@/hooks/use-toast";
 
 export const Layout = () => {
   const { user, isAuthenticated } = useAuth();
@@ -38,10 +39,29 @@ export const Layout = () => {
     }
   }, [isAuthenticated, fetchOrganizations]);
 
+  // Log what organizations we have for debugging
+  useEffect(() => {
+    console.log("Current organizations in state:", organizations);
+    console.log("Current selected organization:", currentOrganization);
+  }, [organizations, currentOrganization]);
+
   // Find or create Belmorso organization if user has no organizations
   useEffect(() => {
     const findOrCreateBelmorsoOrg = async () => {
-      if (!isAuthenticated || !user || organizations.length > 0 || isLoadingBelmorso) {
+      if (!isAuthenticated || !user || isLoadingBelmorso) {
+        return;
+      }
+      
+      // Log organizations length for debugging
+      console.log(`User has ${organizations.length} organizations available`);
+      
+      if (organizations.length > 0) {
+        // If organizations exist but no current organization is selected,
+        // set the first one as current
+        if (!currentOrganization) {
+          console.log("Organizations exist but none selected, selecting first one:", organizations[0].id);
+          switchOrganization(organizations[0].id);
+        }
         return;
       }
       
@@ -50,15 +70,21 @@ export const Layout = () => {
       
       try {
         // Check if Belmorso organization exists
-        const { data: existingOrg } = await supabase
+        const { data: existingOrg, error } = await supabase
           .from('organizations')
           .select('*')
           .eq('name', 'Belmorso')
           .single();
         
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error finding Belmorso organization:", error);
+          setIsLoadingBelmorso(false);
+          return;
+        }
+        
         if (existingOrg) {
           console.log("Found existing Belmorso organization:", existingOrg);
-          setBelmorsoOrg({
+          const formattedOrg = {
             id: existingOrg.id,
             name: existingOrg.name,
             slug: existingOrg.slug,
@@ -67,7 +93,9 @@ export const Layout = () => {
             secondaryColor: existingOrg.secondary_color || undefined,
             createdAt: new Date(existingOrg.created_at),
             updatedAt: new Date(existingOrg.updated_at)
-          });
+          };
+          
+          setBelmorsoOrg(formattedOrg);
           
           // Now check if user is already a member
           const { data: membership } = await supabase
@@ -78,29 +106,36 @@ export const Layout = () => {
             .single();
           
           if (membership) {
-            // User is already a member, switch to this org
             console.log("User is already a member of Belmorso, switching to it");
-            switchOrganization(existingOrg.id);
+            await switchOrganization(existingOrg.id);
+            toast({
+              title: "Organization Selected",
+              description: "You've been connected to the Belmorso organization."
+            });
           } else {
-            // Show login dialog for Belmorso org
             console.log("User is not a member of Belmorso, showing login dialog");
             setShowOrgLoginDialog(true);
           }
         } else {
-          // Belmorso org doesn't exist yet, redirect to create it
-          console.log("Belmorso organization doesn't exist, redirecting to create it");
+          // Create Belmorso organization
+          console.log("Belmorso organization doesn't exist, creating it");
           navigate('/organizations/new');
         }
       } catch (error) {
-        console.error("Error finding Belmorso organization:", error);
+        console.error("Error in findOrCreateBelmorsoOrg:", error);
         navigate('/organizations/new');
       } finally {
         setIsLoadingBelmorso(false);
       }
     };
     
-    findOrCreateBelmorsoOrg();
-  }, [isAuthenticated, user, organizations, isLoadingBelmorso, navigate, switchOrganization]);
+    // Small delay to ensure the organizations list has been fetched
+    const timer = setTimeout(() => {
+      findOrCreateBelmorsoOrg();
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, user, organizations, isLoadingBelmorso, navigate, switchOrganization, currentOrganization]);
 
   // Handle successful organization login
   const handleOrgLoginSuccess = async () => {
@@ -117,12 +152,42 @@ export const Layout = () => {
       
       // Switch to Belmorso organization
       switchOrganization(belmorsoOrg.id);
+      toast({
+        title: "Success", 
+        description: "You've been added to the Belmorso organization"
+      });
+      
       // Refresh the page to make sure everything is loaded with the new organization context
       window.location.reload();
     } catch (error) {
       console.error("Error creating organization membership:", error);
+      toast({
+        title: "Error",
+        description: "Failed to join organization",
+        variant: "destructive"
+      });
     }
   };
+
+  // If organizations are still loading or not available, show loading state
+  if (isAuthenticated && organizations.length === 0 && !belmorsoOrg && !isLoadingBelmorso) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-medium mb-2">No organizations available</h2>
+          <p className="text-muted-foreground mb-4">
+            You don't have access to any organizations yet.
+          </p>
+          <button 
+            onClick={() => navigate('/organizations/new')} 
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
+          >
+            Create Organization
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen={!window.matchMedia('(max-width: 768px)').matches}>

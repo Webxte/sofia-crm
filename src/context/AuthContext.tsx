@@ -3,6 +3,7 @@ import * as React from "react";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
+import { toast } from "@/hooks/use-toast";
 
 // Extend the User type to include the name property
 interface ExtendedUser extends User {
@@ -60,6 +61,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setSession(currentSession);
         setUser(extendedUser);
         setIsLoading(false);
+
+        if (event === 'SIGNED_IN') {
+          // Check if user is part of any organization
+          ensureUserHasBelmorsoAccess(extendedUser);
+        }
       }
     );
 
@@ -76,12 +82,119 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSession(currentSession);
       setUser(extendedUser);
       setIsLoading(false);
+
+      // If user is logged in, check/create organization access
+      if (extendedUser) {
+        ensureUserHasBelmorsoAccess(extendedUser);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Function to ensure the user has access to the Belmorso organization
+  const ensureUserHasBelmorsoAccess = async (currentUser: ExtendedUser | null) => {
+    if (!currentUser) return;
+    
+    try {
+      // First check if user is already a member of any organization
+      const { data: existingMemberships, error: membershipError } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', currentUser.id);
+      
+      if (membershipError) {
+        console.error("Error checking existing memberships:", membershipError);
+        return;
+      }
+      
+      if (existingMemberships && existingMemberships.length > 0) {
+        console.log("User is already a member of organizations:", existingMemberships);
+        return; // User already has organization access
+      }
+      
+      console.log("User has no organization memberships, looking for Belmorso...");
+      
+      // Check if Belmorso organization exists
+      const { data: belmorsoOrg, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('name', 'Belmorso')
+        .single();
+      
+      if (orgError && orgError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        console.error("Error finding Belmorso organization:", orgError);
+        return;
+      }
+      
+      let belmorsoOrgId: string;
+      
+      if (!belmorsoOrg) {
+        // Create Belmorso organization if it doesn't exist
+        console.log("Creating Belmorso organization...");
+        const { data: newOrg, error: createError } = await supabase
+          .from('organizations')
+          .insert([{
+            name: 'Belmorso',
+            slug: 'belmorso'
+          }])
+          .select('id')
+          .single();
+        
+        if (createError || !newOrg) {
+          console.error("Error creating Belmorso organization:", createError);
+          return;
+        }
+        
+        belmorsoOrgId = newOrg.id;
+        console.log("Created Belmorso organization with ID:", belmorsoOrgId);
+        
+        // Create initial settings for the organization
+        await supabase
+          .from('settings')
+          .insert([{
+            organization_id: belmorsoOrgId,
+            company_name: 'Belmorso'
+          }]);
+      } else {
+        belmorsoOrgId = belmorsoOrg.id;
+        console.log("Found existing Belmorso organization with ID:", belmorsoOrgId);
+      }
+      
+      // Add user as owner of Belmorso organization
+      console.log("Adding user as owner of Belmorso organization...");
+      const { error: memberError } = await supabase
+        .from('organization_members')
+        .insert([{
+          organization_id: belmorsoOrgId,
+          user_id: currentUser.id,
+          role: 'owner'
+        }]);
+      
+      if (memberError) {
+        console.error("Error adding user as organization member:", memberError);
+        return;
+      }
+      
+      console.log("Successfully added user as owner of Belmorso organization");
+      
+      // Set this as the current organization in localStorage
+      localStorage.setItem('currentOrganizationId', belmorsoOrgId);
+      
+      // Notify user
+      toast({
+        title: "Organization Access Granted",
+        description: "You've been added as an owner of the Belmorso organization.",
+      });
+      
+      // Reload page to refresh organization context
+      window.location.reload();
+    } catch (error) {
+      console.error("Error in ensureUserHasBelmorsoAccess:", error);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
