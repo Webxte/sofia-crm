@@ -24,10 +24,10 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           
           // If after fetching there are no organizations, we'll show an error
           if (operations.organizations.length === 0) {
-            console.log("No organizations found after fetch, user may need to create one");
+            console.log("No organizations found after fetch, user may need to create or join one");
             toast({
               title: "No organizations found",
-              description: "Please create an organization to continue",
+              description: "Please create or join an organization to continue",
               variant: "default"
             });
           } else {
