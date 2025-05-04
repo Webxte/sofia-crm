@@ -6,6 +6,7 @@ import { CreateOrganizationForm } from "@/components/organizations/CreateOrganiz
 import { JoinOrganizationForm } from "@/components/organizations/JoinOrganizationForm";
 
 const NewOrganization = () => {
+  // Change default tab to "join" instead of "create"
   const [activeTab, setActiveTab] = useState<string>("join");
   
   return (
@@ -16,7 +17,7 @@ const NewOrganization = () => {
       <div className="container mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6 text-center">Organizations</h1>
         
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="max-w-[600px] mx-auto">
+        <Tabs defaultValue="join" onValueChange={setActiveTab} className="max-w-[600px] mx-auto">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="join">Join Existing</TabsTrigger>
             <TabsTrigger value="create">Create New</TabsTrigger>
