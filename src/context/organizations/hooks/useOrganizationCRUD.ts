@@ -2,8 +2,11 @@
 import { nanoid } from "nanoid";
 import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { Toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
+
+// Define the Toast type locally
+type Toast = typeof toast;
 
 interface Props {
   organizations: Organization[];

@@ -2,7 +2,11 @@
 import { useState } from "react";
 import { Organization, OrganizationInvite } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { Toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
+import { ToastActionElement } from "@/components/ui/toast";
+
+// Define the Toast type locally
+type Toast = typeof toast;
 
 interface Props {
   currentOrganization: Organization | null;

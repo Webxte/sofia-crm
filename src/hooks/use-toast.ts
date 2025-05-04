@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -137,9 +138,9 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+export type Toast = typeof toast
 
-function toast({ ...props }: Toast) {
+function toast({ ...props }: Omit<ToasterToast, "id">) {
   const id = genId()
 
   const update = (props: ToasterToast) =>

@@ -2,8 +2,11 @@
 import { useState } from "react";
 import { Organization } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { Toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+
+// Define the Toast type locally
+type Toast = typeof toast;
 
 interface Props {
   setOrganizations: React.Dispatch<React.SetStateAction<Organization[]>>;
