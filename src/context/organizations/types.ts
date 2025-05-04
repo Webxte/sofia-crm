@@ -7,6 +7,8 @@ export interface OrganizationsContextType {
   members: OrganizationMember[];
   invites: OrganizationInvite[];
   loading: boolean;
+  isLoadingOrganizations: boolean;
+  initialLoadComplete: boolean;
   createOrganization: (name: string, slug: string) => Promise<Organization | null>;
   updateOrganization: (id: string, data: Partial<Organization>) => Promise<boolean>;
   deleteOrganization: (id: string) => Promise<boolean>;

@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
@@ -10,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { OrganizationLogin } from "../organizations/OrganizationLogin";
 import { Organization } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, AlertCircle, Plus } from "lucide-react";
 
 export const Layout = () => {
   const { user, isAuthenticated } = useAuth();
@@ -18,67 +19,62 @@ export const Layout = () => {
     currentOrganization, 
     organizations, 
     fetchOrganizations,
+    isLoadingOrganizations,
+    initialLoadComplete,
     switchOrganization 
   } = useOrganizations();
   const navigate = useNavigate();
+  const location = useLocation();
   const [belmorsoOrg, setBelmorsoOrg] = useState<Organization | null>(null);
   const [showOrgLoginDialog, setShowOrgLoginDialog] = useState(false);
   const [isLoadingBelmorso, setIsLoadingBelmorso] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
   
   // Add smooth scrolling to top when route changes
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+  }, [location.pathname]);
   
-  // Make sure organizations are loaded when user is authenticated
-  useEffect(() => {
-    const loadOrganizations = async () => {
-      if (!isAuthenticated || !user) {
-        setIsInitializing(false);
-        return;
-      }
-      
-      console.log("Layout: User authenticated, fetching organizations");
-      try {
-        await fetchOrganizations();
-        setIsInitializing(false);
-      } catch (error) {
-        console.error("Error fetching organizations:", error);
-        setIsInitializing(false);
-      }
-    };
-    
-    loadOrganizations();
-  }, [isAuthenticated, user, fetchOrganizations]);
-
   // Debug logging
   useEffect(() => {
-    console.log("Current organizations in state:", organizations);
-    console.log("Current selected organization:", currentOrganization);
-  }, [organizations, currentOrganization]);
+    console.log("Layout: Current user:", user?.id);
+    console.log("Layout: Organizations in state:", organizations);
+    console.log("Layout: Current selected organization:", currentOrganization);
+    console.log("Layout: Is loading organizations:", isLoadingOrganizations);
+    console.log("Layout: Initial load complete:", initialLoadComplete);
+  }, [organizations, currentOrganization, user, isLoadingOrganizations, initialLoadComplete]);
 
   // Check for Belmorso organization if user has no organizations
   useEffect(() => {
     const findOrCreateBelmorsoOrg = async () => {
-      if (!isAuthenticated || !user || isLoadingBelmorso || isInitializing) {
+      // Skip this process if we're on the organization creation page
+      if (location.pathname === '/organizations/new') {
+        console.log("On organization creation page, skipping auto-organization setup");
+        return;
+      }
+      
+      if (!isAuthenticated || !user || isLoadingBelmorso || isLoadingOrganizations) {
+        return;
+      }
+      
+      // Don't do anything if not fully loaded yet
+      if (!initialLoadComplete) {
         return;
       }
       
       // Log organizations length for debugging
-      console.log(`User has ${organizations.length} organizations available`);
+      console.log(`Layout: User has ${organizations.length} organizations available`);
       
       if (organizations.length > 0) {
         // If organizations exist but no current organization is selected,
         // set the first one as current
         if (!currentOrganization) {
-          console.log("Organizations exist but none selected, selecting first one:", organizations[0].id);
+          console.log("Layout: Organizations exist but none selected, selecting first one:", organizations[0].id);
           switchOrganization(organizations[0].id);
         }
         return;
       }
       
-      console.log("No organizations found, looking for Belmorso organization");
+      console.log("Layout: No organizations found, looking for Belmorso organization");
       setIsLoadingBelmorso(true);
       
       try {
@@ -96,7 +92,7 @@ export const Layout = () => {
         }
         
         if (existingOrg) {
-          console.log("Found existing Belmorso organization:", existingOrg);
+          console.log("Layout: Found existing Belmorso organization:", existingOrg);
           const formattedOrg = {
             id: existingOrg.id,
             name: existingOrg.name,
@@ -123,19 +119,21 @@ export const Layout = () => {
           }
           
           if (membership) {
-            console.log("User is already a member of Belmorso, switching to it");
+            console.log("Layout: User is already a member of Belmorso, switching to it");
             await switchOrganization(existingOrg.id);
+            // Refresh organizations list to make sure UI updates
+            await fetchOrganizations();
             toast({
               title: "Organization Selected",
               description: "You've been connected to the Belmorso organization."
             });
           } else {
-            console.log("User is not a member of Belmorso, showing login dialog");
+            console.log("Layout: User is not a member of Belmorso, showing login dialog");
             setShowOrgLoginDialog(true);
           }
         } else {
-          // Create Belmorso organization
-          console.log("Belmorso organization doesn't exist, redirecting to create it");
+          // No Belmorso organization found
+          console.log("Layout: Belmorso organization doesn't exist, redirecting to create it");
           navigate('/organizations/new');
         }
       } catch (error) {
@@ -152,30 +150,33 @@ export const Layout = () => {
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, [isAuthenticated, user, organizations, isLoadingBelmorso, navigate, switchOrganization, currentOrganization, isInitializing]);
+  }, [isAuthenticated, user, organizations, isLoadingBelmorso, navigate, switchOrganization, currentOrganization, initialLoadComplete, isLoadingOrganizations, location.pathname]);
 
   // Handle successful organization login
   const handleOrgLoginSuccess = async () => {
     if (!belmorsoOrg || !user) return;
     
     try {
-      console.log("Organization login successful, creating membership");
+      console.log("Layout: Organization login successful, creating membership");
       // Create organization membership
-      await supabase.from('organization_members').insert([{
+      const { error: membershipError } = await supabase.from('organization_members').insert([{
         organization_id: belmorsoOrg.id,
         user_id: user.id,
         role: 'member'
       }]);
       
-      // Switch to Belmorso organization
-      switchOrganization(belmorsoOrg.id);
+      if (membershipError) {
+        throw membershipError;
+      }
+      
+      // After creating membership, fetch organizations again and switch
+      await fetchOrganizations();
+      await switchOrganization(belmorsoOrg.id);
+      
       toast({
         title: "Success", 
         description: "You've been added to the Belmorso organization"
       });
-      
-      // Refresh the page to make sure everything is loaded with the new organization context
-      window.location.reload();
     } catch (error) {
       console.error("Error creating organization membership:", error);
       toast({
@@ -186,8 +187,8 @@ export const Layout = () => {
     }
   };
 
-  // If still initializing, show loading state
-  if (isInitializing && isAuthenticated) {
+  // If still initializing or loading organizations, show loading state
+  if ((isLoadingOrganizations || !initialLoadComplete) && isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -201,21 +202,25 @@ export const Layout = () => {
     );
   }
 
-  // If organizations are still loading or not available, show loading state
-  if (isAuthenticated && organizations.length === 0 && !belmorsoOrg && !isLoadingBelmorso) {
+  // If organizations are loaded but none are available
+  if (isAuthenticated && initialLoadComplete && organizations.length === 0 && !isLoadingBelmorso) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-medium mb-2">No organizations available</h2>
-          <p className="text-muted-foreground mb-4">
-            You don't have access to any organizations yet.
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="text-center max-w-md w-full bg-card p-6 rounded-lg shadow-sm">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4 text-amber-500" />
+          <h2 className="text-xl font-medium mb-2">No Organizations Available</h2>
+          <p className="text-muted-foreground mb-6">
+            You don't have access to any organizations yet. 
+            Create a new organization to get started with the CRM.
           </p>
-          <button 
+          <Button 
             onClick={() => navigate('/organizations/new')} 
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
+            className="w-full"
+            size="lg"
           >
+            <Plus className="mr-2 h-4 w-4" />
             Create Organization
-          </button>
+          </Button>
         </div>
       </div>
     );
