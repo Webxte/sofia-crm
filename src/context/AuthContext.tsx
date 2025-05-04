@@ -29,6 +29,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [membershipChecked, setMembershipChecked] = useState(false);
   
   // Helper function to extract user name from metadata
   const getUserWithName = (supabaseUser: User | null): ExtendedUser | null => {
@@ -44,61 +45,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   };
   
-  useEffect(() => {
-    console.log("Setting up auth state listener");
-    
-    // Set up the auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log("Auth state changed:", event);
-        const extendedUser = getUserWithName(currentSession?.user ?? null);
-        console.log("User with auth change:", extendedUser ? {
-          id: extendedUser.id, 
-          name: extendedUser.name,
-          organizationId: extendedUser.organizationId
-        } : null);
-        
-        setSession(currentSession);
-        setUser(extendedUser);
-        setIsLoading(false);
-
-        if (event === 'SIGNED_IN') {
-          // Check if user is part of any organization
-          ensureUserHasBelmorsoAccess(extendedUser);
-        }
-      }
-    );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
-      const extendedUser = getUserWithName(currentSession?.user ?? null);
-      console.log("User from initial session:", extendedUser ? {
-        id: extendedUser.id, 
-        name: extendedUser.name,
-        organizationId: extendedUser.organizationId
-      } : null);
-      
-      setSession(currentSession);
-      setUser(extendedUser);
-      setIsLoading(false);
-
-      // If user is logged in, check/create organization access
-      if (extendedUser) {
-        ensureUserHasBelmorsoAccess(extendedUser);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   // Function to ensure the user has access to the Belmorso organization
   const ensureUserHasBelmorsoAccess = async (currentUser: ExtendedUser | null) => {
     if (!currentUser) return;
     
     try {
+      console.log("Checking if user has organization access");
+      
       // First check if user is already a member of any organization
       const { data: existingMemberships, error: membershipError } = await supabase
         .from('organization_members')
@@ -112,6 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (existingMemberships && existingMemberships.length > 0) {
         console.log("User is already a member of organizations:", existingMemberships);
+        setMembershipChecked(true);
         return; // User already has organization access
       }
       
@@ -122,9 +76,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .from('organizations')
         .select('id')
         .eq('name', 'Belmorso')
-        .single();
+        .maybeSingle();
       
-      if (orgError && orgError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      if (orgError) {
         console.error("Error finding Belmorso organization:", orgError);
         return;
       }
@@ -175,6 +129,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (memberError) {
         console.error("Error adding user as organization member:", memberError);
+        toast({
+          title: "Error",
+          description: "Failed to add you to the organization. Please try logging out and back in.",
+          variant: "destructive"
+        });
         return;
       }
       
@@ -189,12 +148,72 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         description: "You've been added as an owner of the Belmorso organization.",
       });
       
-      // Reload page to refresh organization context
-      window.location.reload();
+      setMembershipChecked(true);
+      
+      // Don't reload page here - we'll update the organization context instead
     } catch (error) {
       console.error("Error in ensureUserHasBelmorsoAccess:", error);
+      setMembershipChecked(true); // Mark as checked even on error to prevent infinite loops
     }
   };
+
+  useEffect(() => {
+    console.log("Setting up auth state listener");
+    
+    // Set up the auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        console.log("Auth state changed:", event);
+        const extendedUser = getUserWithName(currentSession?.user ?? null);
+        console.log("User with auth change:", extendedUser ? {
+          id: extendedUser.id, 
+          name: extendedUser.name,
+          organizationId: extendedUser.organizationId
+        } : null);
+        
+        setSession(currentSession);
+        setUser(extendedUser);
+        
+        if (event === 'SIGNED_IN' && extendedUser) {
+          // Delay to ensure DB connections are established
+          setTimeout(() => {
+            ensureUserHasBelmorsoAccess(extendedUser);
+          }, 500);
+        } else if (event === 'SIGNED_OUT') {
+          setMembershipChecked(false);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
+      const extendedUser = getUserWithName(currentSession?.user ?? null);
+      console.log("User from initial session:", extendedUser ? {
+        id: extendedUser.id, 
+        name: extendedUser.name,
+        organizationId: extendedUser.organizationId
+      } : null);
+      
+      setSession(currentSession);
+      setUser(extendedUser);
+      setIsLoading(false);
+
+      // If user is logged in, check/create organization access with a delay
+      if (extendedUser) {
+        // Delay to ensure DB connections are established
+        setTimeout(() => {
+          ensureUserHasBelmorsoAccess(extendedUser);
+        }, 500);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -242,6 +261,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // First clear state so the UI updates immediately
       setUser(null);
       setSession(null);
+      setMembershipChecked(false);
       
       // Clear organization data
       localStorage.removeItem('currentOrganizationId');

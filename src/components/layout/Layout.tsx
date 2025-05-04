@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { OrganizationLogin } from "../organizations/OrganizationLogin";
 import { Organization } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export const Layout = () => {
   const { user, isAuthenticated } = useAuth();
@@ -23,32 +24,44 @@ export const Layout = () => {
   const [belmorsoOrg, setBelmorsoOrg] = useState<Organization | null>(null);
   const [showOrgLoginDialog, setShowOrgLoginDialog] = useState(false);
   const [isLoadingBelmorso, setIsLoadingBelmorso] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   
   // Add smooth scrolling to top when route changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
   
-  // Make sure organizations are loaded
+  // Make sure organizations are loaded when user is authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    const loadOrganizations = async () => {
+      if (!isAuthenticated || !user) {
+        setIsInitializing(false);
+        return;
+      }
+      
       console.log("Layout: User authenticated, fetching organizations");
-      fetchOrganizations();
-    } else {
-      console.log("Layout: User not authenticated, skipping organization fetch");
-    }
-  }, [isAuthenticated, fetchOrganizations]);
+      try {
+        await fetchOrganizations();
+        setIsInitializing(false);
+      } catch (error) {
+        console.error("Error fetching organizations:", error);
+        setIsInitializing(false);
+      }
+    };
+    
+    loadOrganizations();
+  }, [isAuthenticated, user, fetchOrganizations]);
 
-  // Log what organizations we have for debugging
+  // Debug logging
   useEffect(() => {
     console.log("Current organizations in state:", organizations);
     console.log("Current selected organization:", currentOrganization);
   }, [organizations, currentOrganization]);
 
-  // Find or create Belmorso organization if user has no organizations
+  // Check for Belmorso organization if user has no organizations
   useEffect(() => {
     const findOrCreateBelmorsoOrg = async () => {
-      if (!isAuthenticated || !user || isLoadingBelmorso) {
+      if (!isAuthenticated || !user || isLoadingBelmorso || isInitializing) {
         return;
       }
       
@@ -74,9 +87,9 @@ export const Layout = () => {
           .from('organizations')
           .select('*')
           .eq('name', 'Belmorso')
-          .single();
+          .maybeSingle();
         
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error("Error finding Belmorso organization:", error);
           setIsLoadingBelmorso(false);
           return;
@@ -98,12 +111,16 @@ export const Layout = () => {
           setBelmorsoOrg(formattedOrg);
           
           // Now check if user is already a member
-          const { data: membership } = await supabase
+          const { data: membership, error: membershipError } = await supabase
             .from('organization_members')
             .select('*')
             .eq('organization_id', existingOrg.id)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
+          
+          if (membershipError) {
+            console.error("Error checking membership:", membershipError);
+          }
           
           if (membership) {
             console.log("User is already a member of Belmorso, switching to it");
@@ -118,7 +135,7 @@ export const Layout = () => {
           }
         } else {
           // Create Belmorso organization
-          console.log("Belmorso organization doesn't exist, creating it");
+          console.log("Belmorso organization doesn't exist, redirecting to create it");
           navigate('/organizations/new');
         }
       } catch (error) {
@@ -135,7 +152,7 @@ export const Layout = () => {
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, [isAuthenticated, user, organizations, isLoadingBelmorso, navigate, switchOrganization, currentOrganization]);
+  }, [isAuthenticated, user, organizations, isLoadingBelmorso, navigate, switchOrganization, currentOrganization, isInitializing]);
 
   // Handle successful organization login
   const handleOrgLoginSuccess = async () => {
@@ -169,6 +186,21 @@ export const Layout = () => {
     }
   };
 
+  // If still initializing, show loading state
+  if (isInitializing && isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-medium mb-2">Loading your account</h2>
+          <p className="text-muted-foreground">
+            Please wait while we set up your workspace
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // If organizations are still loading or not available, show loading state
   if (isAuthenticated && organizations.length === 0 && !belmorsoOrg && !isLoadingBelmorso) {
     return (
@@ -184,6 +216,21 @@ export const Layout = () => {
           >
             Create Organization
           </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // If we're loading the Belmorso org details
+  if (isLoadingBelmorso) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-medium mb-2">Setting up your workspace</h2>
+          <p className="text-muted-foreground">
+            Please wait while we prepare your organization
+          </p>
         </div>
       </div>
     );
