@@ -1,6 +1,6 @@
 
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateOrganizationForm } from "@/components/organizations/CreateOrganizationForm";
 import { JoinOrganizationForm } from "@/components/organizations/JoinOrganizationForm";
