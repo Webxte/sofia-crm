@@ -6,7 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { LoadingScreen } from "./LoadingScreen";
-import { NoOrganizationScreen } from "./NoOrganizationScreen";
+import { DebugHooks } from "@/components/DebugHooks";
 import { useSmoothScroll } from "./hooks/useSmoothScroll";
 import { useAuth } from "@/context/AuthContext";
 
@@ -45,6 +45,8 @@ export const Layout = () => {
         <div className="flex-1 flex flex-col">
           <Header />
           <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
+            {/* Debug component to test React hooks */}
+            <DebugHooks />
             <Outlet />
           </main>
         </div>

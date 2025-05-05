@@ -16,7 +16,8 @@ if (!rootElement) {
   console.error("Root element not found!");
 } else {
   const root = createRoot(rootElement);
-  // Proper nesting with explicit React import to avoid hook issues
+  
+  // Proper provider hierarchy to avoid React context issues
   root.render(
     <React.StrictMode>
       <BrowserRouter>
