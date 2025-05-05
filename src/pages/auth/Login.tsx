@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -26,9 +27,19 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
   const { isAuthenticated, login, isLoading } = useAuth();
+  const { currentOrganization } = useOrganizations();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if we need to redirect to organization login first
+  useEffect(() => {
+    if (isAuthenticated && !currentOrganization && !location.pathname.startsWith('/organizations/login')) {
+      console.log("Authenticated but no organization, redirecting to org login");
+      navigate("/organizations/login?slug=belmorso", { replace: true });
+    }
+  }, [isAuthenticated, currentOrganization, navigate, location.pathname]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -42,7 +53,9 @@ const Login = () => {
     try {
       setLoading(true);
       await login(data.email, data.password);
-      navigate("/dashboard");
+      
+      // Don't navigate here - let the auth effect handle redirects
+      // This ensures organization context is checked first
     } catch (error: any) {
       toast({
         title: "Error",
@@ -54,9 +67,12 @@ const Login = () => {
     }
   };
 
-  if (isAuthenticated) {
+  // Only redirect to dashboard if both authenticated and have organization
+  if (isAuthenticated && currentOrganization) {
     return <Navigate to="/dashboard" replace />;
   }
+  
+  // If authenticated but no org, we'll redirect through the effect above
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40">

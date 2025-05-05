@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +29,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [membershipChecked, setMembershipChecked] = useState(false);
   
   // Helper function to extract user name from metadata
   const getUserWithName = (supabaseUser: User | null): ExtendedUser | null => {
@@ -42,111 +42,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || '',
       organizationId: storedOrgId || undefined
     };
-  };
-  
-  // Function to ensure the user has access to the Belmorso organization
-  const ensureUserHasBelmorsoAccess = async (currentUser: ExtendedUser | null) => {
-    if (!currentUser) return;
-    
-    try {
-      console.log("Checking if user has organization access");
-      
-      // First check if user is already a member of any organization
-      const { data: existingMemberships, error: membershipError } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', currentUser.id);
-      
-      if (membershipError) {
-        console.error("Error checking existing memberships:", membershipError);
-        return;
-      }
-      
-      if (existingMemberships && existingMemberships.length > 0) {
-        console.log("User is already a member of organizations:", existingMemberships);
-        setMembershipChecked(true);
-        return; // User already has organization access
-      }
-      
-      console.log("User has no organization memberships, looking for Belmorso...");
-      
-      // Check if Belmorso organization exists
-      const { data: belmorsoOrg, error: orgError } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('name', 'Belmorso')
-        .maybeSingle();
-      
-      if (orgError) {
-        console.error("Error finding Belmorso organization:", orgError);
-        return;
-      }
-      
-      let belmorsoOrgId: string;
-      
-      if (!belmorsoOrg) {
-        // Create Belmorso organization if it doesn't exist
-        console.log("Creating Belmorso organization...");
-        const { data: newOrg, error: createError } = await supabase
-          .from('organizations')
-          .insert([{
-            name: 'Belmorso',
-            slug: 'belmorso'
-          }])
-          .select('id')
-          .single();
-        
-        if (createError || !newOrg) {
-          console.error("Error creating Belmorso organization:", createError);
-          return;
-        }
-        
-        belmorsoOrgId = newOrg.id;
-        console.log("Created Belmorso organization with ID:", belmorsoOrgId);
-        
-        // Create initial settings for the organization
-        await supabase
-          .from('settings')
-          .insert([{
-            organization_id: belmorsoOrgId,
-            company_name: 'Belmorso'
-          }]);
-          
-        // Create a password for the organization - using a simple hard-coded password
-        // In a production environment, you would use a proper password hashing function
-        const passwordHash = "password_hash_for_belmorso"; // A simplified approach for demo purposes
-        
-        // Insert the password hash directly
-        await supabase
-          .from('organization_passwords')
-          .insert([{
-            organization_id: belmorsoOrgId,
-            password_hash: passwordHash
-          }]);
-      } else {
-        belmorsoOrgId = belmorsoOrg.id;
-        console.log("Found existing Belmorso organization with ID:", belmorsoOrgId);
-      }
-      
-      // DO NOT automatically add the user as a member - let the user join manually
-      // This change allows the user to go through the joining flow
-      
-      // Instead, just set the membership check as complete
-      console.log("Setting membershipChecked = true, user will need to join manually");
-      setMembershipChecked(true);
-      
-      // Skip setting the organization in localStorage to allow the user to join manually
-      
-      // Inform the user they need to join
-      toast({
-        title: "Welcome to Belmorso CRM",
-        description: "Please join the Belmorso organization using the Join tab.",
-      });
-      
-    } catch (error) {
-      console.error("Error in ensureUserHasBelmorsoAccess:", error);
-      setMembershipChecked(true); // Mark as checked even on error to prevent infinite loops
-    }
   };
 
   useEffect(() => {
@@ -165,16 +60,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         setSession(currentSession);
         setUser(extendedUser);
-        
-        if (event === 'SIGNED_IN' && extendedUser) {
-          // Delay to ensure DB connections are established
-          setTimeout(() => {
-            ensureUserHasBelmorsoAccess(extendedUser);
-          }, 500);
-        } else if (event === 'SIGNED_OUT') {
-          setMembershipChecked(false);
-        }
-        
         setIsLoading(false);
       }
     );
@@ -192,14 +77,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSession(currentSession);
       setUser(extendedUser);
       setIsLoading(false);
-
-      // If user is logged in, check/create organization access with a delay
-      if (extendedUser) {
-        // Delay to ensure DB connections are established
-        setTimeout(() => {
-          ensureUserHasBelmorsoAccess(extendedUser);
-        }, 500);
-      }
     });
 
     return () => {
@@ -253,7 +130,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // First clear state so the UI updates immediately
       setUser(null);
       setSession(null);
-      setMembershipChecked(false);
       
       // Clear organization data
       localStorage.removeItem('currentOrganizationId');

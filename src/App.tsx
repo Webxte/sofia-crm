@@ -31,6 +31,7 @@ import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import OrganizationSettings from './pages/organizations/OrganizationSettings';
 import NewOrganization from './pages/organizations/NewOrganization';
+import OrganizationLogin from './pages/organizations/OrganizationLogin';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import NotFound from './pages/NotFound';
@@ -49,6 +50,7 @@ export default function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Signup />} />
                     <Route path="/organizations/new" element={<NewOrganization />} />
+                    <Route path="/organizations/login" element={<OrganizationLogin />} />
                     <Route path="/" element={<Layout />}>
                       <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                       <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />

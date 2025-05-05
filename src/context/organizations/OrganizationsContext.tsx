@@ -25,18 +25,28 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         try {
           await operations.fetchOrganizations();
           
-          // Only redirect to create organization page if:
-          // 1. We're not already on the organizations/new page
-          // 2. We have no organizations
-          // 3. We're not on the login page
-          const isOrganizationsNewPage = location.pathname === "/organizations/new";
+          // Check if we're on login or similar non-org required pages
+          const isOrgLoginPage = location.pathname === "/organizations/login";
           const isLoginPage = location.pathname === "/login";
+          const isRegisterPage = location.pathname === "/register";
+          const isNewOrgPage = location.pathname === "/organizations/new";
+          const isNonOrgPage = isOrgLoginPage || isLoginPage || isRegisterPage || isNewOrgPage;
           
-          if (operations.organizations.length === 0 && !isOrganizationsNewPage && !isLoginPage) {
-            console.log("No organizations found after fetch, redirecting to organizations/new");
+          // If no organizations found and not on a non-org page, redirect to org login
+          if (operations.organizations.length === 0 && !isNonOrgPage) {
+            console.log("No organizations found, redirecting to create org page");
             navigate("/organizations/new");
-          } else {
+          } 
+          // If we have organizations but no current organization selected, redirect to org login
+          else if (operations.organizations.length > 0 && !operations.currentOrganization && !isOrgLoginPage) {
+            console.log("Organizations exist but none selected, redirecting to org login");
+            navigate("/organizations/login?slug=belmorso");
+          }
+          else {
             console.log(`Found ${operations.organizations.length} organizations for user`);
+            if (operations.currentOrganization) {
+              console.log("Current organization:", operations.currentOrganization.name);
+            }
           }
         } catch (error) {
           console.error("Error loading organizations:", error);

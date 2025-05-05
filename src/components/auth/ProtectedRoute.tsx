@@ -1,6 +1,6 @@
 
 import { ReactNode, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
@@ -11,38 +11,73 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, isAdmin } = useAuth();
-  const { initialLoadComplete, organizations } = useOrganizations();
+  const { 
+    currentOrganization, 
+    organizations, 
+    initialLoadComplete 
+  } = useOrganizations();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // This effect ensures we have a valid user session
   useEffect(() => {
-    // If we're not loading and not authenticated, redirect to login
-    if (!isLoading && !isAuthenticated) {
-      navigate("/login", { replace: true });
+    // Skip these checks on the organization login page
+    if (location.pathname.startsWith('/organizations/login')) {
+      return;
+    }
+
+    // First priority: If authenticated but no current organization, 
+    // redirect to organization login for Belmorso
+    if (!isLoading && isAuthenticated && initialLoadComplete && !currentOrganization) {
+      console.log("Authenticated but no organization selected, redirecting to org login");
+      navigate("/organizations/login?slug=belmorso", { replace: true });
+      return;
     }
     
-    // If authenticated and initial load is complete, but no organizations, redirect to new org page
-    if (!isLoading && isAuthenticated && initialLoadComplete && organizations.length === 0) {
-      navigate("/organizations/new", { replace: true });
+    // Second priority: If not authenticated, redirect to login
+    if (!isLoading && !isAuthenticated) {
+      console.log("Not authenticated, redirecting to login");
+      navigate("/login", { replace: true });
+      return;
     }
-  }, [isLoading, isAuthenticated, initialLoadComplete, organizations.length, navigate]);
 
+    // Third priority: If no organizations at all, go to new org page
+    if (!isLoading && isAuthenticated && initialLoadComplete && organizations.length === 0) {
+      console.log("No organizations found, redirecting to create new org");
+      navigate("/organizations/new", { replace: true });
+      return;
+    }
+  }, [
+    isLoading, 
+    isAuthenticated, 
+    initialLoadComplete, 
+    organizations, 
+    currentOrganization, 
+    navigate,
+    location.pathname
+  ]);
+
+  // Show loading state while checking auth and orgs
   if (isLoading || !initialLoadComplete) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
+  // Block access if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (organizations.length === 0) {
-    return <Navigate to="/organizations/new" replace />;
+  // Block access if no current organization is set
+  if (!currentOrganization) {
+    return <Navigate to="/organizations/login?slug=belmorso" replace />;
   }
 
+  // Block access for non-admins if admin required
   // Allow both admins and agents to access the Reports and Contacts pages
-  const path = window.location.pathname;
-  if (requireAdmin && !isAdmin && path !== '/reports' && !path.startsWith('/contacts')) {
-    return <Navigate to="/" replace />;
+  if (requireAdmin && !isAdmin) {
+    const path = location.pathname;
+    if (path !== '/reports' && !path.startsWith('/contacts')) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <>{children}</>;
