@@ -1,12 +1,12 @@
 
-import React from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { HelmetProvider } from 'react-helmet-async'
-import App from './App.tsx'
-import './index.css'
-import { AuthProvider } from './context/AuthContext.tsx'
-import { Toaster } from "@/components/ui/toaster"
+import * as React from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import App from './App.tsx';
+import './index.css';
+import { AuthProvider } from './context/AuthContext.tsx';
+import { Toaster } from "@/components/ui/toaster";
 
 // Get the root element
 const rootElement = document.getElementById("root");
