@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
 import { ContactsProvider } from './context/contacts/ContactsContext';
 import { MeetingsProvider } from './context/meetings';
 import { TasksProvider } from './context/TasksContext';
@@ -35,50 +36,50 @@ import Layout from './components/layout/Layout';
 import NotFound from './pages/NotFound';
 import Calendar from './pages/Calendar';
 
-// Removed AuthProvider and OrganizationsProvider as they're already in main.tsx
-// Removed duplicate Toaster as it's already in main.tsx
 export default function App() {
   return (
-    <ContactsProvider>
-      <MeetingsProvider>
-        <TasksProvider>
-          <ProductsProvider>
-            <OrdersProvider>
-              <SettingsProvider>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Signup />} />
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                    <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
-                    <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetails /></ProtectedRoute>} />
-                    <Route path="/contacts/:id/edit" element={<ProtectedRoute><EditContact /></ProtectedRoute>} />
-                    <Route path="/contacts/new" element={<ProtectedRoute><NewContact /></ProtectedRoute>} />
-                    <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
-                    <Route path="/meetings/:id" element={<ProtectedRoute><MeetingDetails /></ProtectedRoute>} />
-                    <Route path="/meetings/:id/edit" element={<ProtectedRoute><EditMeeting /></ProtectedRoute>} />
-                    <Route path="/meetings/new" element={<ProtectedRoute><NewMeeting /></ProtectedRoute>} />
-                    <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-                    <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-                    <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
-                    <Route path="/tasks/:id/edit" element={<ProtectedRoute><EditTask /></ProtectedRoute>} />
-                    <Route path="/tasks/new" element={<ProtectedRoute><NewTask /></ProtectedRoute>} />
-                    <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-                    <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
-                    <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
-                    <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
-                    <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-                    <Route path="/settings" element={<ProtectedRoute requireAdmin={true}><Settings /></ProtectedRoute>} />
-                    <Route path="/organizations/settings" element={<ProtectedRoute><OrganizationSettings /></ProtectedRoute>} />
-                    <Route path="/organizations/new" element={<ProtectedRoute><NewOrganization /></ProtectedRoute>} />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </SettingsProvider>
-            </OrdersProvider>
-          </ProductsProvider>
-        </TasksProvider>
-      </MeetingsProvider>
-    </ContactsProvider>
+    <OrganizationsProvider>
+      <ContactsProvider>
+        <MeetingsProvider>
+          <TasksProvider>
+            <ProductsProvider>
+              <OrdersProvider>
+                <SettingsProvider>
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Signup />} />
+                    <Route path="/organizations/new" element={<NewOrganization />} />
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                      <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                      <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetails /></ProtectedRoute>} />
+                      <Route path="/contacts/:id/edit" element={<ProtectedRoute><EditContact /></ProtectedRoute>} />
+                      <Route path="/contacts/new" element={<ProtectedRoute><NewContact /></ProtectedRoute>} />
+                      <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
+                      <Route path="/meetings/:id" element={<ProtectedRoute><MeetingDetails /></ProtectedRoute>} />
+                      <Route path="/meetings/:id/edit" element={<ProtectedRoute><EditMeeting /></ProtectedRoute>} />
+                      <Route path="/meetings/new" element={<ProtectedRoute><NewMeeting /></ProtectedRoute>} />
+                      <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+                      <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+                      <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
+                      <Route path="/tasks/:id/edit" element={<ProtectedRoute><EditTask /></ProtectedRoute>} />
+                      <Route path="/tasks/new" element={<ProtectedRoute><NewTask /></ProtectedRoute>} />
+                      <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                      <Route path="/orders/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
+                      <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
+                      <Route path="/orders/new" element={<ProtectedRoute><NewOrder /></ProtectedRoute>} />
+                      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                      <Route path="/settings" element={<ProtectedRoute requireAdmin={true}><Settings /></ProtectedRoute>} />
+                      <Route path="/organizations/settings" element={<ProtectedRoute><OrganizationSettings /></ProtectedRoute>} />
+                    </Route>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </SettingsProvider>
+              </OrdersProvider>
+            </ProductsProvider>
+          </TasksProvider>
+        </MeetingsProvider>
+      </ContactsProvider>
+    </OrganizationsProvider>
   );
 }

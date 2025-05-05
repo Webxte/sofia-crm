@@ -6,7 +6,6 @@ import { HelmetProvider } from 'react-helmet-async'
 import App from './App.tsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext.tsx'
-import { OrganizationsProvider } from './context/organizations/OrganizationsContext.tsx'
 import { Toaster } from "@/components/ui/toaster"
 
 // Get the root element
@@ -17,16 +16,15 @@ if (!rootElement) {
   console.error("Root element not found!");
 } else {
   const root = createRoot(rootElement);
-  // Ensure proper nesting of providers
+  // Ensure proper nesting of providers - OrganizationsProvider is moved inside App
+  // to avoid circular dependencies and ensure Auth is available first
   root.render(
     <React.StrictMode>
       <BrowserRouter>
         <HelmetProvider>
           <AuthProvider>
-            <OrganizationsProvider>
-              <App />
-              <Toaster />
-            </OrganizationsProvider>
+            <App />
+            <Toaster />
           </AuthProvider>
         </HelmetProvider>
       </BrowserRouter>

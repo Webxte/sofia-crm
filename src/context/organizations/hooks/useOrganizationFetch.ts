@@ -6,13 +6,13 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
 // Define the Toast type locally
-type Toast = typeof toast;
+type ToastFunction = typeof toast;
 
 interface Props {
   setOrganizations: React.Dispatch<React.SetStateAction<Organization[]>>;
   setCurrentOrganization: React.Dispatch<React.SetStateAction<Organization | null>>;
   setOrganization: React.Dispatch<React.SetStateAction<Organization | null>>;
-  toast: Toast;
+  toast: ToastFunction;
 }
 
 export const useOrganizationFetch = ({ 
@@ -33,6 +33,7 @@ export const useOrganizationFetch = ({
       }
       
       setLoading(true);
+      console.log("Fetching organizations for user:", user.id);
       
       // Get organizations the user is a member of
       const { data: memberData, error: memberError } = await supabase
@@ -40,7 +41,12 @@ export const useOrganizationFetch = ({
         .select('organization_id')
         .eq('user_id', user.id);
       
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error fetching organization memberships:", memberError);
+        throw memberError;
+      }
+      
+      console.log("Found organization memberships:", memberData.length);
       
       if (memberData.length > 0) {
         const organizationIds = memberData.map(m => m.organization_id);
@@ -64,6 +70,7 @@ export const useOrganizationFetch = ({
           updatedAt: new Date(org.updated_at)
         }));
         
+        console.log("Formatted organizations:", formattedOrgs.length);
         setOrganizations(formattedOrgs);
         
         // If there's an organization ID in local storage, set that as current
@@ -72,11 +79,18 @@ export const useOrganizationFetch = ({
           formattedOrgs.find(org => org.id === savedOrgId) : 
           formattedOrgs[0] || null;
         
+        console.log("Current organization set to:", currentOrg?.name || "none");
+        
         if (currentOrg) {
           setCurrentOrganization(currentOrg);
           setOrganization(currentOrg);
           localStorage.setItem('currentOrganizationId', currentOrg.id);
         }
+      } else {
+        console.log("User has no organization memberships");
+        setOrganizations([]);
+        setCurrentOrganization(null);
+        setOrganization(null);
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
@@ -93,27 +107,37 @@ export const useOrganizationFetch = ({
   // Get organization by slug
   const getOrganizationBySlug = async (slug: string): Promise<Organization | null> => {
     try {
+      console.log("Getting organization by slug:", slug);
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
         .eq('slug', slug)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error getting organization by slug:", error);
+        throw error;
+      }
       
-      const formattedOrg: Organization = {
-        id: data.id,
-        name: data.name,
-        slug: data.slug,
-        logoUrl: data.logo_url || undefined,
-        primaryColor: data.primary_color || undefined,
-        secondaryColor: data.secondary_color || undefined,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
-      };
+      console.log("Found organization:", data?.name || "none");
       
-      setOrganization(formattedOrg);
-      return formattedOrg;
+      if (data) {
+        const formattedOrg: Organization = {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          logoUrl: data.logo_url || undefined,
+          primaryColor: data.primary_color || undefined,
+          secondaryColor: data.secondary_color || undefined,
+          createdAt: new Date(data.created_at),
+          updatedAt: new Date(data.updated_at)
+        };
+        
+        setOrganization(formattedOrg);
+        return formattedOrg;
+      }
+      
+      return null;
     } catch (error) {
       console.error('Error fetching organization by slug:', error);
       return null;

@@ -112,6 +112,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             organization_id: belmorsoOrgId,
             company_name: 'Belmorso'
           }]);
+          
+        // Create a password for the organization
+        await supabase
+          .from('organization_passwords')
+          .insert([{
+            organization_id: belmorsoOrgId,
+            password_hash: await supabase.rpc('crypt', { password: 'Belmorso2024!', salt: await supabase.rpc('gen_salt', { type: 'bf' }) })
+          }]);
       } else {
         belmorsoOrgId = belmorsoOrg.id;
         console.log("Found existing Belmorso organization with ID:", belmorsoOrgId);
@@ -149,8 +157,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       
       setMembershipChecked(true);
-      
-      // Don't reload page here - we'll update the organization context instead
     } catch (error) {
       console.error("Error in ensureUserHasBelmorsoAccess:", error);
       setMembershipChecked(true); // Mark as checked even on error to prevent infinite loops

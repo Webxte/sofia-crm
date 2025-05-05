@@ -1,4 +1,5 @@
 
+// At the top of the file, update type definition for Toast
 import { useState } from "react";
 import { Organization, OrganizationInvite } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,11 +7,11 @@ import { toast } from "@/hooks/use-toast";
 import { ToastActionElement } from "@/components/ui/toast";
 
 // Define the Toast type locally
-type Toast = typeof toast;
+type ToastFunction = typeof toast;
 
 interface Props {
   currentOrganization: Organization | null;
-  toast: Toast;
+  toast: ToastFunction;
 }
 
 export const useOrganizationInvites = ({ currentOrganization, toast }: Props) => {

@@ -4,6 +4,7 @@ import { useOrganizationsOperations } from "./useOrganizationsOperations";
 import { OrganizationsContextType } from "./types";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const OrganizationsContext = createContext<OrganizationsContextType | undefined>(undefined);
 
@@ -12,6 +13,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   const { isAuthenticated, user } = useAuth();
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [loadingOrganizations, setLoadingOrganizations] = useState(false);
+  const navigate = useNavigate();
   
   // Initialize organizations when the provider mounts and auth status changes
   useEffect(() => {
@@ -22,14 +24,10 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         try {
           await operations.fetchOrganizations();
           
-          // If after fetching there are no organizations, we'll show an error
+          // If after fetching there are no organizations, redirect to the organizations page
           if (operations.organizations.length === 0) {
-            console.log("No organizations found after fetch, user may need to create or join one");
-            toast({
-              title: "No organizations found",
-              description: "Please create or join an organization to continue",
-              variant: "default"
-            });
+            console.log("No organizations found after fetch, redirecting to organizations/new");
+            navigate("/organizations/new");
           } else {
             console.log(`Found ${operations.organizations.length} organizations for user`);
           }
@@ -44,7 +42,8 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           setLoadingOrganizations(false);
           setInitialLoadComplete(true);
         }
-      } else {
+      } else if (!isAuthenticated) {
+        // If not authenticated, we're done initializing
         setInitialLoadComplete(true);
       }
     };

@@ -136,10 +136,9 @@ function dispatch(action: Action) {
   })
 }
 
-// Export the Toast type as a function type
+// Define and export the Toast type
 export type Toast = typeof toast
 
-// Fix the toast function to accept ToasterToast without id
 function toast(props: Omit<ToasterToast, "id">) {
   const id = genId()
 

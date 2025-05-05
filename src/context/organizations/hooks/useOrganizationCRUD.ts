@@ -1,4 +1,5 @@
 
+// At the top of the file, update type definition for Toast
 import { nanoid } from "nanoid";
 import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 
 // Define the Toast type locally
-type Toast = typeof toast;
+type ToastFunction = typeof toast;
 
 interface Props {
   organizations: Organization[];
@@ -18,7 +19,7 @@ interface Props {
   fetchOrganizationMembers: (organizationId: string) => Promise<void>;
   fetchOrganizationInvites: (organizationId: string) => Promise<void>;
   user: User | null;
-  toast: Toast;
+  toast: ToastFunction;
 }
 
 export const useOrganizationCRUD = ({ 
