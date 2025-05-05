@@ -4,7 +4,7 @@ import { useOrganizationsOperations } from "./useOrganizationsOperations";
 import { OrganizationsContextType } from "./types";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const OrganizationsContext = createContext<OrganizationsContextType | undefined>(undefined);
 
@@ -14,6 +14,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [loadingOrganizations, setLoadingOrganizations] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Initialize organizations when the provider mounts and auth status changes
   useEffect(() => {
@@ -24,8 +25,14 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         try {
           await operations.fetchOrganizations();
           
-          // If after fetching there are no organizations, redirect to the organizations page
-          if (operations.organizations.length === 0) {
+          // Only redirect to create organization page if:
+          // 1. We're not already on the organizations/new page
+          // 2. We have no organizations
+          // 3. We're not on the login page
+          const isOrganizationsNewPage = location.pathname === "/organizations/new";
+          const isLoginPage = location.pathname === "/login";
+          
+          if (operations.organizations.length === 0 && !isOrganizationsNewPage && !isLoginPage) {
             console.log("No organizations found after fetch, redirecting to organizations/new");
             navigate("/organizations/new");
           } else {
@@ -49,7 +56,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     };
     
     loadOrganizations();
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, location.pathname, navigate]);
   
   // Create a context value with loading state included
   const contextValue = {

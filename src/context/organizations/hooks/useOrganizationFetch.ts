@@ -46,9 +46,9 @@ export const useOrganizationFetch = ({
         throw memberError;
       }
       
-      console.log("Found organization memberships:", memberData.length);
+      console.log("Found organization memberships:", memberData?.length || 0);
       
-      if (memberData.length > 0) {
+      if (memberData && memberData.length > 0) {
         const organizationIds = memberData.map(m => m.organization_id);
         
         const { data: orgsData, error: orgsError } = await supabase

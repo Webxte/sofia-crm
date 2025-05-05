@@ -15,16 +15,27 @@ const NewOrganization = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // If authenticated and has organizations, redirect to dashboard
+    // Only redirect if the user has organizations and we've completed initial loading
     if (!isLoading && isAuthenticated && initialLoadComplete && organizations.length > 0) {
+      console.log("User has organizations, redirecting to dashboard");
       navigate("/dashboard", { replace: true });
     }
     
     // If not authenticated, redirect to login
     if (!isLoading && !isAuthenticated) {
+      console.log("User not authenticated, redirecting to login");
       navigate("/login", { replace: true });
     }
   }, [isLoading, isAuthenticated, organizations, initialLoadComplete, navigate]);
+  
+  // Add debug logging for the component render
+  console.log("NewOrganization render", { 
+    isLoading, 
+    isAuthenticated, 
+    initialLoadComplete, 
+    organizationsCount: organizations.length,
+    activeTab
+  });
   
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;

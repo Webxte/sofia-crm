@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,11 +112,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             company_name: 'Belmorso'
           }]);
           
-        // Create a password for the organization - Fixed TypeScript errors
-        // Instead of using RPC functions directly, use a simple hard-coded hash
+        // Create a password for the organization - using a simple hard-coded password
         // In a production environment, you would use a proper password hashing function
         const passwordHash = "password_hash_for_belmorso"; // A simplified approach for demo purposes
         
+        // Insert the password hash directly
         await supabase
           .from('organization_passwords')
           .insert([{
@@ -129,38 +128,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log("Found existing Belmorso organization with ID:", belmorsoOrgId);
       }
       
-      // Add user as owner of Belmorso organization
-      console.log("Adding user as owner of Belmorso organization...");
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert([{
-          organization_id: belmorsoOrgId,
-          user_id: currentUser.id,
-          role: 'owner'
-        }]);
+      // DO NOT automatically add the user as a member - let the user join manually
+      // This change allows the user to go through the joining flow
       
-      if (memberError) {
-        console.error("Error adding user as organization member:", memberError);
-        toast({
-          title: "Error",
-          description: "Failed to add you to the organization. Please try logging out and back in.",
-          variant: "destructive"
-        });
-        return;
-      }
+      // Instead, just set the membership check as complete
+      console.log("Setting membershipChecked = true, user will need to join manually");
+      setMembershipChecked(true);
       
-      console.log("Successfully added user as owner of Belmorso organization");
+      // Skip setting the organization in localStorage to allow the user to join manually
       
-      // Set this as the current organization in localStorage
-      localStorage.setItem('currentOrganizationId', belmorsoOrgId);
-      
-      // Notify user
+      // Inform the user they need to join
       toast({
-        title: "Organization Access Granted",
-        description: "You've been added as an owner of the Belmorso organization.",
+        title: "Welcome to Belmorso CRM",
+        description: "Please join the Belmorso organization using the Join tab.",
       });
       
-      setMembershipChecked(true);
     } catch (error) {
       console.error("Error in ensureUserHasBelmorsoAccess:", error);
       setMembershipChecked(true); // Mark as checked even on error to prevent infinite loops
