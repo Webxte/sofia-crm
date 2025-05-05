@@ -113,12 +113,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             company_name: 'Belmorso'
           }]);
           
-        // Create a password for the organization
+        // Create a password for the organization - Fixed TypeScript error here
+        // First generate a salt
+        const { data: salt } = await supabase.rpc('gen_salt', { type: 'bf' });
+        
+        if (!salt) {
+          console.error("Failed to generate salt for password");
+          return;
+        }
+        
+        // Then create the hash with the salt
+        const { data: hash } = await supabase.rpc('crypt', { 
+          password: 'Belmorso2024!', 
+          salt: salt 
+        });
+        
+        if (!hash) {
+          console.error("Failed to generate password hash");
+          return;
+        }
+        
+        // Finally insert the hashed password
         await supabase
           .from('organization_passwords')
           .insert([{
             organization_id: belmorsoOrgId,
-            password_hash: await supabase.rpc('crypt', { password: 'Belmorso2024!', salt: await supabase.rpc('gen_salt', { type: 'bf' }) })
+            password_hash: hash
           }]);
       } else {
         belmorsoOrgId = belmorsoOrg.id;
