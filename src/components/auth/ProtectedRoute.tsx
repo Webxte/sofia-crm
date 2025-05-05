@@ -20,30 +20,36 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const location = useLocation();
 
   useEffect(() => {
-    // Skip these checks on the organization login page
-    if (location.pathname.startsWith('/organizations/login')) {
+    // Skip these checks on specific auth routes
+    if (location.pathname === '/login' || 
+        location.pathname === '/register' ||
+        location.pathname === '/organizations/new' ||
+        location.pathname.startsWith('/organizations/login')) {
       return;
     }
 
-    // First priority: If authenticated but no current organization, 
-    // redirect to organization login for Belmorso
-    if (!isLoading && isAuthenticated && initialLoadComplete && !currentOrganization) {
+    // Only run redirects when auth and org data are loaded
+    if (isLoading || !initialLoadComplete) return;
+    
+    // First priority: If authenticated but no organizations at all, go to new org page
+    if (isAuthenticated && organizations.length === 0) {
+      console.log("No organizations found, redirecting to create new org");
+      navigate("/organizations/new", { replace: true });
+      return;
+    }
+
+    // Second priority: If authenticated but no current organization, 
+    // redirect to organization login for Belmorso or org selection
+    if (isAuthenticated && !currentOrganization) {
       console.log("Authenticated but no organization selected, redirecting to org login");
       navigate("/organizations/login?slug=belmorso", { replace: true });
       return;
     }
     
-    // Second priority: If not authenticated, redirect to login
-    if (!isLoading && !isAuthenticated) {
+    // Third priority: If not authenticated, redirect to login
+    if (!isAuthenticated) {
       console.log("Not authenticated, redirecting to login");
       navigate("/login", { replace: true });
-      return;
-    }
-
-    // Third priority: If no organizations at all, go to new org page
-    if (!isLoading && isAuthenticated && initialLoadComplete && organizations.length === 0) {
-      console.log("No organizations found, redirecting to create new org");
-      navigate("/organizations/new", { replace: true });
       return;
     }
   }, [
@@ -66,8 +72,10 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" replace />;
   }
 
-  // Block access if no current organization is set
-  if (!currentOrganization) {
+  // Block access if no current organization is set (except in the org pages)
+  if (!currentOrganization && 
+      !location.pathname.startsWith('/organizations/login') && 
+      !location.pathname.startsWith('/organizations/new')) {
     return <Navigate to="/organizations/login?slug=belmorso" replace />;
   }
 

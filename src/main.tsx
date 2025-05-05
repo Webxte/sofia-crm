@@ -16,8 +16,7 @@ if (!rootElement) {
   console.error("Root element not found!");
 } else {
   const root = createRoot(rootElement);
-  // Ensure proper nesting of providers - OrganizationsProvider is moved inside App
-  // to avoid circular dependencies and ensure Auth is available first
+  // Proper nesting: React.StrictMode -> BrowserRouter -> HelmetProvider -> AuthProvider -> App
   root.render(
     <React.StrictMode>
       <BrowserRouter>

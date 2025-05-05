@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Lock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),

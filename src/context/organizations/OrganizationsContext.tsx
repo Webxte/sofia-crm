@@ -25,15 +25,14 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         try {
           await operations.fetchOrganizations();
           
-          // Check if we're on login or similar non-org required pages
-          const isOrgLoginPage = location.pathname === "/organizations/login";
+          // Check if we're on non-organization pages
+          const isOrgLoginPage = location.pathname.startsWith("/organizations/login");
           const isLoginPage = location.pathname === "/login";
           const isRegisterPage = location.pathname === "/register";
           const isNewOrgPage = location.pathname === "/organizations/new";
           const isNonOrgPage = isOrgLoginPage || isLoginPage || isRegisterPage || isNewOrgPage;
           
-          // If no organizations found and not on a non-org page, redirect to org login
-          if (operations.organizations.length === 0 && !isNonOrgPage) {
+          if (operations.organizations.length === 0 && !isNewOrgPage) {
             console.log("No organizations found, redirecting to create org page");
             navigate("/organizations/new");
           } 
@@ -66,7 +65,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     };
     
     loadOrganizations();
-  }, [isAuthenticated, user?.id, location.pathname, navigate]);
+  }, [isAuthenticated, user?.id, location.pathname, navigate, operations]);
   
   // Create a context value with loading state included
   const contextValue = {

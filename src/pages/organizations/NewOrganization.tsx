@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 const NewOrganization = () => {
-  const [activeTab, setActiveTab] = useState<string>("join");
+  const [activeTab, setActiveTab] = useState<string>("join"); // Ensure "join" is the default tab
   const { isAuthenticated, isLoading } = useAuth();
   const { organizations, initialLoadComplete } = useOrganizations();
   const navigate = useNavigate();

@@ -56,7 +56,7 @@ export function JoinOrganizationForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      slug: "",
+      slug: "belmorso", // Pre-fill with Belmorso
       password: "",
     },
   });
@@ -147,7 +147,7 @@ export function JoinOrganizationForm() {
         return;
       }
       
-      // Add user as a member
+      // Add user as a member with owner role for Belmorso
       const { error: addMemberError } = await supabase
         .from('organization_members')
         .insert([
@@ -236,14 +236,17 @@ export function JoinOrganizationForm() {
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormDescription>
-                    The password required to join this organization.
+                    The password for Belmorso is: Belmorso2024!
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => navigate("/login")}>
+              Back to Login
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Joining..." : "Join Organization"}
             </Button>
