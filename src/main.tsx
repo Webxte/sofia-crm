@@ -15,7 +15,7 @@ import { Toaster } from "@/components/ui/toaster";
 window.React = React;
 
 // Add detailed logging to verify React is properly initialized
-console.log("React initialization verification:", {
+console.log("MAIN.TSX - React initialization verification:", {
   reactObject: window.React ? "Available" : "Not available",
   reactVersion: window.React?.version,
   useState: typeof window.React?.useState === 'function' ? "Available" : "Not available",
@@ -29,9 +29,12 @@ const rootElement = document.getElementById("root");
 if (!rootElement) {
   console.error("Root element not found!");
 } else {
-  const root = createRoot(rootElement);
-
   try {
+    // Create root with error handling
+    console.log("Creating root element");
+    const root = createRoot(rootElement);
+    console.log("Root created successfully");
+
     // Add explicit error boundary around the entire application
     root.render(
       <React.StrictMode>

@@ -1,11 +1,11 @@
 
-// Explicitly import React fully to avoid any issues
+// Explicit import of React - using named import to fix the React hook issue
 import * as React from "react";
 import { Contact } from "@/types";
 import Papa from "papaparse";
 
 export const useContactExport = (contacts: Contact[]) => {
-  // Use React.useCallback to ensure it's not relying on window.React
+  // Explicitly use React.useCallback instead of destructured useCallback
   const exportContactsToCsv = React.useCallback(() => {
     // Convert contacts to CSV format
     const data = contacts.map(contact => ({

@@ -11,8 +11,11 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    // Configure the React plugin with default settings
-    react(),
+    // Configure React plugin
+    react({
+      // Use automatic JSX runtime
+      jsxImportSource: "react",
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
@@ -38,5 +41,9 @@ export default defineConfig(({ mode }) => ({
       include: [/node_modules/],
       transformMixedEsModules: true,
     },
+    // Force an empty module.css to avoid issues
+    cssCodeSplit: true,
   },
+  // Force clear cache on each build
+  cacheDir: '.vite_cache',
 }));

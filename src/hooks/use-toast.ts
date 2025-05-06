@@ -1,5 +1,5 @@
 
-// Fully import React to avoid any window.React dependencies
+// Fully import React to ensure hooks are available
 import * as React from "react";
 
 import type {
@@ -190,4 +190,5 @@ export function useToast() {
   };
 }
 
+// Ensure toast is exported properly
 export { toast };

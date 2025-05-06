@@ -11,10 +11,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>CRM</title>
+    <!-- Load React directly from CDN before any other scripts -->
+    <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
     <script>
-      // Ensure React is defined globally as early as possible
-      window.React = {};
+      // Verify React is loaded properly
       console.log("React defined in head:", window.React);
+      console.log("React version:", window.React?.version);
+      console.log("useState available:", typeof window.React?.useState);
+      console.log("useCallback available:", typeof window.React?.useCallback);
     </script>
   </head>
   <body>
@@ -22,6 +27,7 @@
     <script>
       // Verify React is still defined before scripts load
       console.log("React check before scripts:", window.React);
+      console.log("useState still available:", typeof window.React?.useState);
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <!-- Force fresh load with timestamp -->
