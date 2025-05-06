@@ -1,10 +1,9 @@
-
-import React, { useCallback } from "react";
+import * as React from "react";
 import { Contact } from "@/types";
 import Papa from "papaparse";
 
 export const useContactExport = (contacts: Contact[]) => {
-  const exportContactsToCsv = useCallback(() => {
+  const exportContactsToCsv = React.useCallback(() => {
     // Convert contacts to CSV format
     const data = contacts.map(contact => ({
       Name: contact.fullName,
