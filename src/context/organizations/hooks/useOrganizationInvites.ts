@@ -17,7 +17,7 @@ export const useOrganizationInvites = ({ currentOrganization, toast }: Props) =>
   const [invites, setInvites] = React.useState<OrganizationInvite[]>([]);
   
   // Fetch pending invites for the current organization
-  const fetchOrganizationInvites = async (organizationId: string) => {
+  const fetchOrganizationInvites = React.useCallback(async (organizationId: string) => {
     try {
       const { data, error } = await supabase
         .from('organization_invites')
@@ -42,7 +42,7 @@ export const useOrganizationInvites = ({ currentOrganization, toast }: Props) =>
     } catch (error) {
       console.error('Error fetching organization invites:', error);
     }
-  };
+  }, []);
   
   return {
     invites,

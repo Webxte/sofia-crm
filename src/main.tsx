@@ -5,9 +5,12 @@ import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import './index.css';
-import { AuthProvider } from './context/AuthContext.tsx';
-import { OrganizationsProvider } from './context/OrganizationsContext.tsx';
+import { AuthProvider } from './context/AuthContext';
+import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
 import { Toaster } from "@/components/ui/toaster";
+
+// Expose React to window for debugging
+window.React = React;
 
 // Get the root element
 const rootElement = document.getElementById("root");
