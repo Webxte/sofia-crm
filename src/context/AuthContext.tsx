@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -24,7 +23,7 @@ interface AuthContextType {
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state with explicit null values
+  // Initialize state with explicit React.useState
   const [user, setUser] = React.useState<ExtendedUser | null>(null);
   const [session, setSession] = React.useState<Session | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -157,9 +156,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated,
     isAdmin,
     isLoading,
-    login,
-    createUser,
-    logout,
+    login: async (email: string, password: string) => {
+      setIsLoading(true);
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) {
+          throw error;
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    createUser: async (name: string, email: string, password: string, role: "admin" | "agent") => {
+      setIsLoading(true);
+      try {
+        const { error, data } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name,
+              role,
+            },
+          }
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        console.log("User created successfully:", data);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    logout: async () => {
+      setIsLoading(true);
+      try {
+        // First clear state so the UI updates immediately
+        setUser(null);
+        setSession(null);
+        
+        // Clear organization data
+        localStorage.removeItem('currentOrganizationId');
+        
+        // Then sign out from supabase
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          throw error;
+        }
+      } catch (error) {
+        console.error("Error during logout:", error);
+      } finally {
+        setIsLoading(false);
+        // Clear any cached data that might be causing issues
+        localStorage.removeItem('supabase.auth.token');
+      }
+    }
   };
 
   return (

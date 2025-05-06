@@ -1,9 +1,11 @@
 
+// Explicitly import React fully to avoid any issues
 import * as React from "react";
 import { Contact } from "@/types";
 import Papa from "papaparse";
 
 export const useContactExport = (contacts: Contact[]) => {
+  // Use React.useCallback to ensure it's not relying on window.React
   const exportContactsToCsv = React.useCallback(() => {
     // Convert contacts to CSV format
     const data = contacts.map(contact => ({

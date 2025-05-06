@@ -1,4 +1,5 @@
 
+// Explicitly import the full React library and all hooks we might need
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -9,15 +10,17 @@ import { AuthProvider } from './context/AuthContext';
 import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
 import { Toaster } from "@/components/ui/toaster";
 
-// IMPORTANT: Expose React globally BEFORE any component imports
-// This ensures React is available for all modules that might need it
+// CRITICAL: First, ensure React is globally available BEFORE any component imports or rendering
+// Explicitly expose React and its hooks to the window object
 window.React = React;
 
-// Verify React is exposed properly with a console log
-console.log("React initialization check:", {
-  reactAvailable: !!window.React,
+// Add detailed logging to verify React is properly initialized
+console.log("React initialization verification:", {
+  reactObject: window.React ? "Available" : "Not available",
   reactVersion: window.React?.version,
-  hooksAvailable: !!window.React?.useState
+  useState: typeof window.React?.useState === 'function' ? "Available" : "Not available",
+  useEffect: typeof window.React?.useEffect === 'function' ? "Available" : "Not available",
+  useCallback: typeof window.React?.useCallback === 'function' ? "Available" : "Not available"
 });
 
 // Get the root element
@@ -28,18 +31,24 @@ if (!rootElement) {
 } else {
   const root = createRoot(rootElement);
 
-  root.render(
-    <React.StrictMode>
-      <BrowserRouter>
-        <HelmetProvider>
-          <AuthProvider>
-            <OrganizationsProvider>
-              <App />
-              <Toaster />
-            </OrganizationsProvider>
-          </AuthProvider>
-        </HelmetProvider>
-      </BrowserRouter>
-    </React.StrictMode>
-  );
+  try {
+    // Add explicit error boundary around the entire application
+    root.render(
+      <React.StrictMode>
+        <BrowserRouter>
+          <HelmetProvider>
+            <AuthProvider>
+              <OrganizationsProvider>
+                <App />
+                <Toaster />
+              </OrganizationsProvider>
+            </AuthProvider>
+          </HelmetProvider>
+        </BrowserRouter>
+      </React.StrictMode>
+    );
+    console.log("Application rendered successfully");
+  } catch (error) {
+    console.error("Error rendering application:", error);
+  }
 }

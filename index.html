@@ -11,16 +11,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>CRM</title>
+    <script>
+      // Define window.React as a placeholder object before any scripts load
+      // This ensures React is available before any code tries to access it
+      window.React = window.React || {};
+      console.log("Initial React setup in head:", window.React);
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script>
-      // Ensure window.React is defined as an empty object before any scripts load
-      // This prevents null reference errors if scripts try to access React before it's loaded
-      window.React = window.React || {};
+      // Double-check React is defined before script loading
+      console.log("Pre-script React check:", window.React);
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Add cache-busting timestamp to ensure fresh React code -->
+    <script type="module" src="/src/main.tsx?t=<?= Date.now() ?>"></script>
     <script>
       // Register service worker for offline support
       if ('serviceWorker' in navigator) {

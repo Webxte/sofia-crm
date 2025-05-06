@@ -1,4 +1,5 @@
 
+// Fully import React to avoid any window.React dependencies
 import * as React from "react";
 
 import type {
@@ -169,6 +170,7 @@ function toast(props: Omit<ToasterToast, "id">) {
 }
 
 export function useToast() {
+  // Use explicitly qualified React hooks
   const [state, setState] = React.useState<State>(memoryState);
 
   React.useEffect(() => {

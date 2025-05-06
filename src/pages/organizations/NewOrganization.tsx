@@ -1,4 +1,5 @@
 
+// Fully import React to avoid any issues with window.React
 import * as React from "react";
 import { Helmet } from "react-helmet-async";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

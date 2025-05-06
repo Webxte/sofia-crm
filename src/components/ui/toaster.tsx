@@ -1,4 +1,5 @@
 
+// Fully import React to avoid any issues with window.React
 import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -12,6 +13,8 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast();
+
+  console.log("Toaster component rendering with toasts:", toasts.length);
 
   return (
     <ToastProvider>

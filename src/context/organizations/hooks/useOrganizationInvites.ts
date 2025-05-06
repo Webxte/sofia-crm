@@ -1,4 +1,5 @@
 
+// Explicitly import React and use qualified names for hooks
 import * as React from "react";
 import { Organization, OrganizationInvite } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,9 +18,10 @@ export const useOrganizationInvites = ({
   currentOrganization, 
   toast 
 }: Props) => {
+  // Use React.useState instead of relying on window.React
   const [invites, setInvites] = React.useState<OrganizationInvite[]>([]);
   
-  // Fetch pending invites for the current organization
+  // Use React.useCallback instead of relying on window.React
   const fetchOrganizationInvites = React.useCallback(async (organizationId: string) => {
     try {
       const { data, error } = await supabase
