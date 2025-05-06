@@ -13,7 +13,10 @@ interface Props {
   toast: ToastFunction;
 }
 
-export const useOrganizationInvites = ({ currentOrganization, toast }: Props) => {
+export const useOrganizationInvites = ({ 
+  currentOrganization, 
+  toast 
+}: Props) => {
   const [invites, setInvites] = React.useState<OrganizationInvite[]>([]);
   
   // Fetch pending invites for the current organization

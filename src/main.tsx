@@ -9,8 +9,16 @@ import { AuthProvider } from './context/AuthContext';
 import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
 import { Toaster } from "@/components/ui/toaster";
 
-// Expose React to window for debugging - ensure this happens before any components use React
+// IMPORTANT: Expose React globally BEFORE any component imports
+// This ensures React is available for all modules that might need it
 window.React = React;
+
+// Verify React is exposed properly with a console log
+console.log("React initialization check:", {
+  reactAvailable: !!window.React,
+  reactVersion: window.React?.version,
+  hooksAvailable: !!window.React?.useState
+});
 
 // Get the root element
 const rootElement = document.getElementById("root");
