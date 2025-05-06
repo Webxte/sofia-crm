@@ -9,7 +9,7 @@ import { AuthProvider } from './context/AuthContext';
 import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
 import { Toaster } from "@/components/ui/toaster";
 
-// Expose React to window for debugging
+// Expose React to window for debugging - ensure this happens before any components use React
 window.React = React;
 
 // Get the root element

@@ -10,7 +10,8 @@ import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { DebugHooks } from "@/components/DebugHooks";
 
 const NewOrganization = () => {
-  const [activeTab, setActiveTab] = React.useState<string>("join"); // Set "join" as the default tab
+  // Explicitly set "join" as the default tab
+  const [activeTab, setActiveTab] = React.useState<string>("join");
   const { isAuthenticated, isLoading } = useAuth();
   const { organizations, initialLoadComplete } = useOrganizations();
   const navigate = useNavigate();
