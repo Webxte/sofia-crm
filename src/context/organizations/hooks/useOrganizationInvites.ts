@@ -1,6 +1,5 @@
 
-// At the top of the file, update type definition for Toast
-import { useState } from "react";
+import React, { useState } from "react";
 import { Organization, OrganizationInvite } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";

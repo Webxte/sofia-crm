@@ -1,6 +1,5 @@
 
-import * as React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateOrganizationForm } from "@/components/organizations/CreateOrganizationForm";
