@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import * as React from "react";
 import { Organization, OrganizationInvite } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export const useOrganizationInvites = ({ currentOrganization, toast }: Props) => {
-  const [invites, setInvites] = useState<OrganizationInvite[]>([]);
+  const [invites, setInvites] = React.useState<OrganizationInvite[]>([]);
   
   // Fetch pending invites for the current organization
   const fetchOrganizationInvites = async (organizationId: string) => {

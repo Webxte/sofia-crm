@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import * as React from "react";
 import { Helmet } from "react-helmet-async";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateOrganizationForm } from "@/components/organizations/CreateOrganizationForm";
@@ -10,12 +10,12 @@ import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { DebugHooks } from "@/components/DebugHooks";
 
 const NewOrganization = () => {
-  const [activeTab, setActiveTab] = useState<string>("join"); // Set "join" as the default tab
+  const [activeTab, setActiveTab] = React.useState<string>("join"); // Set "join" as the default tab
   const { isAuthenticated, isLoading } = useAuth();
   const { organizations, initialLoadComplete } = useOrganizations();
   const navigate = useNavigate();
   
-  useEffect(() => {
+  React.useEffect(() => {
     // Only redirect if the user has organizations and we've completed initial loading
     if (!isLoading && isAuthenticated && initialLoadComplete && organizations.length > 0) {
       console.log("User has organizations, redirecting to dashboard");
