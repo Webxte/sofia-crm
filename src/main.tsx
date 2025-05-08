@@ -8,7 +8,7 @@ import App from './App.tsx';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "./components/ui/toaster";
 
 // CRITICAL: First, ensure React is globally available BEFORE any component imports or rendering
 // Explicitly expose React and its hooks to the window object

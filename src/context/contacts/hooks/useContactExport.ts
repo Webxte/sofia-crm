@@ -1,5 +1,6 @@
 
-import React from 'react';
+// Use full import to ensure React is loaded properly
+import * as React from 'react';
 import { Contact } from "@/types";
 import Papa from "papaparse";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useContactExport = (contacts: Contact[]) => {
   const { toast } = useToast();
   
+  // Use explicitly qualified React.useCallback
   const exportContactsToCsv = React.useCallback(() => {
     try {
       // Convert contacts to CSV format

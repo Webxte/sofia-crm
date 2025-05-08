@@ -1,4 +1,5 @@
 
+// Import React explicitly at the top
 import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -13,7 +14,8 @@ import {
 export function Toaster() {
   const { toasts } = useToast();
 
-  console.log("Toaster component rendering with toasts:", toasts?.length || 0);
+  // Add debug log to check toast functionality
+  console.log("Toaster component rendering with toasts:", toasts?.length || 0, "React available:", !!React);
 
   return (
     <ToastProvider>
