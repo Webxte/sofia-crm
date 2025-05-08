@@ -1,6 +1,5 @@
 
-// Import React as default, not just with namespace
-import React from "react";
+import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Toast,

@@ -1,6 +1,6 @@
 
-// Import React as default, not just namespace
-import React from "react";
+// Import React using namespace import
+import * as React from "react";
 
 // Correctly re-export everything from the main implementation
 import { toast, useToast, type ToasterToast, type ToastProps } from "@/hooks/use-toast";

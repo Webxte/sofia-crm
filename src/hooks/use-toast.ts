@@ -1,5 +1,5 @@
 
-import React from "react";
+import * as React from "react";
 import { ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 10;
@@ -172,10 +172,8 @@ function toast({ ...props }: ToastProps) {
 }
 
 function useToast() {
-  // Use React.useState to ensure React is available
   const [state, setState] = React.useState<State>(memoryState);
 
-  // Use React.useEffect to ensure React is available
   React.useEffect(() => {
     listeners.push(setState);
     return () => {
