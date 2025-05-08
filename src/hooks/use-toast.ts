@@ -1,17 +1,18 @@
 
 // Import React explicitly at the top
 import * as React from "react";
-import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast";
+import { ToastProps, ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 10;
 const TOAST_REMOVE_DELAY = 1000;
 
-type ToasterToast = Toast & {
+// Define the ToasterToast type without circular references
+export interface ToasterToast extends ToastProps {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
-};
+}
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -134,9 +135,10 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToasterToast, "id">;
+// Define the Toast type separately, not as a self-referencing type
+export type ToastProps = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
+function toast({ ...props }: ToastProps) {
   const id = genId();
 
   const update = (props: ToasterToast) =>
@@ -189,4 +191,3 @@ function useToast() {
 }
 
 export { toast, useToast };
-export type { ToasterToast };

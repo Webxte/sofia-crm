@@ -2,9 +2,9 @@
 // Import React fully and explicitly
 import * as React from "react";
 
-// Forward export - be explicit about what we're exporting
-// Using a more explicit approach to avoid any circular dependencies
-import { toast, useToast, type Toast } from "@/hooks/use-toast";
+// Correctly re-export everything from the main implementation
+import { toast, useToast, type ToasterToast, type ToastProps } from "@/hooks/use-toast";
 
-// Re-export the imports to maintain compatibility
-export { toast, useToast, type Toast };
+// Re-export these types and functions
+export { toast, useToast };
+export type { ToasterToast, ToastProps };
