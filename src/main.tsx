@@ -11,7 +11,7 @@ import { OrganizationsProvider } from './context/organizations/OrganizationsCont
 import { Toaster } from "./components/ui/toaster";
 
 // CRITICAL: First, ensure React is globally available BEFORE any component imports or rendering
-// Explicitly expose React and its hooks to the window object
+// Explicitly expose React to the window object
 window.React = React;
 
 // Add detailed logging to verify React is properly initialized

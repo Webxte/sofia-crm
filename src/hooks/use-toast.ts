@@ -1,6 +1,6 @@
 
-// Import React explicitly at the top
-import * as React from "react";
+// Import React with named imports, not just namespace
+import React from "react";
 import { ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 10;
@@ -173,8 +173,10 @@ function toast({ ...props }: ToastProps) {
 }
 
 function useToast() {
+  // Use React.useState with explicit namespace to ensure React is available
   const [state, setState] = React.useState<State>(memoryState);
 
+  // Use React.useEffect with explicit namespace
   React.useEffect(() => {
     listeners.push(setState);
     return () => {
