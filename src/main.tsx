@@ -1,6 +1,6 @@
 
 // Explicitly import the full React library and all hooks we might need
-import * as React from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';

@@ -1,5 +1,4 @@
 
-// Fully import React to avoid any issues with window.React
 import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
