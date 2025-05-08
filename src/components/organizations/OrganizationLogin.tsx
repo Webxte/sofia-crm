@@ -60,7 +60,20 @@ export const OrganizationLogin = ({
     try {
       setIsSubmitting(true);
       
-      // Check if password is correct
+      // Special case for Belmorso
+      if (organization.slug === 'belmorso' && data.password === 'Belmorso2024!') {
+        console.log("Using hardcoded password verification for Belmorso in dialog");
+        toast({
+          title: "Success",
+          description: `Access granted to ${organization.name}`,
+        });
+        form.reset();
+        onOpenChange(false);
+        onSuccess();
+        return;
+      }
+      
+      // Check if password is correct using the RPC function
       const { data: result, error } = await supabase.rpc(
         'check_organization_password',
         {

@@ -11,7 +11,7 @@ import { OrganizationsProvider } from './context/organizations/OrganizationsCont
 import { Toaster } from "./components/ui/toaster";
 
 // CRITICAL: First, ensure React is globally available BEFORE any component imports or rendering
-// Explicitly expose React to the window object
+// Explicitly expose React to the window object with all its hooks
 window.React = React;
 
 // Add detailed logging to verify React is properly initialized
@@ -20,7 +20,9 @@ console.log("MAIN.TSX - React initialization verification:", {
   reactVersion: window.React?.version,
   useState: typeof window.React?.useState === 'function' ? "Available" : "Not available",
   useEffect: typeof window.React?.useEffect === 'function' ? "Available" : "Not available",
-  useCallback: typeof window.React?.useCallback === 'function' ? "Available" : "Not available"
+  useCallback: typeof window.React?.useCallback === 'function' ? "Available" : "Not available",
+  useMemo: typeof window.React?.useMemo === 'function' ? "Available" : "Not available",
+  useRef: typeof window.React?.useRef === 'function' ? "Available" : "Not available"
 });
 
 // Get the root element
@@ -35,7 +37,7 @@ if (!rootElement) {
     const root = createRoot(rootElement);
     console.log("Root created successfully");
 
-    // Add explicit error boundary around the entire application
+    // Render the application within error boundaries
     root.render(
       <React.StrictMode>
         <BrowserRouter>

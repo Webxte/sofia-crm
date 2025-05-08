@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
@@ -22,13 +22,13 @@ interface AuthContextType {
 }
 
 // Create context with undefined as default value
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state with explicit React.useState
-  const [user, setUser] = React.useState<ExtendedUser | null>(null);
-  const [session, setSession] = React.useState<Session | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  // Initialize state with useState hook
+  const [user, setUser] = useState<ExtendedUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Helper function to extract user name from metadata
   const getUserWithName = (supabaseUser: User | null): ExtendedUser | null => {
@@ -44,10 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("Setting up auth state listener");
     
-    // Set up the auth state listener first
+    // Set up the auth state listener first (this order is important)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed:", event);
@@ -58,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           organizationId: extendedUser.organizationId
         } : null);
         
+        // Update session and user state
         setSession(currentSession);
         setUser(extendedUser);
         setIsLoading(false);
@@ -171,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }

@@ -1,5 +1,4 @@
 
-// Use explicit named imports for React
 import React from 'react';
 import { Contact } from "@/types";
 import Papa from "papaparse";
@@ -8,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useContactExport = (contacts: Contact[]) => {
   const { toast } = useToast();
   
-  // Use React.useCallback explicitly with namespace
+  // Use React.useCallback to ensure React is available
   const exportContactsToCsv = React.useCallback(() => {
     try {
       // Convert contacts to CSV format

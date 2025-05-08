@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -86,16 +85,15 @@ export function JoinOrganizationForm() {
         return;
       }
       
-      // Special case for Belmorso organization - hardcoded verification
-      const isBelmorsoOrg = organization.slug === 'belmorso';
+      // Check password
       let isPasswordCorrect = false;
       
-      if (isBelmorsoOrg && values.password === 'Belmorso2024!') {
-        // Hardcoded password for Belmorso
+      // Special case for Belmorso
+      if (organization.slug === 'belmorso' && values.password === 'Belmorso2024!') {
         isPasswordCorrect = true;
         console.log("Using hardcoded password verification for Belmorso");
       } else {
-        // For other organizations, try to verify using Supabase RPC
+        // For other organizations, verify using RPC function
         try {
           const { data: verificationResult, error: passwordError } = await supabase.rpc(
             'check_organization_password',
@@ -110,11 +108,6 @@ export function JoinOrganizationForm() {
           console.log("Password verification result:", isPasswordCorrect);
         } catch (verifyError) {
           console.error("Error verifying password:", verifyError);
-          // Fallback to hardcoded password verification for Belmorso
-          if (isBelmorsoOrg && values.password === 'Belmorso2024!') {
-            isPasswordCorrect = true;
-            console.log("Fallback: Using hardcoded password for Belmorso");
-          }
         }
       }
       
@@ -154,7 +147,7 @@ export function JoinOrganizationForm() {
           {
             organization_id: organization.id,
             user_id: user.id,
-            role: isBelmorsoOrg ? 'owner' : 'member' // Make the user an owner for Belmorso
+            role: organization.slug === 'belmorso' ? 'owner' : 'member' // Make the user an owner for Belmorso
           }
         ]);
       

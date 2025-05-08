@@ -49,7 +49,9 @@ const OrganizationLogin = () => {
     const loadOrganization = async () => {
       if (slug) {
         try {
+          console.log("Loading organization with slug:", slug);
           const org = await getOrganizationBySlug(slug);
+          console.log("Organization loaded:", org);
           setOrganization(org);
           setIsLoaded(true);
         } catch (err) {
@@ -73,11 +75,11 @@ const OrganizationLogin = () => {
     setError(null);
     
     try {
+      console.log("Attempting to verify password for organization:", organization.name);
+      
       // Special case for Belmorso
       if (organization.slug === 'belmorso' && values.password === 'Belmorso2024!') {
-        // Hardcoded password verification for Belmorso
         console.log("Using hardcoded password verification for Belmorso");
-        
         // Success - proceed with login
         await switchOrganization(organization.id);
         
@@ -96,8 +98,40 @@ const OrganizationLogin = () => {
         return;
       }
       
-      // For non-Belmorso orgs, handle with regular password verification
-      // This is just a placeholder for now since we're focusing on Belmorso
+      // For non-Belmorso orgs, check password with database function
+      const { data: passwordCorrect, error: passwordError } = await supabase.rpc(
+        'check_organization_password',
+        {
+          org_id: organization.id,
+          password: values.password
+        }
+      );
+      
+      if (passwordError) {
+        throw passwordError;
+      }
+      
+      if (passwordCorrect) {
+        console.log("Password verified, switching organization");
+        // Success - proceed with login
+        await switchOrganization(organization.id);
+        
+        toast({
+          title: "Success",
+          description: `Access granted to ${organization.name}`,
+        });
+        
+        // If the user is already authenticated, redirect to dashboard
+        if (isAuthenticated && user) {
+          navigate('/dashboard');
+        } else {
+          // Otherwise redirect to login
+          navigate('/login');
+        }
+        return;
+      }
+      
+      // Password incorrect
       setError("Incorrect password for this organization.");
       
     } catch (error) {
