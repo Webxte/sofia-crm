@@ -56,22 +56,28 @@ const Index = () => {
     );
   }
 
-  // Redirect logic based on authentication status
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // If authenticated but no organizations, redirect to create a new one
-  if (initialLoadComplete && organizations.length === 0) {
-    return <Navigate to="/organizations/new" replace />;
-  }
-
-  // If authenticated but no organization selected, redirect to organization login
+  // First, redirect to organization login if no organization is selected
+  // This takes priority over authentication
   if (initialLoadComplete && !currentOrganization) {
     return <Navigate to="/organizations/login?slug=belmorso" replace />;
   }
 
-  // If all conditions are met, redirect to dashboard
+  // Then, if authenticated but no organizations, redirect to create a new one
+  if (initialLoadComplete && isAuthenticated && organizations.length === 0) {
+    return <Navigate to="/organizations/new" replace />;
+  }
+  
+  // If not authenticated but organization is selected, redirect to login
+  if (!isAuthenticated && currentOrganization) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // If not authenticated and no organization, we already redirected to org login above
+  if (!isAuthenticated) {
+    return <Navigate to="/organizations/login?slug=belmorso" replace />;
+  }
+
+  // If all conditions are met (authenticated and has organization), redirect to dashboard
   return <Navigate to="/dashboard" replace />;
 };
 

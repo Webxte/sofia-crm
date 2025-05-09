@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate, Navigate, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,15 +31,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Check if we need to redirect to organization login first
-  useEffect(() => {
-    if (isAuthenticated && !currentOrganization && !location.pathname.startsWith('/organizations/login')) {
-      console.log("Authenticated but no organization, redirecting to org login");
-      navigate("/organizations/login?slug=belmorso", { replace: true });
-    }
-  }, [isAuthenticated, currentOrganization, navigate, location.pathname]);
+  // Redirect to organization selection if no organization is selected
+  if (!currentOrganization) {
+    return <Navigate to="/organizations/login?slug=belmorso" replace />;
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -54,8 +50,7 @@ const Login = () => {
       setLoading(true);
       await login(data.email, data.password);
       
-      // Don't navigate here - let the auth effect handle redirects
-      // This ensures organization context is checked first
+      // Login successful, should auto-redirect via auth effect
     } catch (error: any) {
       toast({
         title: "Error",
@@ -67,18 +62,16 @@ const Login = () => {
     }
   };
 
-  // Only redirect to dashboard if both authenticated and have organization
+  // If authenticated and organization is selected, redirect to dashboard
   if (isAuthenticated && currentOrganization) {
     return <Navigate to="/dashboard" replace />;
   }
-  
-  // If authenticated but no org, we'll redirect through the effect above
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40">
       <div className="mx-auto w-full max-w-md space-y-6 rounded-lg border bg-card p-6 shadow-lg">
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">Welcome Back</h1>
+          <h1 className="text-3xl font-bold">Welcome to {currentOrganization?.name || "CRM"}</h1>
           <p className="text-muted-foreground">Enter your credentials to access your account</p>
         </div>
 

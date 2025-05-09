@@ -31,22 +31,23 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     // Only run redirects when auth and org data are loaded
     if (isLoading || !initialLoadComplete) return;
     
-    // First priority: If authenticated but no organizations at all, go to new org page
+    // First priority: If no current organization, redirect to organization login
+    // This happens even before authentication check
+    if (!currentOrganization) {
+      console.log("No organization selected, redirecting to org login");
+      navigate("/organizations/login?slug=belmorso", { replace: true });
+      return;
+    }
+    
+    // Second priority: If authenticated but no organizations at all, go to new org page
     if (isAuthenticated && organizations.length === 0) {
       console.log("No organizations found, redirecting to create new org");
       navigate("/organizations/new", { replace: true });
       return;
     }
-
-    // Second priority: If authenticated but no current organization, 
-    // redirect to organization login for Belmorso or org selection
-    if (isAuthenticated && !currentOrganization) {
-      console.log("Authenticated but no organization selected, redirecting to org login");
-      navigate("/organizations/login?slug=belmorso", { replace: true });
-      return;
-    }
     
     // Third priority: If not authenticated, redirect to login
+    // But only after organization is selected
     if (!isAuthenticated) {
       console.log("Not authenticated, redirecting to login");
       navigate("/login", { replace: true });
@@ -67,16 +68,16 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
-  // Block access if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
   // Block access if no current organization is set (except in the org pages)
   if (!currentOrganization && 
       !location.pathname.startsWith('/organizations/login') && 
       !location.pathname.startsWith('/organizations/new')) {
     return <Navigate to="/organizations/login?slug=belmorso" replace />;
+  }
+
+  // Block access if not authenticated (after organization check)
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
   // Block access for non-admins if admin required
