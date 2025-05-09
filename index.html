@@ -11,27 +11,27 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>CRM</title>
-    <!-- Load React directly from CDN before any other scripts -->
-    <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+    <!-- Load React directly from CDN before any other scripts, make sure to use specific versions -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
     <script>
-      // Verify React is loaded properly
-      console.log("React defined in head:", window.React);
-      console.log("React version:", window.React?.version);
-      console.log("useState available:", typeof window.React?.useState);
-      console.log("useCallback available:", typeof window.React?.useCallback);
+      // Verify React is loaded properly and attach it to window
+      console.log("React version loaded in head:", React?.version || "NOT LOADED");
+      console.log("useState hook available:", typeof React?.useState === 'function' ? "YES" : "NO");
+      console.log("useCallback hook available:", typeof React?.useCallback === 'function' ? "YES" : "NO");
+      
+      // Make sure React is globally available
+      window.React = React;
     </script>
   </head>
   <body>
     <div id="root"></div>
     <script>
       // Verify React is still defined before scripts load
-      console.log("React check before scripts:", window.React);
-      console.log("useState still available:", typeof window.React?.useState);
+      console.log("React check before scripts:", window.React ? "AVAILABLE" : "NOT AVAILABLE");
+      console.log("useState hook still available:", typeof window.React?.useState === 'function' ? "YES" : "NO");
     </script>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <!-- Force fresh load with timestamp -->
-    <script type="module" src="/src/main.tsx?v=<?= Date.now() ?>"></script>
+    <script type="module" src="/src/main.tsx"></script>
     <script>
       // Register service worker for offline support
       if ('serviceWorker' in navigator) {
