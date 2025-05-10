@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Contact } from "@/types";
 import Papa from "papaparse";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useContactExport = (contacts: Contact[]) => {
   const { toast } = useToast();
   
-  // Use React hook without relying on React being globally available
+  // Use React.useCallback instead of directly using useCallback
   const exportContactsToCsv = React.useCallback(() => {
     try {
       // Convert contacts to CSV format

@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import React from "react";
 import { Contact } from "@/types";
 import { useContactsFetch } from "./hooks/useContactsFetch";
 import { useContactCRUD } from "./hooks/useContactCRUD";
@@ -19,7 +19,7 @@ export const useContactsOperations = () => {
   const { addContact, updateContact, deleteContact } = useContactCRUD(setContacts);
   
   // Refresh operation - simplified to avoid typing issues
-  const refreshContacts = useCallback(async () => {
+  const refreshContacts = React.useCallback(async () => {
     await fetchContacts();
   }, [fetchContacts]);
   

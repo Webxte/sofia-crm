@@ -26,9 +26,10 @@ export default defineConfig(({ mode }) => ({
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
   },
-  // Optimize for React
+  // Optimize for React and ensure single instance
   optimizeDeps: {
     include: ['react', 'react-dom'],
+    force: true, // Force dependency re-optimization
     esbuildOptions: {
       define: {
         global: 'window'
@@ -41,7 +42,15 @@ export default defineConfig(({ mode }) => ({
       include: [/node_modules/],
       transformMixedEsModules: true,
     },
-    // Force an empty module.css to avoid issues
+    rollupOptions: {
+      // Make sure React is externalized properly
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+        },
+      },
+    },
+    // Force clear cache on each build
     cssCodeSplit: true,
   },
   // Force clear cache on each build

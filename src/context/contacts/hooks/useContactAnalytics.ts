@@ -1,16 +1,16 @@
 
-import { useCallback } from "react";
+import React from 'react';
 import { Contact } from "@/types";
 import { useAnalytics } from "@/hooks/use-analytics";
 
 export const useContactAnalytics = (contacts: Contact[]) => {
   const { trackEvent } = useAnalytics();
   
-  const trackContactView = useCallback((contactId: string) => {
+  const trackContactView = React.useCallback((contactId: string) => {
     trackEvent('contact_viewed', { contactId });
   }, [trackEvent]);
   
-  const analyzeContactData = useCallback(() => {
+  const analyzeContactData = React.useCallback(() => {
     // Calculate statistics
     const totalContacts = contacts.length;
     

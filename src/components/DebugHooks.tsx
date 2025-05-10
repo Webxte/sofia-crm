@@ -5,6 +5,7 @@ import React from 'react';
 export function DebugHooks() {
   const [count, setCount] = React.useState(0);
   const click = React.useCallback(() => setCount((c) => c + 1), []);
+  
   return (
     <div className="p-4 m-4 border border-red-500 rounded">
       <p className="text-sm text-gray-500 mb-2">Debug Hooks Test</p>

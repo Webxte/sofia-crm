@@ -1,46 +1,24 @@
 
-// Import React using proper namespace import
-import * as React from 'react';
+// Import React using ESM imports
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import App from './App.tsx';
+import App from './App';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
-import { Toaster } from "./components/ui/toaster";
+import { Toaster } from './components/ui/toaster';
 
-// CRITICAL: First, ensure React is globally available BEFORE any component imports or rendering
-// Explicitly expose React to the window object with all its hooks
-window.React = React;
-
-// Add detailed logging to verify React is properly initialized
 console.log("MAIN.TSX - React initialization verification:", {
-  reactObject: window.React ? "Available" : "Not available",
-  reactVersion: window.React?.version,
-  useState: typeof window.React?.useState === 'function' ? "Available" : "Not available",
-  useEffect: typeof window.React?.useEffect === 'function' ? "Available" : "Not available",
-  useCallback: typeof window.React?.useCallback === 'function' ? "Available" : "Not available",
-  useMemo: typeof window.React?.useMemo === 'function' ? "Available" : "Not available",
-  useRef: typeof window.React?.useRef === 'function' ? "Available" : "Not available"
+  reactVersion: React.version,
+  useState: typeof React.useState === 'function' ? "Available" : "Not available",
+  useEffect: typeof React.useEffect === 'function' ? "Available" : "Not available",
+  useCallback: typeof React.useCallback === 'function' ? "Available" : "Not available",
 });
 
-// Create a function to check if React is properly initialized
-const ensureReact = () => {
-  if (!window.React || typeof window.React.useState !== 'function') {
-    console.error("React is not properly initialized!");
-    // Try to recover by using the React from the window
-    if (typeof React !== 'undefined') {
-      window.React = React;
-      console.log("Attempted recovery by setting window.React from local React");
-    } else {
-      console.error("Recovery failed, React is not available");
-    }
-  }
-};
-
-// Run the check before mounting
-ensureReact();
+// Explicitly expose React to the window object (for debugging only)
+window.React = React;
 
 // Get the root element
 const rootElement = document.getElementById("root");
