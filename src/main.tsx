@@ -25,6 +25,23 @@ console.log("MAIN.TSX - React initialization verification:", {
   useRef: typeof window.React?.useRef === 'function' ? "Available" : "Not available"
 });
 
+// Create a function to check if React is properly initialized
+const ensureReact = () => {
+  if (!window.React || typeof window.React.useState !== 'function') {
+    console.error("React is not properly initialized!");
+    // Try to recover by using the React from the window
+    if (typeof React !== 'undefined') {
+      window.React = React;
+      console.log("Attempted recovery by setting window.React from local React");
+    } else {
+      console.error("Recovery failed, React is not available");
+    }
+  }
+};
+
+// Run the check before mounting
+ensureReact();
+
 // Get the root element
 const rootElement = document.getElementById("root");
 

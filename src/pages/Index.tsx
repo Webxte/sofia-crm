@@ -1,8 +1,11 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { Navigate } from "react-router-dom";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Index = () => {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
@@ -12,6 +15,19 @@ const Index = () => {
     initialLoadComplete, 
     isLoadingOrganizations 
   } = useOrganizations();
+  const [loadingStage, setLoadingStage] = useState<string>("Initializing");
+  const [error, setError] = useState<string | null>(null);
+
+  // Update loading stage based on current state
+  useEffect(() => {
+    if (authLoading) {
+      setLoadingStage("Authenticating");
+    } else if (isLoadingOrganizations) {
+      setLoadingStage("Loading organizations");
+    } else if (!initialLoadComplete) {
+      setLoadingStage("Finalizing setup");
+    }
+  }, [authLoading, isLoadingOrganizations, initialLoadComplete]);
 
   // Log components that are mounted and their states to debug
   useEffect(() => {
@@ -30,6 +46,15 @@ const Index = () => {
         orgsCount: organizations.length
       }
     });
+
+    // Set error if stuck in loading state for too long (10 seconds)
+    const timeout = setTimeout(() => {
+      if (authLoading || isLoadingOrganizations || !initialLoadComplete) {
+        console.warn("Loading state persisted for too long, might indicate an issue");
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeout);
   }, [
     isAuthenticated, 
     authLoading, 
@@ -44,13 +69,20 @@ const Index = () => {
   if (authLoading || isLoadingOrganizations || !initialLoadComplete) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-        <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <h2 className="text-2xl font-bold mb-2">Loading Your Account</h2>
-        <p className="text-gray-600">Please wait while we set up your workspace...</p>
-        <div className="mt-4 text-sm text-gray-500">
-          {authLoading && <p>Authenticating...</p>}
-          {!authLoading && isLoadingOrganizations && <p>Loading organizations...</p>}
-          {!authLoading && !isLoadingOrganizations && !initialLoadComplete && <p>Finalizing setup...</p>}
+        <LoadingSpinner 
+          size="lg" 
+          message="Loading Your Account" 
+          description={`Please wait while we ${loadingStage.toLowerCase()}...`}
+        />
+        
+        <div className="mt-8 max-w-md">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </div>
       </div>
     );

@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { AlertCircle, LogIn, ArrowLeft } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -26,11 +29,21 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
-  const { isAuthenticated, login, isLoading } = useAuth();
+  const { isAuthenticated, login, isLoading: authLoading } = useAuth();
   const { currentOrganization } = useOrganizations();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the previous location from state if available
+  const from = location.state?.from?.pathname || "/dashboard";
+  
+  // Reset error when component mounts or when form values change
+  useEffect(() => {
+    setError(null);
+  }, []);
 
   // Redirect to organization selection if no organization is selected
   if (!currentOrganization) {
@@ -48,13 +61,30 @@ const Login = () => {
   const onSubmit = async (data: FormValues) => {
     try {
       setLoading(true);
+      setError(null);
       await login(data.email, data.password);
       
-      // Login successful, should auto-redirect via auth effect
-    } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Login failed. Please try again.",
+        title: "Login successful",
+        description: "Welcome back to your account",
+      });
+      
+      // Login successful, redirecting happens via auth effect
+    } catch (error: any) {
+      console.error("Login error:", error);
+      
+      // Handle different error types
+      if (error.message?.includes("Email not confirmed")) {
+        setError("Please check your email to confirm your account before logging in.");
+      } else if (error.message?.includes("Invalid login credentials")) {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        setError(error.message || "Login failed. Please try again.");
+      }
+      
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
@@ -64,8 +94,10 @@ const Login = () => {
 
   // If authenticated and organization is selected, redirect to dashboard
   if (isAuthenticated && currentOrganization) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={from} replace />;
   }
+
+  const isSubmitting = loading || authLoading;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40">
@@ -74,6 +106,13 @@ const Login = () => {
           <h1 className="text-3xl font-bold">Welcome to {currentOrganization?.name || "CRM"}</h1>
           <p className="text-muted-foreground">Enter your credentials to access your account</p>
         </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -84,7 +123,12 @@ const Login = () => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="your@email.com" {...field} />
+                    <Input 
+                      placeholder="your@email.com" 
+                      {...field} 
+                      disabled={isSubmitting}
+                      autoFocus
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -98,20 +142,48 @@ const Login = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder="••••••••" 
+                      {...field} 
+                      disabled={isSubmitting}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || loading}
-            >
-              {(isLoading || loading) ? "Logging in..." : "Login"}
-            </Button>
+            <div className="flex flex-col space-y-4">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Logging in...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/organizations/login?slug=belmorso")}
+                disabled={isSubmitting}
+                className="w-full"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Change Organization
+              </Button>
+            </div>
 
             <div className="text-center text-sm text-muted-foreground">
               Contact your administrator if you have trouble logging in
