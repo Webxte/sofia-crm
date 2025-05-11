@@ -43,8 +43,29 @@ export const LoginForm = ({
   });
 
   const handleSubmit = async (values: FormValues) => {
-    await onSubmit(values.password);
+    if (!organization) {
+      toast({
+        title: "Error",
+        description: "No organization selected",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      await onSubmit(values.password);
+    } catch (err) {
+      console.error("Error in form submission:", err);
+    }
   };
+
+  if (!organization) {
+    return (
+      <div className="p-4 bg-muted/20 rounded-md text-center">
+        No organization selected. Please go back and select an organization.
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,19 +24,25 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
     }
     
     // For non-Belmorso orgs, check password with database function
-    const { data: passwordCorrect, error: passwordError } = await supabase.rpc(
-      'check_organization_password',
-      {
-        org_id: organizationId,
-        password: password
+    try {
+      const { data: passwordCorrect, error: passwordError } = await supabase.rpc(
+        'check_organization_password',
+        {
+          org_id: organizationId,
+          password: password
+        }
+      );
+      
+      if (passwordError) {
+        console.error("Password verification error:", passwordError);
+        throw passwordError;
       }
-    );
-    
-    if (passwordError) {
-      throw passwordError;
+      
+      return passwordCorrect === true;
+    } catch (error) {
+      console.error("Error in verifyPassword:", error);
+      return false;
     }
-    
-    return passwordCorrect === true;
   };
   
   /**
@@ -51,7 +58,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
     setError(null);
     
     try {
-      console.log(`Attempting to verify password for organization: ${organizationName}`);
+      console.log(`Attempting to verify password for organization: ${organizationName} (ID: ${organizationId})`);
       
       const isPasswordCorrect = await verifyPassword(password);
       
@@ -62,9 +69,11 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
         });
         
         // Switch to the organization
+        console.log(`Switching to organization: ${organizationId}`);
         const success = await switchOrganization(organizationId);
         
         if (!success) {
+          console.error("Failed to switch to organization");
           throw new Error("Failed to switch to organization");
         }
         

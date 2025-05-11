@@ -1,59 +1,59 @@
 
-import { ReactNode } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Building, ArrowLeft } from "lucide-react";
 
 interface OrganizationContainerProps {
   title: string;
   description?: string;
-  error?: string | null;
   children: ReactNode;
+  error?: string;
   showHomeButton?: boolean;
 }
 
-export const OrganizationContainer = ({
-  title,
+export const OrganizationContainer = ({ 
+  title, 
   description,
-  error,
   children,
+  error,
   showHomeButton = false
 }: OrganizationContainerProps) => {
   const navigate = useNavigate();
   
+  const handleGoHome = () => {
+    navigate('/', { replace: true });
+  };
+  
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Lock className="h-6 w-6 text-primary" />
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Building className="h-6 w-6 text-primary" />
+            <CardTitle className="text-2xl">{title}</CardTitle>
           </div>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          {description && !error && <CardDescription>{description}</CardDescription>}
+          {error && <CardDescription className="text-destructive">{error}</CardDescription>}
         </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
+        <CardContent>
+          {children}
+          
+          {showHomeButton && (
+            <div className="mt-6">
+              <Button 
+                variant="outline" 
+                onClick={handleGoHome}
+                className="w-full"
+                type="button"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
             </div>
           )}
-          
-          {children}
         </CardContent>
-        
-        {showHomeButton && (
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => navigate("/")}
-            >
-              Go to Home
-            </Button>
-          </CardFooter>
-        )}
       </Card>
     </div>
   );

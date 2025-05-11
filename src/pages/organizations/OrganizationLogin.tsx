@@ -1,17 +1,20 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { OrganizationContainer } from "@/components/organizations/OrganizationContainer";
 import { LoginForm } from "@/components/organizations/LoginForm";
 import { useOrganizationLoader } from "@/hooks/useOrganizationLoader";
 import { useOrganizationAuth } from "@/hooks/useOrganizationAuth";
+import { toast } from "@/hooks/use-toast";
 
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
   const slug = searchParams.get("slug");
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [attemptsCount, setAttemptsCount] = useState(0);
+  const navigate = useNavigate();
   
   // Use our custom hooks for organization loading and authentication
   const { 
@@ -31,13 +34,38 @@ const OrganizationLogin = () => {
   // Use the combined error from both hooks
   const displayError = authError || error;
   
+  // Effect to handle automatic redirect if already authenticated with an organization
+  useEffect(() => {
+    if (isAuthenticated && organization && attemptsCount === 0) {
+      // Only try auto-switch on first attempt
+      setAttemptsCount(prev => prev + 1);
+      console.log("User already authenticated and organization found, attempting to navigate to dashboard");
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, organization, navigate, attemptsCount]);
+  
   const handleSubmit = async (password: string) => {
-    if (!organization) return;
+    if (!organization) {
+      toast({
+        title: "Error",
+        description: "Organization not found",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    const success = await handleLogin(password, organization.name);
-    
-    if (success) {
-      handleSuccessfulLogin(isAuthenticated, user?.id);
+    try {
+      console.log(`Submitting login for organization: ${organization.name}`);
+      const success = await handleLogin(password, organization.name);
+      
+      if (success) {
+        console.log("Login successful, navigating...");
+        handleSuccessfulLogin(isAuthenticated, user?.id);
+      } else {
+        console.log("Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
     }
   };
 
