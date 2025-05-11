@@ -22,14 +22,15 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Ensure we use a single instance of React
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
   },
-  // Optimize for React and ensure single instance
+  // Ensure React has only one instance
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    force: true, // Force dependency re-optimization
+    force: true,
     esbuildOptions: {
       define: {
         global: 'window'
@@ -37,20 +38,17 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Ensure React has only one instance
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true,
-    },
     rollupOptions: {
-      // Make sure React is externalized properly
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
         },
       },
     },
-    // Force clear cache on each build
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
     cssCodeSplit: true,
   },
   // Force clear cache on each build

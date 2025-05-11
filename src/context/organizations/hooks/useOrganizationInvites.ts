@@ -17,10 +17,8 @@ export const useOrganizationInvites = ({
   currentOrganization, 
   toast 
 }: Props) => {
-  // Use React.useState instead of relying on window.React
   const [invites, setInvites] = React.useState<OrganizationInvite[]>([]);
   
-  // Use React.useCallback instead of relying on window.React
   const fetchOrganizationInvites = React.useCallback(async (organizationId: string) => {
     try {
       const { data, error } = await supabase
