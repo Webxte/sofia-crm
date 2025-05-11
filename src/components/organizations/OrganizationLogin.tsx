@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import * as React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,7 +47,7 @@ export const OrganizationLogin = ({
   onSuccess,
 }: OrganizationLoginProps) => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   
   const form = useForm<OrgLoginFormValues>({
     resolver: zodResolver(orgLoginSchema),

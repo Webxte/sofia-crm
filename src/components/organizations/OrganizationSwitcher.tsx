@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import * as React from "react";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,15 +15,16 @@ import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { OrganizationLogin } from "./OrganizationLogin";
 import { Organization } from "@/types";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const OrganizationSwitcher = () => {
   const { organizations, currentOrganization, switchOrganization } = useOrganizations();
-  const [loading, setLoading] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [selectedOrg, setSelectedOrg] = React.useState<Organization | null>(null);
+  const [showPasswordDialog, setShowPasswordDialog] = React.useState(false);
   const navigate = useNavigate();
   const { trackEvent } = useAnalytics();
+  const { toast } = useToast();
 
   const handleSwitchOrganization = async (org: Organization) => {
     if (loading || currentOrganization?.id === org.id) return;
@@ -41,6 +42,7 @@ export const OrganizationSwitcher = () => {
     
     setLoading(true);
     try {
+      console.log("Attempting to switch to organization:", selectedOrg.name);
       const success = await switchOrganization(selectedOrg.id);
       
       if (success) {

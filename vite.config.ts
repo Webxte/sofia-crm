@@ -11,13 +11,12 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    // Configure React plugin
+    // Configure React plugin with explicit JSX runtime
     react({
-      // Use automatic JSX runtime
       jsxImportSource: "react",
+      jsxRuntime: "automatic",
     }),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -27,7 +26,7 @@ export default defineConfig(({ mode }) => ({
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
   },
-  // Ensure React has only one instance
+  // Better optimization for React to ensure single instance
   optimizeDeps: {
     include: ['react', 'react-dom'],
     force: true,
