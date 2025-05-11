@@ -1,31 +1,12 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useAuth } from "@/context/AuthContext";
-import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-const formSchema = z.object({
-  password: z.string().min(1, { message: "Password is required." }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { OrganizationContainer } from "@/components/organizations/OrganizationContainer";
+import { LoginForm } from "@/components/organizations/LoginForm";
 
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
@@ -38,13 +19,7 @@ const OrganizationLogin = () => {
   const [organization, setOrganization] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      password: "",
-    },
-  });
-
+  // Load organization data on component mount
   useEffect(() => {
     const loadOrganization = async () => {
       if (slug) {
@@ -68,7 +43,7 @@ const OrganizationLogin = () => {
     loadOrganization();
   }, [slug, getOrganizationBySlug]);
 
-  const onSubmit = async (values: FormValues) => {
+  const handleSubmit = async (password: string) => {
     if (!organization) return;
     
     setIsSubmitting(true);
@@ -78,7 +53,7 @@ const OrganizationLogin = () => {
       console.log("Attempting to verify password for organization:", organization.name);
       
       // Special case for Belmorso
-      if (organization.slug === 'belmorso' && values.password === 'Belmorso2024!') {
+      if (organization.slug === 'belmorso' && password === 'Belmorso2024!') {
         console.log("Using hardcoded password verification for Belmorso");
         
         toast({
@@ -110,7 +85,7 @@ const OrganizationLogin = () => {
         'check_organization_password',
         {
           org_id: organization.id,
-          password: values.password
+          password: password
         }
       );
       
@@ -165,20 +140,14 @@ const OrganizationLogin = () => {
     );
   }
 
-  // If no org found or error
+  // If no org found or error without an organization
   if (error && !organization) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Organization Error</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button onClick={() => navigate("/")}>Go to Home</Button>
-          </CardFooter>
-        </Card>
-      </div>
+      <OrganizationContainer
+        title="Organization Error"
+        error={error}
+        showHomeButton
+      />
     );
   }
 
@@ -187,57 +156,18 @@ const OrganizationLogin = () => {
       <Helmet>
         <title>{organization?.name || "Organization"} Login | CRM</title>
       </Helmet>
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
-            <CardTitle>{organization?.name}</CardTitle>
-            <CardDescription>
-              Enter the organization password to continue
-            </CardDescription>
-          </CardHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <CardContent className="space-y-4">
-                {error && (
-                  <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                    {error}
-                  </div>
-                )}
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          {...field} 
-                          autoFocus
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Verifying..." : "Access Organization"}
-                </Button>
-              </CardFooter>
-            </form>
-          </Form>
-        </Card>
-      </div>
+      
+      <OrganizationContainer
+        title={organization?.name || "Organization"}
+        description="Enter the organization password to continue"
+      >
+        <LoginForm
+          organization={organization}
+          isSubmitting={isSubmitting}
+          onSubmit={handleSubmit}
+          error={error}
+        />
+      </OrganizationContainer>
     </>
   );
 };

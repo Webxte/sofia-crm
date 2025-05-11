@@ -46,6 +46,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
             navigate("/organizations/new", { replace: true });
           } 
           // If we have organizations but no current organization selected, redirect to org login
+          // But ONLY if we're not already on the org login page to prevent loops
           else if (operations.organizations.length > 0 && !operations.currentOrganization && !isOrgLoginPage) {
             console.log("Organizations exist but none selected, redirecting to org login");
             navigate("/organizations/login?slug=belmorso", { replace: true });

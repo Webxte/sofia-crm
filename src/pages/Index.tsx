@@ -17,6 +17,7 @@ const Index = () => {
   } = useOrganizations();
   const [loadingStage, setLoadingStage] = useState<string>("Initializing");
   const [error, setError] = useState<string | null>(null);
+  const [redirectStarted, setRedirectStarted] = useState<boolean>(false);
 
   // Update loading stage based on current state
   useEffect(() => {
@@ -88,29 +89,46 @@ const Index = () => {
     );
   }
 
+  // Use redirectStarted state to prevent multiple redirects
+  if (redirectStarted) {
+    return null;
+  }
+
+  // Handle redirects based on authentication and organization state
+  let redirectTo = null;
+
   // First, redirect to organization login if no organization is selected
-  // This takes priority over authentication
   if (initialLoadComplete && !currentOrganization) {
-    return <Navigate to="/organizations/login?slug=belmorso" replace />;
+    console.log("Index: No current organization, redirecting to organization login");
+    redirectTo = "/organizations/login?slug=belmorso";
+    setRedirectStarted(true);
   }
-
   // Then, if authenticated but no organizations, redirect to create a new one
-  if (initialLoadComplete && isAuthenticated && organizations.length === 0) {
-    return <Navigate to="/organizations/new" replace />;
+  else if (initialLoadComplete && isAuthenticated && organizations.length === 0) {
+    console.log("Index: Authenticated but no organizations, redirecting to create organization");
+    redirectTo = "/organizations/new";
+    setRedirectStarted(true);
   }
-  
   // If not authenticated but organization is selected, redirect to login
-  if (!isAuthenticated && currentOrganization) {
-    return <Navigate to="/login" replace />;
+  else if (!isAuthenticated && currentOrganization) {
+    console.log("Index: Not authenticated but organization selected, redirecting to login");
+    redirectTo = "/login";
+    setRedirectStarted(true);
   }
-  
-  // If not authenticated and no organization, we already redirected to org login above
-  if (!isAuthenticated) {
-    return <Navigate to="/organizations/login?slug=belmorso" replace />;
+  // If not authenticated and no organization, we redirect to org login
+  else if (!isAuthenticated) {
+    console.log("Index: Not authenticated and no organization, redirecting to organization login");
+    redirectTo = "/organizations/login?slug=belmorso";
+    setRedirectStarted(true);
+  }
+  // If all conditions are met (authenticated and has organization), redirect to dashboard
+  else if (isAuthenticated && currentOrganization) {
+    console.log("Index: Authenticated with organization, redirecting to dashboard");
+    redirectTo = "/dashboard";
+    setRedirectStarted(true);
   }
 
-  // If all conditions are met (authenticated and has organization), redirect to dashboard
-  return <Navigate to="/dashboard" replace />;
+  return redirectTo ? <Navigate to={redirectTo} replace /> : null;
 };
 
 export default Index;

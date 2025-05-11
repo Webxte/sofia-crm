@@ -55,11 +55,8 @@ export const OrganizationSwitcher = () => {
           description: `Switched to ${selectedOrg.name}`
         });
         
-        // We'll use a timeout to ensure the state is properly updated before reloading
-        setTimeout(() => {
-          // Navigate to dashboard instead of reloading
-          navigate('/dashboard', { replace: true });
-        }, 300);
+        // Navigate to dashboard instead of reloading
+        navigate('/dashboard', { replace: true });
       } else {
         toast({
           title: "Error",

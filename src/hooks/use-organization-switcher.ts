@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Organization } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export const useOrganizationSwitcher = () => {
@@ -13,7 +12,7 @@ export const useOrganizationSwitcher = () => {
       setIsLoading(true);
       console.log(`Attempting to switch to organization ${id}`);
       
-      // Store the organization ID in localStorage first
+      // Store the organization ID in localStorage
       localStorage.setItem('currentOrganizationId', id);
       console.log(`Set currentOrganizationId in localStorage: ${id}`);
       
