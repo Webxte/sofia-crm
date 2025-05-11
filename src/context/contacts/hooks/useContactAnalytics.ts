@@ -10,7 +10,7 @@ export const useContactAnalytics = (contacts: Contact[]) => {
   const trackContactView = React.useCallback((contactId: string) => {
     const contact = contacts.find(c => c.id === contactId);
     if (contact) {
-      analytics.track('contact_viewed', {
+      analytics.trackEvent('contact_viewed', {
         contactId,
         contactName: contact.fullName,
         contactCompany: contact.company

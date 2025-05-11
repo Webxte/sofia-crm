@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import * as React from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganizations } from '@/context/organizations/OrganizationsContext';
 import { useAuth } from '@/context/AuthContext';
@@ -8,7 +8,7 @@ export const useAnalytics = () => {
   const { currentOrganization } = useOrganizations();
   const { user } = useAuth();
   
-  const trackEvent = useCallback(async (
+  const trackEvent = React.useCallback(async (
     eventName: string, 
     eventData?: Record<string, any>
   ) => {
