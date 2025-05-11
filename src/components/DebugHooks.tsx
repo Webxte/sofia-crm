@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 
 // A simple component to test if React hooks are working properly
 export function DebugHooks() {

@@ -17,9 +17,6 @@ console.log("MAIN.TSX - React initialization verification:", {
   useCallback: typeof React.useCallback === 'function' ? "Available" : "Not available",
 });
 
-// Explicitly expose React to the window object (for debugging only)
-window.React = React;
-
 // Get the root element
 const rootElement = document.getElementById("root");
 

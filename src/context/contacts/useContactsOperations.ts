@@ -1,5 +1,5 @@
 
-import React from "react";
+import * as React from "react";
 import { Contact } from "@/types";
 import { useContactsFetch } from "./hooks/useContactsFetch";
 import { useContactCRUD } from "./hooks/useContactCRUD";
