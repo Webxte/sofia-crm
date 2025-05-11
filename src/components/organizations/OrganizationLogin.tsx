@@ -63,13 +63,20 @@ export const OrganizationLogin = ({
       // Special case for Belmorso
       if (organization.slug === 'belmorso' && data.password === 'Belmorso2024!') {
         console.log("Using hardcoded password verification for Belmorso in dialog");
-        toast({
-          title: "Success",
-          description: `Access granted to ${organization.name}`,
-        });
+        
+        // Close modal and indicate success before attempting to switch org
         form.reset();
         onOpenChange(false);
-        onSuccess();
+        
+        // Delay the success callback slightly to ensure modal is closed
+        setTimeout(() => {
+          toast({
+            title: "Success",
+            description: `Access granted to ${organization.name}`,
+          });
+          onSuccess();
+        }, 100);
+        
         return;
       }
       
@@ -85,13 +92,18 @@ export const OrganizationLogin = ({
       if (error) throw error;
       
       if (result === true) {
-        toast({
-          title: "Success",
-          description: `Access granted to ${organization.name}`,
-        });
+        // Close modal and reset form before proceeding with the org switch
         form.reset();
         onOpenChange(false);
-        onSuccess();
+        
+        // Delay the success callback slightly to ensure modal is closed
+        setTimeout(() => {
+          toast({
+            title: "Success",
+            description: `Access granted to ${organization.name}`,
+          });
+          onSuccess();
+        }, 100);
       } else {
         toast({
           title: "Error",

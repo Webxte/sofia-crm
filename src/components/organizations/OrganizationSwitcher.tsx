@@ -30,7 +30,6 @@ export const OrganizationSwitcher = () => {
     if (loading || currentOrganization?.id === org.id) return;
 
     // For now, we'll show the password dialog for all organizations except the current one
-    // In a production app, you might want to check if the user is already a member
     if (currentOrganization?.id !== org.id) {
       setSelectedOrg(org);
       setShowPasswordDialog(true);
@@ -43,16 +42,24 @@ export const OrganizationSwitcher = () => {
     setLoading(true);
     try {
       console.log("Attempting to switch to organization:", selectedOrg.name);
+      
+      // Switch the organization
       const success = await switchOrganization(selectedOrg.id);
       
       if (success) {
+        console.log("Successfully switched to organization:", selectedOrg.name);
         trackEvent('organization_switched', { organizationId: selectedOrg.id });
+        
         toast({
           title: "Success",
           description: `Switched to ${selectedOrg.name}`
         });
-        // Reload to refresh all data with new organization context
-        window.location.reload(); 
+        
+        // We'll use a timeout to ensure the state is properly updated before reloading
+        setTimeout(() => {
+          // Navigate to dashboard instead of reloading
+          navigate('/dashboard', { replace: true });
+        }, 300);
       } else {
         toast({
           title: "Error",

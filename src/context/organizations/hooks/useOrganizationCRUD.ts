@@ -246,9 +246,12 @@ export const useOrganizationCRUD = ({
           updatedAt: new Date(orgData.updated_at)
         };
         
+        // Update state
         setCurrentOrganization(fetchedOrg);
+        
+        // Store in localStorage
         localStorage.setItem('currentOrganizationId', fetchedOrg.id);
-        console.log(`Set current organization to ${fetchedOrg.name}`);
+        console.log(`Set current organization to ${fetchedOrg.name} (ID: ${fetchedOrg.id})`);
         
         // Add to organizations list if not already there
         setOrganizations(prev => {
@@ -259,7 +262,7 @@ export const useOrganizationCRUD = ({
         // Organization found in current list
         setCurrentOrganization(org);
         localStorage.setItem('currentOrganizationId', org.id);
-        console.log(`Set current organization to ${org.name}`);
+        console.log(`Set current organization to ${org.name} (ID: ${org.id})`);
       }
       
       // Verify the current organization was set
@@ -276,7 +279,6 @@ export const useOrganizationCRUD = ({
         }
       } catch (fetchError) {
         // Don't fail the whole operation if fetching members fails
-        // This allows at least setting the organization
         console.error("Error fetching organization data:", fetchError);
       }
       

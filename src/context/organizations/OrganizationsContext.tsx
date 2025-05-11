@@ -21,9 +21,17 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     const loadOrganizations = async () => {
       if (isAuthenticated && user) {
         console.log("OrganizationsContext: User authenticated, fetching organizations");
+        
+        // Prevent multiple simultaneous fetches
+        if (loadingOrganizations) {
+          console.log("Already loading organizations, skipping");
+          return;
+        }
+        
         setLoadingOrganizations(true);
         try {
           await operations.fetchOrganizations();
+          console.log(`Found ${operations.organizations.length} organizations for user`);
           
           // Check if we're on non-organization pages
           const isOrgLoginPage = location.pathname.startsWith("/organizations/login");
@@ -32,20 +40,18 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           const isNewOrgPage = location.pathname === "/organizations/new";
           const isNonOrgPage = isOrgLoginPage || isLoginPage || isRegisterPage || isNewOrgPage;
           
+          // Only redirect if needed and we're not already on an appropriate page
           if (operations.organizations.length === 0 && !isNewOrgPage) {
             console.log("No organizations found, redirecting to create org page");
-            navigate("/organizations/new");
+            navigate("/organizations/new", { replace: true });
           } 
           // If we have organizations but no current organization selected, redirect to org login
           else if (operations.organizations.length > 0 && !operations.currentOrganization && !isOrgLoginPage) {
             console.log("Organizations exist but none selected, redirecting to org login");
-            navigate("/organizations/login?slug=belmorso");
+            navigate("/organizations/login?slug=belmorso", { replace: true });
           }
-          else {
-            console.log(`Found ${operations.organizations.length} organizations for user`);
-            if (operations.currentOrganization) {
-              console.log("Current organization:", operations.currentOrganization.name);
-            }
+          else if (operations.currentOrganization) {
+            console.log("Current organization:", operations.currentOrganization.name);
           }
         } catch (error) {
           console.error("Error loading organizations:", error);
@@ -65,7 +71,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     };
     
     loadOrganizations();
-  }, [isAuthenticated, user?.id, location.pathname, navigate, operations]);
+  }, [isAuthenticated, user?.id]);
   
   // Create a context value with loading state included
   const contextValue = {
