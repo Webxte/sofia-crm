@@ -37,15 +37,11 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import NotFound from './pages/NotFound';
 import Calendar from './pages/Calendar';
-import { DebugHooks } from './components/DebugHooks';
 
 export default function App() {
   return (
     <ErrorBoundary>
       <OrganizationsProvider>
-        {/* Debug component to verify hooks are working */}
-        {process.env.NODE_ENV === 'development' && <DebugHooks />}
-        
         <Routes>
           {/* Auth routes - these don't need the other providers */}
           <Route path="/login" element={<Login />} />

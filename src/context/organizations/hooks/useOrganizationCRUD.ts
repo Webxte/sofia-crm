@@ -5,11 +5,10 @@ import { toast } from "@/hooks/use-toast";
 import { useOrganizationCreate } from "./useOrganizationCreate";
 import { useOrganizationUpdate } from "./useOrganizationUpdate";
 import { useOrganizationSwitch } from "./useOrganizationSwitch";
+import { useOrganizationDelete } from "./useOrganizationDelete";
 
-// Define the Toast type locally
-type ToastFunction = typeof toast;
-
-interface Props {
+// Define the core properties used by organization hooks
+export interface OrganizationHookProps {
   organizations: Organization[];
   setOrganizations: React.Dispatch<React.SetStateAction<Organization[]>>;
   currentOrganization: Organization | null;
@@ -19,13 +18,17 @@ interface Props {
   fetchOrganizationMembers: (organizationId: string) => Promise<void>;
   fetchOrganizationInvites: (organizationId: string) => Promise<void>;
   user: User | null;
-  toast: ToastFunction;
+  toast: typeof toast;
 }
 
-export const useOrganizationCRUD = (props: Props) => {
+/**
+ * Main hook that combines all organization CRUD operations
+ */
+export const useOrganizationCRUD = (props: OrganizationHookProps) => {
   // Get organization CRUD operations from sub-hooks
   const { createOrganization } = useOrganizationCreate(props);
-  const { updateOrganization, deleteOrganization } = useOrganizationUpdate(props);
+  const { updateOrganization } = useOrganizationUpdate(props);
+  const { deleteOrganization } = useOrganizationDelete(props);
   const { switchOrganization } = useOrganizationSwitch(props);
   
   return {

@@ -8,7 +8,6 @@ import { JoinOrganizationForm } from "@/components/organizations/JoinOrganizatio
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
-import { DebugHooks } from "@/components/DebugHooks";
 
 const NewOrganization = () => {
   // Explicitly set "join" as the default tab
@@ -51,9 +50,6 @@ const NewOrganization = () => {
       </Helmet>
       <div className="container mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6 text-center">Organizations</h1>
-        
-        {/* Debug component to verify React hooks are working */}
-        <DebugHooks />
         
         <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="join" className="max-w-[600px] mx-auto">
           <TabsList className="grid w-full grid-cols-2 mb-6">
