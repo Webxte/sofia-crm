@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { Organization } from "@/types";
 

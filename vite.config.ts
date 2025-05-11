@@ -12,10 +12,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     // Configure React plugin with proper options
-    react({
-      jsxImportSource: "react",
-      // Remove the jsxRuntime property as it's not a valid option
-    }),
+    react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
