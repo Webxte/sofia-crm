@@ -211,22 +211,83 @@ export const useOrganizationCRUD = ({
   // Switch to a different organization
   const switchOrganization = async (id: string): Promise<boolean> => {
     try {
+      console.log(`Attempting to switch to organization ${id}`);
+      
+      // Find the organization in the current list
       const org = organizations.find(o => o.id === id);
-      if (!org) throw new Error('Organization not found');
       
-      setCurrentOrganization(org);
-      localStorage.setItem('currentOrganizationId', org.id);
+      // If organization wasn't found in the current list, try to fetch it
+      if (!org) {
+        console.log("Organization not in current list, fetching from database");
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (orgError) {
+          console.error("Error fetching organization:", orgError);
+          throw new Error(`Organization not found: ${orgError.message}`);
+        }
+        
+        if (!orgData) {
+          throw new Error("Organization not found");
+        }
+        
+        // Format and set as current organization
+        const fetchedOrg: Organization = {
+          id: orgData.id,
+          name: orgData.name,
+          slug: orgData.slug,
+          logoUrl: orgData.logo_url || undefined,
+          primaryColor: orgData.primary_color || undefined,
+          secondaryColor: orgData.secondary_color || undefined,
+          createdAt: new Date(orgData.created_at),
+          updatedAt: new Date(orgData.updated_at)
+        };
+        
+        setCurrentOrganization(fetchedOrg);
+        localStorage.setItem('currentOrganizationId', fetchedOrg.id);
+        console.log(`Set current organization to ${fetchedOrg.name}`);
+        
+        // Add to organizations list if not already there
+        setOrganizations(prev => {
+          if (prev.some(o => o.id === fetchedOrg.id)) return prev;
+          return [...prev, fetchedOrg];
+        });
+      } else {
+        // Organization found in current list
+        setCurrentOrganization(org);
+        localStorage.setItem('currentOrganizationId', org.id);
+        console.log(`Set current organization to ${org.name}`);
+      }
       
-      // Fetch members and invites for the new current organization
-      await fetchOrganizationMembers(org.id);
-      await fetchOrganizationInvites(org.id);
+      // Verify the current organization was set
+      setTimeout(() => {
+        const savedOrgId = localStorage.getItem('currentOrganizationId');
+        console.log(`Verification: currentOrganizationId in localStorage: ${savedOrgId}`);
+      }, 100);
+      
+      try {
+        // Fetch members for the organization
+        if (user) {
+          await fetchOrganizationMembers(id);
+          await fetchOrganizationInvites(id);
+        }
+      } catch (fetchError) {
+        // Don't fail the whole operation if fetching members fails
+        // This allows at least setting the organization
+        console.error("Error fetching organization data:", fetchError);
+      }
       
       return true;
     } catch (error) {
       console.error('Error switching organization:', error);
       toast({
         title: 'Error',
-        description: 'Failed to switch organization',
+        description: error instanceof Error 
+          ? `Failed to switch organization: ${error.message}`
+          : 'Failed to switch organization',
         variant: 'destructive'
       });
       return false;

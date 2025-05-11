@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { OrganizationLogin } from "./OrganizationLogin";
 import { Organization } from "@/types";
+import { toast } from "@/hooks/use-toast";
 
 export const OrganizationSwitcher = () => {
   const { organizations, currentOrganization, switchOrganization } = useOrganizations();
@@ -39,10 +40,34 @@ export const OrganizationSwitcher = () => {
     if (!selectedOrg) return;
     
     setLoading(true);
-    await switchOrganization(selectedOrg.id);
-    trackEvent('organization_switched', { organizationId: selectedOrg.id });
-    window.location.reload(); // Reload to refresh all data with new organization context
-    setLoading(false);
+    try {
+      const success = await switchOrganization(selectedOrg.id);
+      
+      if (success) {
+        trackEvent('organization_switched', { organizationId: selectedOrg.id });
+        toast({
+          title: "Success",
+          description: `Switched to ${selectedOrg.name}`
+        });
+        // Reload to refresh all data with new organization context
+        window.location.reload(); 
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to switch organization. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error switching organization:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while switching organizations",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleCreateOrganization = () => {

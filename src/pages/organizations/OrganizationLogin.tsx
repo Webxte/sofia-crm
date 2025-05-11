@@ -80,20 +80,27 @@ const OrganizationLogin = () => {
       // Special case for Belmorso
       if (organization.slug === 'belmorso' && values.password === 'Belmorso2024!') {
         console.log("Using hardcoded password verification for Belmorso");
-        // Success - proceed with login
-        await switchOrganization(organization.id);
         
         toast({
           title: "Success",
           description: `Access granted to ${organization.name}`,
         });
         
+        // Success - proceed with login
+        const success = await switchOrganization(organization.id);
+        
+        if (!success) {
+          throw new Error("Failed to switch to organization. Please try again.");
+        }
+        
+        console.log("Successfully switched to organization:", organization.name);
+        
         // If the user is already authenticated, redirect to dashboard
         if (isAuthenticated && user) {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         } else {
           // Otherwise redirect to login
-          navigate('/login');
+          navigate('/login', { replace: true });
         }
         return;
       }
@@ -114,7 +121,11 @@ const OrganizationLogin = () => {
       if (passwordCorrect) {
         console.log("Password verified, switching organization");
         // Success - proceed with login
-        await switchOrganization(organization.id);
+        const success = await switchOrganization(organization.id);
+        
+        if (!success) {
+          throw new Error("Failed to switch to organization. Please try again.");
+        }
         
         toast({
           title: "Success",
@@ -123,10 +134,10 @@ const OrganizationLogin = () => {
         
         // If the user is already authenticated, redirect to dashboard
         if (isAuthenticated && user) {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         } else {
           // Otherwise redirect to login
-          navigate('/login');
+          navigate('/login', { replace: true });
         }
         return;
       }
