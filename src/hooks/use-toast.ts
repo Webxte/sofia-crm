@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React from "react";
 import { ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 10;
