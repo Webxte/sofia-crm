@@ -4,12 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseToMeeting, meetingToSupabase, newMeetingToSupabase } from "./meetingUtils";
 import { useContacts } from "@/context/ContactsContext";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useAuth } from "@/context/AuthContext";
 
 export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { getContactById } = useContacts();
+  const { currentOrganization } = useOrganizations();
+  const { user } = useAuth();
 
   // Helper function to sort meetings by date and time
   const sortMeetingsByDateTime = (meetingsToSort: Meeting[]) => {
@@ -43,18 +47,31 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       setLoading(true);
       console.log("Attempting to fetch meetings...");
       
-      if (!isAuthenticated) {
+      if (!isAuthenticated || !user?.id) {
         console.log("User not authenticated, skipping meetings fetch");
         setMeetings([]);
         setLoading(false);
-        return;
+        return [];
       }
       
-      // Fetch all meetings without organization_id filter
-      const { data, error } = await supabase
-        .from('meetings')
-        .select('*')
-        .order('date', { ascending: false });
+      console.log("Current organization:", currentOrganization?.id);
+      console.log("Current user:", user.id);
+      
+      // Create a base query
+      let query = supabase.from('meetings').select('*');
+      
+      // Apply organization filter if available
+      if (currentOrganization?.id) {
+        console.log(`Filtering meetings by organization: ${currentOrganization.id}`);
+        query = query.eq('organization_id', currentOrganization.id);
+      } else {
+        // Fallback to agent_id filter if no organization is selected
+        console.log(`Filtering meetings by agent: ${user.id}`);
+        query = query.eq('agent_id', user.id);
+      }
+      
+      // Execute query with order
+      const { data, error } = await query.order('date', { ascending: false });
       
       if (error) {
         console.error('Error fetching meetings:', error);
@@ -65,14 +82,14 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         });
         setMeetings([]);
         setLoading(false);
-        return;
+        return [];
       }
       
       if (!data || data.length === 0) {
         console.log("No meetings found");
         setMeetings([]);
         setLoading(false);
-        return;
+        return [];
       }
       
       console.log(`Successfully fetched ${data.length} meetings`);
@@ -116,6 +133,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
       console.log(`Processed ${sortedMeetings.length} meetings`);
       
       setMeetings(sortedMeetings);
+      return sortedMeetings;
     } catch (err) {
       console.error('Unexpected error fetching meetings:', err);
       toast({
@@ -124,6 +142,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         variant: "destructive",
       });
       setMeetings([]);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -137,7 +156,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
           description: "You must be logged in to add meetings",
           variant: "destructive",
         });
-        return;
+        return null;
       }
       
       // Add contact name if not present
@@ -152,6 +171,11 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         agent_name: userName || ''
       };
       
+      // Add organization information
+      if (currentOrganization?.id) {
+        meetingData.organizationId = currentOrganization.id;
+      }
+      
       // Convert Meeting type to Supabase table format
       const newMeetingData = newMeetingToSupabase(meetingData, agentData);
       
@@ -165,44 +189,24 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         console.error('Error adding meeting:', error);
         toast({
           title: "Error",
-          description: "Failed to add meeting",
+          description: "Failed to add meeting. " + error.message,
           variant: "destructive",
         });
-        return;
+        return null;
       }
       
       // Transform and add the new meeting to state
       const newMeeting = supabaseToMeeting(data);
       
       // Sort after adding new meeting
-      setMeetings(prevMeetings => {
-        const updatedMeetings = [...prevMeetings, newMeeting];
-        return updatedMeetings.sort((a, b) => {
-          // First compare by date
-          const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
-          
-          // If dates are the same, compare by time
-          if (dateComparison === 0) {
-            const timeA = a.time ? a.time.split(':').map(Number) : [0, 0];
-            const timeB = b.time ? b.time.split(':').map(Number) : [0, 0];
-            
-            // Compare hours first
-            if (timeA[0] !== timeB[0]) {
-              return timeA[0] - timeB[0];
-            }
-            
-            // If hours are the same, compare minutes
-            return timeA[1] - timeB[1];
-          }
-          
-          return dateComparison;
-        });
-      });
+      setMeetings(prevMeetings => sortMeetingsByDateTime([...prevMeetings, newMeeting]));
       
       toast({
         title: "Success",
         description: "Meeting added successfully",
       });
+      
+      return newMeeting;
     } catch (err) {
       console.error('Unexpected error adding meeting:', err);
       toast({
@@ -210,6 +214,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+      return null;
     }
   };
 
@@ -230,10 +235,10 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         console.error('Error updating meeting:', error);
         toast({
           title: "Error",
-          description: "Failed to update meeting",
+          description: "Failed to update meeting. " + error.message,
           variant: "destructive",
         });
-        return;
+        return false;
       }
       
       // Refresh meetings to get updated data
@@ -243,6 +248,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         title: "Success",
         description: "Meeting updated successfully",
       });
+      return true;
     } catch (err) {
       console.error('Unexpected error updating meeting:', err);
       toast({
@@ -250,6 +256,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+      return false;
     }
   };
 
@@ -264,10 +271,10 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         console.error('Error deleting meeting:', error);
         toast({
           title: "Error",
-          description: "Failed to delete meeting",
+          description: "Failed to delete meeting. " + error.message,
           variant: "destructive",
         });
-        return;
+        return false;
       }
       
       // Remove the meeting from state
@@ -277,6 +284,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         title: "Success",
         description: "Meeting deleted successfully",
       });
+      return true;
     } catch (err) {
       console.error('Unexpected error deleting meeting:', err);
       toast({
@@ -284,6 +292,7 @@ export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+      return false;
     }
   };
 
