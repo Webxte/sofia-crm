@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -81,95 +82,36 @@ export function JoinOrganizationForm() {
       console.log("Found organization:", organization);
       
       if (!organization) {
-        setError("Organization not found. Please check the slug and try again.");
-        return;
-      }
-      
-      // Check password
-      let isPasswordCorrect = false;
-      
-      // Special case for Belmorso
-      if (organization.slug === 'belmorso' && values.password === 'Belmorso2024!') {
-        isPasswordCorrect = true;
-        console.log("Using hardcoded password verification for Belmorso");
-      } else {
-        // For other organizations, verify using RPC function
-        try {
-          const { data: verificationResult, error: passwordError } = await supabase.rpc(
-            'check_organization_password',
-            {
-              org_id: organization.id,
-              password: values.password
-            }
-          );
+        // Try direct database query as a fallback
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('slug', values.slug)
+          .single();
           
-          if (passwordError) throw passwordError;
-          isPasswordCorrect = !!verificationResult;
-          console.log("Password verification result:", isPasswordCorrect);
-        } catch (verifyError) {
-          console.error("Error verifying password:", verifyError);
+        if (orgError || !orgData) {
+          setError("Organization not found. Please check the slug and try again.");
+          return;
         }
-      }
-      
-      if (!isPasswordCorrect) {
-        setError("Incorrect password for this organization.");
+        
+        // Format the organization object
+        const formattedOrg = {
+          id: orgData.id,
+          name: orgData.name,
+          slug: orgData.slug,
+          logoUrl: orgData.logo_url || undefined,
+          primaryColor: orgData.primary_color || undefined,
+          secondaryColor: orgData.secondary_color || undefined,
+          createdAt: new Date(orgData.created_at),
+          updatedAt: new Date(orgData.updated_at)
+        };
+        
+        // Proceed with the formatted organization
+        await joinOrganization(formattedOrg, values.password);
         return;
       }
       
-      // Check if user is already a member
-      const { data: existingMembership, error: membershipError } = await supabase
-        .from('organization_members')
-        .select('*')
-        .eq('organization_id', organization.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (membershipError) throw membershipError;
-      
-      console.log("Existing membership check:", existingMembership);
-      
-      if (existingMembership) {
-        // User is already a member, just switch to this organization
-        await switchOrganization(organization.id);
-        toast({
-          title: "Success",
-          description: `You already belong to ${organization.name}. Switching to this organization.`,
-        });
-        trackEvent('organization_accessed', { organizationId: organization.id });
-        navigate('/dashboard');
-        return;
-      }
-      
-      // Add user as a member with owner role for Belmorso
-      const { error: addMemberError } = await supabase
-        .from('organization_members')
-        .insert([
-          {
-            organization_id: organization.id,
-            user_id: user.id,
-            role: organization.slug === 'belmorso' ? 'owner' : 'member' // Make the user an owner for Belmorso
-          }
-        ]);
-      
-      if (addMemberError) {
-        console.error("Error adding member:", addMemberError);
-        throw addMemberError;
-      }
-      
-      console.log("Successfully added as member, fetching organizations");
-      
-      // Fetch updated organizations and switch to the joined one
-      await fetchOrganizations();
-      await switchOrganization(organization.id);
-      
-      toast({
-        title: "Success",
-        description: `You have successfully joined ${organization.name}`,
-      });
-      
-      trackEvent('organization_joined', { organizationId: organization.id });
-      navigate('/dashboard');
-      
+      await joinOrganization(organization, values.password);
     } catch (error) {
       console.error("Error joining organization:", error);
       setError("Failed to join organization. Please try again later.");
@@ -181,6 +123,90 @@ export function JoinOrganizationForm() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const joinOrganization = async (organization: any, password: string) => {
+    // Check password
+    let isPasswordCorrect = false;
+    
+    // Special case for Belmorso
+    if (organization.slug === 'belmorso' && password === 'Belmorso2024!') {
+      isPasswordCorrect = true;
+      console.log("Using hardcoded password verification for Belmorso");
+    } else {
+      // For other organizations, verify using direct check
+      try {
+        const { data } = await supabase
+          .from('organizations')
+          .select('password')
+          .eq('id', organization.id)
+          .single();
+          
+        isPasswordCorrect = data?.password === password;
+        console.log("Password verification result:", isPasswordCorrect);
+      } catch (verifyError) {
+        console.error("Error verifying password:", verifyError);
+      }
+    }
+    
+    if (!isPasswordCorrect) {
+      setError("Incorrect password for this organization.");
+      return;
+    }
+    
+    // Check if user is already a member
+    const { data: existingMembership, error: membershipError } = await supabase
+      .from('organization_members')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .eq('user_id', user!.id)
+      .maybeSingle();
+    
+    if (membershipError) throw membershipError;
+    
+    console.log("Existing membership check:", existingMembership);
+    
+    if (existingMembership) {
+      // User is already a member, just switch to this organization
+      await switchOrganization(organization.id);
+      toast({
+        title: "Success",
+        description: `You already belong to ${organization.name}. Switching to this organization.`,
+      });
+      trackEvent('organization_accessed', { organizationId: organization.id });
+      navigate('/dashboard');
+      return;
+    }
+    
+    // Add user as a member with owner role for Belmorso
+    const { error: addMemberError } = await supabase
+      .from('organization_members')
+      .insert([
+        {
+          organization_id: organization.id,
+          user_id: user!.id,
+          role: organization.slug === 'belmorso' ? 'owner' : 'member' // Make the user an owner for Belmorso
+        }
+      ]);
+    
+    if (addMemberError) {
+      console.error("Error adding member:", addMemberError);
+      throw addMemberError;
+    }
+    
+    console.log("Successfully added as member, fetching organizations");
+    
+    // Fetch updated organizations and switch to the joined one
+    await fetchOrganizations();
+    await switchOrganization(organization.id);
+    
+    toast({
+      title: "Success",
+      description: `You have successfully joined ${organization.name}`,
+    });
+    
+    trackEvent('organization_joined', { organizationId: organization.id });
+    navigate('/dashboard');
   };
 
   return (

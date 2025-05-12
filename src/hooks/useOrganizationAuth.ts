@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,8 +25,26 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       return true;
     }
     
-    // Direct password check for organizations table
     try {
+      // Try using the RPC function if available
+      try {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc(
+          'check_organization_password',
+          {
+            org_id: organizationId,
+            password: password
+          }
+        );
+        
+        if (!rpcError && rpcResult === true) {
+          console.log("Password matched using RPC function");
+          return true;
+        }
+      } catch (rpcErr) {
+        console.log("RPC function not available or failed, falling back to direct check");
+      }
+      
+      // Direct password check for organizations table
       const { data, error } = await supabase
         .from('organizations')
         .select('password')
@@ -121,6 +138,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       
       // If not a member, add them
       if (!existingMembership) {
+        console.log(`User ${user.id} is not a member of organization ${orgId}, adding now...`);
         const { error: addMemberError } = await supabase
           .from('organization_members')
           .insert([{
@@ -134,6 +152,8 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
         } else {
           console.log(`Created organization member for user ${user.id} in organization ${orgId}`);
         }
+      } else {
+        console.log(`User ${user.id} is already a member of organization ${orgId}`);
       }
     } catch (err) {
       console.error("Error ensuring user membership:", err);
@@ -146,9 +166,11 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
   const handleSuccessfulLogin = (isAuthenticated: boolean, userId: string | undefined) => {
     // If the user is already authenticated, redirect to dashboard
     if (isAuthenticated && userId) {
+      console.log("User is authenticated, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     } else {
       // Otherwise redirect to login
+      console.log("User is not authenticated, redirecting to login");
       navigate('/login', { replace: true });
     }
   };

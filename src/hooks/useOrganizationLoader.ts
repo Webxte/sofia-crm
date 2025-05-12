@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { Organization } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useOrganizationLoader = (slug: string | null) => {
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -22,7 +23,38 @@ export const useOrganizationLoader = (slug: string | null) => {
       
       try {
         console.log("Loading organization with slug:", slug);
-        const org = await getOrganizationBySlug(slug);
+        
+        // First try using the context method
+        let org = await getOrganizationBySlug(slug);
+        
+        // If that fails, try direct database query as fallback
+        if (!org) {
+          console.log("Fallback: Querying database directly for organization");
+          const { data, error: dbError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+          
+          if (dbError) {
+            console.error("Database error fetching organization:", dbError);
+            throw new Error(dbError.message);
+          }
+          
+          if (data) {
+            org = {
+              id: data.id,
+              name: data.name,
+              slug: data.slug,
+              logoUrl: data.logo_url || undefined,
+              primaryColor: data.primary_color || undefined,
+              secondaryColor: data.secondary_color || undefined,
+              createdAt: new Date(data.created_at),
+              updatedAt: new Date(data.updated_at)
+            };
+            console.log("Found organization via direct query:", org.name);
+          }
+        }
         
         if (!org) {
           console.error(`Organization with slug "${slug}" not found`);

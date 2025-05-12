@@ -35,7 +35,11 @@ export const OrganizationContainer = ({
             <CardTitle className="text-2xl">{title}</CardTitle>
           </div>
           {description && !error && <CardDescription>{description}</CardDescription>}
-          {error && <CardDescription className="text-destructive">{error}</CardDescription>}
+          {error && (
+            <div className="mt-2 text-destructive">
+              <CardDescription className="text-destructive font-medium">{error}</CardDescription>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {children}

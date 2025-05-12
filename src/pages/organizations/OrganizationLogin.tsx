@@ -8,6 +8,7 @@ import { LoginForm } from "@/components/organizations/LoginForm";
 import { useOrganizationLoader } from "@/hooks/useOrganizationLoader";
 import { useOrganizationAuth } from "@/hooks/useOrganizationAuth";
 import { toast } from "@/hooks/use-toast";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
@@ -28,7 +29,8 @@ const OrganizationLogin = () => {
     isSubmitting, 
     error: authError, 
     handleLogin, 
-    handleSuccessfulLogin 
+    handleSuccessfulLogin,
+    attempts
   } = useOrganizationAuth(organization?.id, organization?.slug);
 
   // Use the combined error from both hooks
@@ -66,6 +68,11 @@ const OrganizationLogin = () => {
       }
     } catch (err) {
       console.error("Login error:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
     }
   };
 
@@ -73,10 +80,7 @@ const OrganizationLogin = () => {
   if (!isLoaded || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
-          <p>Loading organization...</p>
-        </div>
+        <LoadingSpinner message="Loading organization..." />
       </div>
     );
   }
@@ -103,6 +107,7 @@ const OrganizationLogin = () => {
       <OrganizationContainer
         title={organization?.name || "Organization"}
         description="Enter the organization password to continue"
+        error={displayError}
       >
         <LoginForm
           organization={organization}
