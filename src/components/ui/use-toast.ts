@@ -1,5 +1,4 @@
 
-// Import React using namespace import
 import * as React from "react";
 
 // Correctly re-export everything from the main implementation
