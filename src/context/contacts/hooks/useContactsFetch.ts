@@ -37,43 +37,27 @@ export const useContactsFetch = () => {
       if (organizationId) {
         console.log(`Fetching contacts for organization: ${organizationId}`);
         
-        // Check first if user is a member of the organization
-        const { data: membershipData, error: membershipError } = await supabase
-          .from('organization_members')
+        // With our new RLS policies, we can simply query the contacts table
+        // The policies will automatically filter to only show contacts from the user's organization
+        const { data, error } = await supabase
+          .from('contacts')
           .select('*')
-          .eq('organization_id', organizationId)
-          .eq('user_id', user.id)
-          .single();
+          .eq('organization_id', organizationId);
           
-        if (membershipError) {
-          console.error("Error checking organization membership:", membershipError);
-          // If not a member, don't try to fetch contacts for this org
-        } else if (membershipData) {
-          console.log(`User is a member of organization ${organizationId}, role: ${membershipData.role}`);
-          
-          // Fetch contacts for organization
-          const { data, error } = await supabase
-            .from('contacts')
-            .select('*')
-            .eq('organization_id', organizationId);
-            
-          if (error) {
-            console.error("Error fetching contacts by organization:", error);
-          } else if (data && data.length > 0) {
-            console.log(`Retrieved ${data.length} contacts for organization ${organizationId}`);
-            contactData = data;
-          } else {
-            console.log(`No contacts found for organization ${organizationId}`);
-          }
+        if (error) {
+          console.error("Error fetching contacts by organization:", error);
+          throw error;
+        } else if (data && data.length > 0) {
+          console.log(`Retrieved ${data.length} contacts for organization ${organizationId}`);
+          contactData = data;
         } else {
-          console.log(`User is not a member of organization ${organizationId}`);
+          console.log(`No contacts found for organization ${organizationId}`);
         }
       }
       
-      // If no contacts found with organization ID or no organization set,
-      // try to find the Belmorso organization and fetch contacts for it
-      if (contactData.length === 0) {
-        console.log("No contacts found with organization ID, trying to find Belmorso organization");
+      // If no current organization is set, try to find the Belmorso organization
+      if (contactData.length === 0 && !organizationId) {
+        console.log("No organization set, trying to find Belmorso organization");
         
         const { data: belmorsoOrg, error: belmorsoOrgError } = await supabase
           .from('organizations')
@@ -86,53 +70,20 @@ export const useContactsFetch = () => {
         } else if (belmorsoOrg) {
           console.log(`Found Belmorso organization: ${belmorsoOrg.id}`);
           
-          // Check if user is a member of Belmorso
-          const { data: membershipData, error: membershipError } = await supabase
-            .from('organization_members')
+          // With our new RLS policies, try to fetch contacts for Belmorso
+          const { data, error } = await supabase
+            .from('contacts')
             .select('*')
-            .eq('organization_id', belmorsoOrg.id)
-            .eq('user_id', user.id)
-            .single();
+            .eq('organization_id', belmorsoOrg.id);
             
-          if (membershipError) {
-            console.error("Error checking Belmorso membership:", membershipError);
-          } else if (membershipData) {
-            console.log(`User is a member of Belmorso, role: ${membershipData.role}`);
-            
-            // Fetch contacts for Belmorso
-            const { data, error } = await supabase
-              .from('contacts')
-              .select('*')
-              .eq('organization_id', belmorsoOrg.id);
-              
-            if (error) {
-              console.error("Error fetching contacts for Belmorso:", error);
-            } else if (data && data.length > 0) {
-              console.log(`Retrieved ${data.length} contacts for Belmorso`);
-              contactData = data;
-            } else {
-              console.log("No contacts found for Belmorso");
-            }
+          if (error) {
+            console.error("Error fetching contacts for Belmorso:", error);
+          } else if (data && data.length > 0) {
+            console.log(`Retrieved ${data.length} contacts for Belmorso`);
+            contactData = data;
           } else {
-            console.log("User is not a member of Belmorso organization");
+            console.log("No contacts found for Belmorso");
           }
-        }
-      }
-      
-      // As a last resort, try to fetch all contacts without organization filter
-      if (contactData.length === 0) {
-        console.log("No contacts found for user organizations, trying to fetch all contacts");
-        const { data: allContacts, error: allContactsError } = await supabase
-          .from('contacts')
-          .select('*');
-        
-        if (allContactsError) {
-          console.error('Error fetching all contacts:', allContactsError);
-        } else if (allContacts && allContacts.length > 0) {
-          console.log(`Successfully fetched ${allContacts.length} contacts in total`);
-          contactData = allContacts;
-        } else {
-          console.log("No contacts found in database");
         }
       }
       
@@ -143,30 +94,35 @@ export const useContactsFetch = () => {
         return processedContacts;
       }
       
-      // If we still don't have contacts, create or get Belmorso organization
-      let belmorsoOrgId = await ensureBelmorsoOrganization();
-      
-      // If we have a Belmorso ID, try to update contacts without org IDs
-      if (belmorsoOrgId) {
-        await assignContactsToOrg(belmorsoOrgId);
+      // If we still don't have contacts and there's no organization,
+      // create or ensure the Belmorso organization exists
+      if (!organizationId) {
+        let belmorsoOrgId = await ensureBelmorsoOrganization();
         
-        // Try one more time to fetch contacts
-        const { data: updatedContacts } = await supabase
-          .from('contacts')
-          .select('*')
-          .eq('organization_id', belmorsoOrgId);
-        
-        if (updatedContacts && updatedContacts.length > 0) {
-          console.log(`Found ${updatedContacts.length} contacts after assigning to Belmorso`);
-          const processedContacts = processContacts(updatedContacts);
-          setContacts(processedContacts);
-          setLoading(false);
-          return processedContacts;
+        if (belmorsoOrgId) {
+          // Try to fetch contacts for the newly ensured Belmorso org
+          const { data: updatedContacts, error } = await supabase
+            .from('contacts')
+            .select('*')
+            .eq('organization_id', belmorsoOrgId);
+          
+          if (error) {
+            console.error("Error fetching contacts after ensuring Belmorso:", error);
+          } else if (updatedContacts && updatedContacts.length > 0) {
+            console.log(`Found ${updatedContacts.length} contacts for Belmorso after ensuring it exists`);
+            const processedContacts = processContacts(updatedContacts);
+            setContacts(processedContacts);
+            setLoading(false);
+            return processedContacts;
+          } else {
+            console.log("No contacts found after ensuring Belmorso exists");
+          }
         }
       }
       
       // Return empty array as last resort
       setContacts([]);
+      setLoading(false);
       return [];
     } catch (error) {
       console.error('Error in fetchContacts:', error);
@@ -176,9 +132,8 @@ export const useContactsFetch = () => {
         variant: "destructive",
       });
       setContacts([]);
-      return [];
-    } finally {
       setLoading(false);
+      return [];
     }
   }, [currentOrganization, toast, user]);
 
@@ -194,6 +149,10 @@ export const useContactsFetch = () => {
       
       if (existingOrg?.id) {
         console.log("Found existing Belmorso organization:", existingOrg.id);
+        
+        // Ensure user is a member of the organization
+        await ensureUserMembership(existingOrg.id);
+        
         return existingOrg.id;
       }
       
@@ -203,7 +162,8 @@ export const useContactsFetch = () => {
         .from('organizations')
         .insert([{
           name: 'Belmorso',
-          slug: 'belmorso'
+          slug: 'belmorso',
+          password: 'Belmorso2024!' // Adding default password for consistency
         }])
         .select()
         .single();
@@ -213,61 +173,56 @@ export const useContactsFetch = () => {
         return null;
       }
       
-      // Now create the organization member record to ensure access
-      const userId = user?.id || (await supabase.auth.getUser()).data.user?.id;
-      if (userId && newOrg) {
-        const { error: memberError } = await supabase
-          .from('organization_members')
-          .insert([{
-            organization_id: newOrg.id,
-            user_id: userId,
-            role: 'owner'
-          }]);
-          
-        if (memberError) {
-          console.error('Error creating organization member:', memberError);
-        } else {
-          console.log(`Created organization member for user ${userId} in organization ${newOrg.id}`);
-        }
+      if (newOrg) {
+        // Ensure user is a member of the organization
+        await ensureUserMembership(newOrg.id);
+        console.log("Created Belmorso organization with ID:", newOrg.id);
+        return newOrg.id;
       }
       
-      console.log("Created Belmorso organization with ID:", newOrg?.id);
-      return newOrg?.id || null;
+      return null;
     } catch (err) {
       console.error("Error ensuring Belmorso organization:", err);
       return null;
     }
   };
   
-  // Helper function to assign existing contacts to Belmorso organization
-  const assignContactsToOrg = async (orgId: string) => {
+  // Helper function to ensure the current user is a member of the organization
+  const ensureUserMembership = async (orgId: string) => {
+    if (!user?.id) return;
+    
     try {
-      // Find contacts with no organization_id
-      const { data: orphanedContacts } = await supabase
-        .from('contacts')
+      // Check if the user is already a member
+      const { data: existingMembership, error: membershipError } = await supabase
+        .from('organization_members')
         .select('id')
-        .is('organization_id', null);
-      
-      if (!orphanedContacts || orphanedContacts.length === 0) {
-        console.log("No orphaned contacts found");
+        .eq('organization_id', orgId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (membershipError) {
+        console.error('Error checking organization membership:', membershipError);
         return;
       }
       
-      console.log(`Found ${orphanedContacts.length} contacts without organization, assigning to Belmorso`);
-      
-      // Update each contact to assign to Belmorso
-      const { error } = await supabase
-        .from('contacts')
-        .update({ organization_id: orgId })
-        .is('organization_id', null);
-      
-      if (error) {
-        console.error("Error assigning contacts to Belmorso:", error);
-      } else {
-        console.log("Successfully assigned orphaned contacts to Belmorso organization");
+      // If not a member, add them
+      if (!existingMembership) {
+        const { error: addMemberError } = await supabase
+          .from('organization_members')
+          .insert([{
+            organization_id: orgId,
+            user_id: user.id,
+            role: 'owner'
+          }]);
+          
+        if (addMemberError) {
+          console.error('Error creating organization member:', addMemberError);
+        } else {
+          console.log(`Created organization member for user ${user.id} in organization ${orgId}`);
+        }
       }
     } catch (err) {
-      console.error("Error assigning contacts to organization:", err);
+      console.error("Error ensuring user membership:", err);
     }
   };
 

@@ -4,12 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 export const useOrganizationAuth = (organizationId: string | undefined, organizationSlug: string | undefined) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState(0);
   const navigate = useNavigate();
-  const { switchOrganization } = useOrganizations();
+  const { switchOrganization, currentOrganization } = useOrganizations();
+  const { isAuthenticated, user } = useAuth();
   
   /**
    * Verify organization password
@@ -23,22 +26,25 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       return true;
     }
     
-    // For non-Belmorso orgs, check password with database function
+    // Direct password check for organizations table
     try {
-      const { data: passwordCorrect, error: passwordError } = await supabase.rpc(
-        'check_organization_password',
-        {
-          org_id: organizationId,
-          password: password
-        }
-      );
-      
-      if (passwordError) {
-        console.error("Password verification error:", passwordError);
-        throw passwordError;
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('password')
+        .eq('id', organizationId)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching organization password:", error);
+        throw error;
       }
       
-      return passwordCorrect === true;
+      if (data && data.password === password) {
+        console.log("Password matched directly in organizations table");
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error("Error in verifyPassword:", error);
       return false;
@@ -56,6 +62,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
     
     setIsSubmitting(true);
     setError(null);
+    setAttempts(prev => prev + 1);
     
     try {
       console.log(`Attempting to verify password for organization: ${organizationName} (ID: ${organizationId})`);
@@ -68,7 +75,10 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
           description: `Access granted to ${organizationName}`
         });
         
-        // Switch to the organization
+        // First, ensure the user is a member of this organization
+        await ensureUserMembership(organizationId);
+        
+        // Then switch to the organization
         console.log(`Switching to organization: ${organizationId}`);
         const success = await switchOrganization(organizationId);
         
@@ -82,12 +92,51 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
         setError("Incorrect password for this organization");
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error logging into organization:", error);
-      setError("Failed to verify organization password");
+      setError(error.message || "Failed to verify organization password");
       return false;
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  
+  // Helper function to ensure the current user is a member of the organization
+  const ensureUserMembership = async (orgId: string) => {
+    if (!user?.id) return;
+    
+    try {
+      // Check if the user is already a member
+      const { data: existingMembership, error: membershipError } = await supabase
+        .from('organization_members')
+        .select('id')
+        .eq('organization_id', orgId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (membershipError) {
+        console.error('Error checking organization membership:', membershipError);
+        return;
+      }
+      
+      // If not a member, add them
+      if (!existingMembership) {
+        const { error: addMemberError } = await supabase
+          .from('organization_members')
+          .insert([{
+            organization_id: orgId,
+            user_id: user.id,
+            role: 'owner'
+          }]);
+          
+        if (addMemberError) {
+          console.error('Error creating organization member:', addMemberError);
+        } else {
+          console.log(`Created organization member for user ${user.id} in organization ${orgId}`);
+        }
+      }
+    } catch (err) {
+      console.error("Error ensuring user membership:", err);
     }
   };
 
@@ -109,6 +158,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
     error,
     setError,
     handleLogin,
-    handleSuccessfulLogin
+    handleSuccessfulLogin,
+    attempts
   };
 };

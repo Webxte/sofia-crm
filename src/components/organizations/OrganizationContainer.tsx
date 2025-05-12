@@ -9,7 +9,7 @@ interface OrganizationContainerProps {
   title: string;
   description?: string;
   children: ReactNode;
-  error?: string;
+  error?: string | null;
   showHomeButton?: boolean;
 }
 
