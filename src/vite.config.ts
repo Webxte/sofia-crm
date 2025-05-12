@@ -19,14 +19,19 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       // Ensure we use a single instance of React
-      "react": path.resolve(__dirname, "./node_modules/react"),
-      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
+      "react": path.resolve(__dirname, "../node_modules/react"),
+      "react-dom": path.resolve(__dirname, "../node_modules/react-dom"),
     },
   },
   // Better optimization for React to ensure single instance
   optimizeDeps: {
     include: ['react', 'react-dom'],
     force: true,
+    esbuildOptions: {
+      define: {
+        global: 'window'
+      },
+    },
   },
   build: {
     rollupOptions: {
