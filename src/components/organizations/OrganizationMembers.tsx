@@ -19,5 +19,5 @@ export const OrganizationMembers = () => {
   );
 };
 
-// Adding a default export to fix the import issue
+// Make sure we have a default export to fix the import issue
 export default OrganizationMembers;
