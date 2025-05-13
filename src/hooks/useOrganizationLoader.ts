@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { Organization } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,20 +14,33 @@ export const useOrganizationLoader = (slug: string | null) => {
   const [error, setError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const { getOrganizationBySlug } = useOrganizations();
+  const isMounted = useRef(true);
+  const fetchInProgress = useRef(false);
   
   useEffect(() => {
-    let isMounted = true;
+    // Set up cleanup function
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+  
+  useEffect(() => {
     let retryTimeout: NodeJS.Timeout;
     
     const loadOrganization = async () => {
+      // Prevent concurrent fetches
+      if (fetchInProgress.current) return;
+      fetchInProgress.current = true;
+      
       // Use default slug if none provided
       const orgSlug = slug || DEFAULT_ORG_SLUG;
       
       if (!orgSlug) {
-        if (isMounted) {
+        if (isMounted.current) {
           setError("No organization specified. Using default organization.");
           setIsLoaded(true);
         }
+        fetchInProgress.current = false;
         return;
       }
       
@@ -45,7 +58,7 @@ export const useOrganizationLoader = (slug: string | null) => {
               .from('organizations')
               .select('*')
               .eq('slug', orgSlug)
-              .single();
+              .maybeSingle();
             
             if (dbError) {
               console.error("Database error fetching organization:", dbError);
@@ -76,10 +89,11 @@ export const useOrganizationLoader = (slug: string | null) => {
           const retryDelay = Math.min(1000 * (2 ** loadAttempt), 5000);
           console.log(`No organization found, retrying in ${retryDelay}ms (attempt ${loadAttempt + 1})`);
           
-          if (isMounted) {
+          if (isMounted.current) {
             retryTimeout = setTimeout(() => {
               setLoadAttempt(prev => prev + 1);
             }, retryDelay);
+            fetchInProgress.current = false;
             return;
           }
         }
@@ -103,7 +117,7 @@ export const useOrganizationLoader = (slug: string | null) => {
           throw new Error(`Organization "${orgSlug}" not found`);
         }
         
-        if (isMounted) {
+        if (isMounted.current) {
           console.log("Organization loaded:", org);
           setOrganization(org);
           setIsLoaded(true);
@@ -111,19 +125,20 @@ export const useOrganizationLoader = (slug: string | null) => {
         }
       } catch (err: any) {
         console.error("Error loading organization:", err);
-        if (isMounted) {
+        if (isMounted.current) {
           setError(err.message || "Organization not found. Please check the URL and try again.");
           setOrganization(null);
           setIsLoaded(true);
         }
       }
+      
+      fetchInProgress.current = false;
     };
     
     setIsLoaded(false); // Reset loaded state at the start
     loadOrganization();
     
     return () => {
-      isMounted = false;
       if (retryTimeout) clearTimeout(retryTimeout);
     };
   }, [slug, getOrganizationBySlug, loadAttempt]);

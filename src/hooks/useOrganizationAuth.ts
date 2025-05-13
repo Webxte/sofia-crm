@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
@@ -11,20 +10,21 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const navigate = useNavigate();
-  const { switchOrganization, currentOrganization } = useOrganizations();
+  const { switchOrganization } = useOrganizations();
   const { isAuthenticated, user } = useAuth();
+  const switchAttemptInProgress = useRef(false);
   
   /**
    * Verify organization password
    */
   const verifyPassword = async (password: string): Promise<boolean> => {
-    if (!organizationId) return false;
-    
-    // Special case for Belmorso
+    // Always allow the demo password for Belmorso
     if (organizationSlug === 'belmorso' && password === 'Belmorso2024!') {
       console.log("Using hardcoded password verification for Belmorso");
       return true;
     }
+    
+    if (!organizationId) return false;
     
     try {
       // Try using the RPC function if available
@@ -54,13 +54,6 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
         
       if (error) {
         console.error("Error fetching organization password:", error);
-        
-        // For demo purposes - handle network errors for Belmorso
-        if (organizationSlug === 'belmorso' && password === 'Belmorso2024!') {
-          console.log("Network error but allowing Belmorso fallback access");
-          return true;
-        }
-        
         throw error;
       }
       
@@ -72,13 +65,6 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       return false;
     } catch (error) {
       console.error("Error in verifyPassword:", error);
-      
-      // Last resort fallback for Belmorso if all else fails
-      if (organizationSlug === 'belmorso' && password === 'Belmorso2024!') {
-        console.log("Error verifying password but allowing Belmorso fallback access");
-        return true;
-      }
-      
       return false;
     }
   };
@@ -87,12 +73,13 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
    * Handle organization login
    */
   const handleLogin = async (password: string, organizationName: string): Promise<boolean> => {
-    if (!organizationId && organizationSlug !== 'belmorso') {
+    // Handle the case where we have a slug but no ID (for Belmorso demo fallback case)
+    const orgId = organizationId || (organizationSlug === 'belmorso' ? 'belmorso-fallback-id' : undefined);
+    
+    if (!orgId) {
       setError("Organization not found");
       return false;
     }
-    
-    const orgId = organizationId || 'belmorso-fallback-id';
     
     setIsSubmitting(true);
     setError(null);
@@ -110,11 +97,22 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
         });
         
         // First, ensure the user is a member of this organization
-        await ensureUserMembership(orgId);
+        if (user?.id) {
+          await ensureUserMembership(orgId);
+        }
         
         // Then switch to the organization
         console.log(`Switching to organization: ${orgId}`);
+        
+        // Prevent concurrent switch attempts
+        if (switchAttemptInProgress.current) {
+          console.log("Switch attempt already in progress, skipping");
+          return true;
+        }
+        
+        switchAttemptInProgress.current = true;
         const success = await switchOrganization(orgId);
+        switchAttemptInProgress.current = false;
         
         if (!success) {
           // For Belmorso, we'll consider this a success anyway for demo
@@ -165,11 +163,11 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
         try {
           const { error: addMemberError } = await supabase
             .from('organization_members')
-            .insert([{
+            .insert({
               organization_id: orgId,
               user_id: user.id,
               role: 'owner'
-            }]);
+            });
             
           if (addMemberError) {
             console.error('Error creating organization member:', addMemberError);
@@ -194,11 +192,17 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
     // If the user is already authenticated, redirect to dashboard
     if (isAuthenticated && userId) {
       console.log("User is authenticated, redirecting to dashboard");
-      navigate('/dashboard', { replace: true });
+      // Use timeout to ensure state updates complete
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
     } else {
       // Otherwise redirect to login
       console.log("User is not authenticated, redirecting to login");
-      navigate('/login', { replace: true });
+      // Use timeout to ensure state updates complete
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 100);
     }
   };
   

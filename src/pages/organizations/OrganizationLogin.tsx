@@ -15,8 +15,9 @@ const DEFAULT_ORG_SLUG = "belmorso";
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
   const slug = searchParams.get("slug") || DEFAULT_ORG_SLUG;
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [attemptsCount, setAttemptsCount] = useState(0);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const navigate = useNavigate();
   
   // Use our custom hooks for organization loading and authentication
@@ -40,13 +41,28 @@ const OrganizationLogin = () => {
   
   // Effect to handle automatic redirect if already authenticated with an organization
   useEffect(() => {
-    if (isAuthenticated && organization && attemptsCount === 0) {
-      // Only try auto-switch on first attempt
-      setAttemptsCount(prev => prev + 1);
-      console.log("User already authenticated and organization found, attempting to navigate to dashboard");
-      navigate('/dashboard', { replace: true });
+    // Prevent infinite loops - only try auto-navigation once
+    if (redirectAttempted) {
+      return;
     }
-  }, [isAuthenticated, organization, navigate, attemptsCount]);
+    
+    // Only run this effect when both auth and org data are loaded
+    if (authLoading || !isLoaded) {
+      return;
+    }
+
+    // If authenticated and organization exists, try auto-navigation
+    if (isAuthenticated && organization && attemptsCount === 0) {
+      setAttemptsCount(prev => prev + 1);
+      setRedirectAttempted(true);
+      console.log("User already authenticated and organization found, attempting to navigate to dashboard");
+      
+      // Add delay to ensure state updates complete
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
+    }
+  }, [isAuthenticated, organization, navigate, attemptsCount, authLoading, isLoaded, redirectAttempted]);
   
   const handleSubmit = async (password: string) => {
     if (!organization) {
@@ -64,6 +80,7 @@ const OrganizationLogin = () => {
       
       if (success) {
         console.log("Login successful, navigating...");
+        setRedirectAttempted(true);
         handleSuccessfulLogin(isAuthenticated, user?.id);
       } else {
         console.log("Login failed");
@@ -79,7 +96,7 @@ const OrganizationLogin = () => {
   };
 
   // Show loading state
-  if (!isLoaded || isLoading) {
+  if ((!isLoaded || authLoading) && !displayError) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner message="Loading organization..." />

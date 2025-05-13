@@ -11,29 +11,25 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    // Configure React plugin
     react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Ensure we use a single instance of React
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
   },
-  // Better optimization for React to ensure single instance
   optimizeDeps: {
     include: ['react', 'react-dom'],
     force: true,
-    esbuildOptions: {
-      define: {
-        global: 'window'
-      },
-    },
   },
   build: {
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
     rollupOptions: {
       output: {
         manualChunks: {
@@ -41,12 +37,8 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true,
-    },
     cssCodeSplit: true,
   },
-  // Force clear cache on each build
+  // Clear cache
   cacheDir: '.vite_cache',
 }));
