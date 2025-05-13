@@ -12,8 +12,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      jsxRuntime: 'automatic',
-      // Force React refresh to be enabled 
+      // Only use valid options for the React plugin
       refresh: true,
     }),
     mode === 'development' && componentTagger(),
