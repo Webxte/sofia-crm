@@ -39,6 +39,6 @@ export default defineConfig(({ mode }) => ({
     },
     cssCodeSplit: true,
   },
-  // Clear cache
-  cacheDir: '.vite_cache',
+  // Clear and use new cache dir
+  cacheDir: '.vite_cache_new',
 }));
