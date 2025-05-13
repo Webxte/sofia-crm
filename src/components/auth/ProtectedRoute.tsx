@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useRef } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
@@ -23,8 +23,14 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const location = useLocation();
   const [checksPassed, setChecksPassed] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Checking authentication");
+  const redirectAttempted = useRef(false);
 
   useEffect(() => {
+    // Skip if already attempted a redirect in this render cycle
+    if (redirectAttempted.current) {
+      return;
+    }
+    
     // Update loading message based on current state
     if (isLoading) {
       setLoadingMessage("Verifying authentication");
@@ -50,6 +56,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       // First priority: If no current organization, redirect to organization login
       // This happens even before authentication check
       if (!currentOrganization) {
+        // Mark that we attempted a redirect
+        redirectAttempted.current = true;
+        
         console.log("No organization selected, redirecting to org login");
         navigate("/organizations/login?slug=belmorso", { 
           replace: true,
@@ -60,6 +69,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       
       // Second priority: If authenticated but no organizations at all, go to new org page
       if (isAuthenticated && organizations.length === 0) {
+        // Mark that we attempted a redirect
+        redirectAttempted.current = true;
+        
         console.log("No organizations found, redirecting to create new org");
         navigate("/organizations/new", { replace: true });
         return;
@@ -68,6 +80,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       // Third priority: If not authenticated, redirect to login
       // But only after organization is selected
       if (!isAuthenticated) {
+        // Mark that we attempted a redirect
+        redirectAttempted.current = true;
+        
         console.log("Not authenticated, redirecting to login");
         navigate("/login", { 
           replace: true,
@@ -78,6 +93,8 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
 
       // If we made it here, all checks passed
       setChecksPassed(true);
+      // Reset redirect flag after checks pass
+      redirectAttempted.current = false;
     } catch (error) {
       console.error("Error in protection checks:", error);
       toast({
@@ -127,9 +144,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   }
 
   // Block access for non-admins if admin required
-  // Allow both admins and agents to access the Reports and Contacts pages
   if (requireAdmin && !isAdmin) {
     const path = location.pathname;
+    // Allow both admins and agents to access the Reports and Contacts pages
     if (path !== '/reports' && !path.startsWith('/contacts')) {
       toast({
         title: "Access denied",

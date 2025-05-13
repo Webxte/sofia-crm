@@ -10,9 +10,11 @@ import { useOrganizationAuth } from "@/hooks/useOrganizationAuth";
 import { toast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
+const DEFAULT_ORG_SLUG = "belmorso";
+
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
-  const slug = searchParams.get("slug");
+  const slug = searchParams.get("slug") || DEFAULT_ORG_SLUG;
   const { isAuthenticated, isLoading, user } = useAuth();
   const [attemptsCount, setAttemptsCount] = useState(0);
   const navigate = useNavigate();

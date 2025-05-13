@@ -1,11 +1,13 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { Navigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+
+const DEFAULT_ORG_SLUG = "belmorso";
 
 const Index = () => {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
@@ -18,6 +20,8 @@ const Index = () => {
   const [loadingStage, setLoadingStage] = useState<string>("Initializing");
   const [error, setError] = useState<string | null>(null);
   const [redirectStarted, setRedirectStarted] = useState<boolean>(false);
+  const redirectAttemptsRef = useRef<number>(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update loading stage based on current state
   useEffect(() => {
@@ -49,13 +53,22 @@ const Index = () => {
     });
 
     // Set error if stuck in loading state for too long (10 seconds)
-    const timeout = setTimeout(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
       if (authLoading || isLoadingOrganizations || !initialLoadComplete) {
         console.warn("Loading state persisted for too long, might indicate an issue");
+        setError("Taking longer than expected to load. You may need to refresh the page.");
       }
     }, 10000);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [
     isAuthenticated, 
     authLoading, 
@@ -65,6 +78,25 @@ const Index = () => {
     currentOrganization, 
     organizations
   ]);
+
+  // Prevent excessive redirect attempts
+  useEffect(() => {
+    // Only try to redirect if we haven't started redirecting already
+    if (!redirectStarted && initialLoadComplete && !authLoading && !isLoadingOrganizations) {
+      // Increment the number of redirect attempts
+      redirectAttemptsRef.current += 1;
+      
+      // Prevent infinite redirect loops by capping the number of attempts
+      if (redirectAttemptsRef.current > 3) {
+        console.error("Too many redirect attempts, might be in a loop");
+        setError("Unable to determine the correct page to show. Please try logging in again.");
+        return;
+      }
+      
+      // Mark redirecting as started to prevent multiple redirects
+      setRedirectStarted(true);
+    }
+  }, [redirectStarted, initialLoadComplete, authLoading, isLoadingOrganizations]);
 
   // Show loading state while checking auth and orgs
   if (authLoading || isLoadingOrganizations || !initialLoadComplete) {
@@ -100,7 +132,7 @@ const Index = () => {
   // First, redirect to organization login if no organization is selected
   if (initialLoadComplete && !currentOrganization) {
     console.log("Index: No current organization, redirecting to organization login");
-    redirectTo = "/organizations/login?slug=belmorso";
+    redirectTo = `/organizations/login?slug=${DEFAULT_ORG_SLUG}`;
     setRedirectStarted(true);
   }
   // Then, if authenticated but no organizations, redirect to create a new one
@@ -118,7 +150,7 @@ const Index = () => {
   // If not authenticated and no organization, we redirect to org login
   else if (!isAuthenticated) {
     console.log("Index: Not authenticated and no organization, redirecting to organization login");
-    redirectTo = "/organizations/login?slug=belmorso";
+    redirectTo = `/organizations/login?slug=${DEFAULT_ORG_SLUG}`;
     setRedirectStarted(true);
   }
   // If all conditions are met (authenticated and has organization), redirect to dashboard

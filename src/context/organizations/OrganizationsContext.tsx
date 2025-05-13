@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode, useEffect, useState } from "react";
+import React, { createContext, useContext, ReactNode, useEffect, useState, useRef } from "react";
 import { useOrganizationsOperations } from "./useOrganizationsOperations";
 import { OrganizationsContextType } from "./types";
 import { useAuth } from "@/context/AuthContext";
@@ -15,12 +15,20 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   const [loadingOrganizations, setLoadingOrganizations] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const initialLoadAttempted = useRef(false);
+  const redirectInProgress = useRef(false);
   
   // Initialize organizations when the provider mounts and auth status changes
   useEffect(() => {
+    // Skip if already attempted an initial load or redirect is in progress
+    if (initialLoadAttempted.current || redirectInProgress.current) {
+      return;
+    }
+    
     const loadOrganizations = async () => {
       if (isAuthenticated && user) {
         console.log("OrganizationsContext: User authenticated, fetching organizations");
+        initialLoadAttempted.current = true;
         
         // Prevent multiple simultaneous fetches
         if (loadingOrganizations) {
@@ -40,14 +48,22 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           const isNewOrgPage = location.pathname === "/organizations/new";
           const isNonOrgPage = isOrgLoginPage || isLoginPage || isRegisterPage || isNewOrgPage;
           
-          // Only redirect if needed and we're not already on an appropriate page
+          // Don't redirect if we're already on an appropriate page
           if (operations.organizations.length === 0 && !isNewOrgPage) {
+            // Prevent multiple redirects
+            if (redirectInProgress.current) return;
+            redirectInProgress.current = true;
+            
             console.log("No organizations found, redirecting to create org page");
             navigate("/organizations/new", { replace: true });
           } 
           // If we have organizations but no current organization selected, redirect to org login
           // But ONLY if we're not already on the org login page to prevent loops
           else if (operations.organizations.length > 0 && !operations.currentOrganization && !isOrgLoginPage) {
+            // Prevent multiple redirects
+            if (redirectInProgress.current) return;
+            redirectInProgress.current = true;
+            
             console.log("Organizations exist but none selected, redirecting to org login");
             navigate("/organizations/login?slug=belmorso", { replace: true });
           }
@@ -64,6 +80,10 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         } finally {
           setLoadingOrganizations(false);
           setInitialLoadComplete(true);
+          // Reset redirect flag after a short delay to prevent immediate redirects
+          setTimeout(() => {
+            redirectInProgress.current = false;
+          }, 1000);
         }
       } else if (!isAuthenticated) {
         // If not authenticated, we're done initializing
