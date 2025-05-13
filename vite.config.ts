@@ -11,7 +11,11 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic',
+      // Force React refresh to be enabled 
+      refresh: true,
+    }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
@@ -19,7 +23,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "./node_modules/react/jsx-runtime"),
     },
+    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
@@ -39,6 +45,6 @@ export default defineConfig(({ mode }) => ({
     },
     cssCodeSplit: true,
   },
-  // Clear and use new cache dir
-  cacheDir: '.vite_cache_new',
+  // Clear and use new cache dir to ensure full rebuild
+  cacheDir: '.vite_cache_fresh',
 }));
