@@ -12,8 +12,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      // Only use valid options for the React plugin
-      refresh: true,
+      // Using only valid options for @vitejs/plugin-react-swc
     }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
