@@ -4,10 +4,10 @@ import { Meeting } from "@/types";
 export interface MeetingsContextType {
   meetings: Meeting[];
   loading: boolean;
-  addMeeting: (meeting: Omit<Meeting, "id" | "createdAt" | "updatedAt">) => Promise<void>;
-  updateMeeting: (id: string, meeting: Partial<Meeting>) => Promise<void>;
-  deleteMeeting: (id: string) => Promise<void>;
+  addMeeting: (meeting: Omit<Meeting, "id" | "createdAt" | "updatedAt">, userId?: string, userName?: string) => Promise<Meeting | null>;
+  updateMeeting: (id: string, meeting: Partial<Meeting>) => Promise<boolean>;
+  deleteMeeting: (id: string) => Promise<boolean>;
   getMeetingById: (id: string) => Meeting | undefined;
   getMeetingsByContactId: (contactId: string) => Meeting[];
-  refreshMeetings: () => Promise<void>;
+  refreshMeetings: (isAuthenticated?: boolean) => Promise<Meeting[]>;
 }
