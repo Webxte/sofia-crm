@@ -6,7 +6,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
 import App from './App';
-import { Toaster } from './components/ui/toaster';
+import { Toaster } from './components/ui/sonner';
 import './index.css';
 
 // Create the root with explicit typing and ensure we're using a properly existing element

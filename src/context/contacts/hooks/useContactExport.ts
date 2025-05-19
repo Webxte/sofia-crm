@@ -1,5 +1,5 @@
 
-import React, { useCallback } from 'react';
+import * as React from 'react';
 import { Contact } from "@/types";
 import Papa from "papaparse";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useContactExport = (contacts: Contact[]) => {
   const { toast } = useToast();
   
-  const exportContactsToCsv = useCallback(() => {
+  const exportContactsToCsv = React.useCallback(() => {
     try {
       // Convert contacts to CSV format
       const data = contacts.map(contact => ({
