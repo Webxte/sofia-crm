@@ -36,6 +36,9 @@ export interface ApiErrorResponse {
 // HTTP method types
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+// Entity types for the CRM system
+export type EntityType = "contact" | "meeting" | "task" | "order" | "product" | "organization" | "user";
+
 // Request configuration
 export interface RequestConfig {
   method: HttpMethod;
