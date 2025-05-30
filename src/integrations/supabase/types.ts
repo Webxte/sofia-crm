@@ -697,12 +697,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_organization_role: {
+        Args: { org_id: string; user_id: string }
+        Returns: string
+      }
       is_member_of_organization: {
         Args: { _user_id: string; _organization_id: string }
         Returns: boolean
       }
       is_org_admin: {
         Args: { _user_id: string; _organization_id: string }
+        Returns: boolean
+      }
+      is_organization_member: {
+        Args: { org_id: string; user_id: string }
         Returns: boolean
       }
     }
