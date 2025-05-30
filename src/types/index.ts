@@ -1,4 +1,3 @@
-
 // Core entity types matching the database schema
 
 export interface Organization {
@@ -139,44 +138,56 @@ export interface OrderItem {
 
 export interface Settings {
   id: string;
-  organizationId: string;
+  organizationId?: string;
+  organization_id?: string;
   companyName?: string;
+  company_name?: string;
   companyEmail?: string;
+  company_email?: string;
   companyPhone?: string;
+  company_phone?: string;
   companyAddress?: string;
+  company_address?: string;
   primaryColor?: string;
+  primary_color?: string;
   secondaryColor?: string;
+  secondary_color?: string;
   defaultVatRate: number;
+  default_vat_rate?: number;
   termsEnabled: boolean;
+  terms_enabled?: boolean;
   terms?: string;
   defaultTermsAndConditions?: string;
+  default_terms_and_conditions?: string;
   catalogUrl?: string;
+  catalog_url?: string;
   priceListUrl?: string;
+  price_list_url?: string;
   customLinks: CustomLink[];
+  custom_links?: CustomLink[];
   bulkEmailTemplate?: string;
+  bulk_email_template?: string;
   defaultContactEmailMessage?: string;
+  default_contact_email_message?: string;
   defaultEmailSubject?: string;
+  default_email_subject?: string;
   defaultEmailMessage?: string;
+  default_email_message?: string;
   emailFooter: string;
+  email_footer?: string;
   emailSenderName: string;
-  showFooterInEmails: boolean;
+  email_sender_name?: string;
+  showFooterInEmails?: boolean;
+  show_footer_in_emails?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface CustomLink {
-  id: string;
-  name: string;
+  id?: string;
+  name?: string;
   url: string;
-}
-
-export interface AnalyticsEvent {
-  id: string;
-  organizationId?: string;
-  userId?: string;
-  eventName: string;
-  eventData?: Record<string, any>;
-  createdAt: Date;
+  description?: string;
 }
 
 // Filter and search types

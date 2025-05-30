@@ -13,3 +13,16 @@ export interface TasksContextType {
   getTasksByStatus: (status: "active" | "completed") => Task[];
   refreshTasks: () => Promise<void>;
 }
+
+export interface TaskData {
+  title: string;
+  description?: string;
+  due_date?: string | null;
+  due_time?: string;
+  priority: "low" | "medium" | "high";
+  status: "active" | "completed";
+  contact_id?: string | null;
+  contact_name?: string;
+  agent_id?: string;
+  agent_name?: string;
+}
