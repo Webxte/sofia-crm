@@ -1,57 +1,57 @@
 
-import * as React from 'react';
+import { useCallback } from "react";
 import { Contact } from "@/types";
-import Papa from "papaparse";
 import { useToast } from "@/hooks/use-toast";
 
 export const useContactExport = (contacts: Contact[]) => {
   const { toast } = useToast();
-  
-  const exportContactsToCsv = React.useCallback(() => {
-    try {
-      // Convert contacts to CSV format
-      const data = contacts.map(contact => ({
-        Name: contact.fullName,
-        Company: contact.company,
-        Email: contact.email,
-        Phone: contact.phone,
-        Mobile: contact.mobile,
-        Position: contact.position,
-        Address: contact.address,
-        Source: contact.source,
-        Notes: contact.notes
-      }));
 
-      // Generate CSV
-      const csv = Papa.unparse(data);
+  const exportContactsToCsv = useCallback(async () => {
+    try {
+      console.log("Exporting contacts to CSV, count:", contacts.length);
       
-      // Create a blob with the CSV data
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      // Create CSV content
+      const headers = ["Full Name", "Company", "Email", "Phone", "Mobile", "Position", "Source", "Agent"];
+      const csvContent = [
+        headers.join(","),
+        ...contacts.map(contact => [
+          contact.fullName || "",
+          contact.company || "",
+          contact.email || "",
+          contact.phone || "",
+          contact.mobile || "",
+          contact.position || "",
+          contact.source || "",
+          contact.agentName || ""
+        ].map(field => `"${field}"`).join(","))
+      ].join("\n");
+
+      // Download file
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      
-      // Create a link element to trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `contacts_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `contacts-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
-      
-      // Trigger download and clean up
       link.click();
       document.body.removeChild(link);
       
       toast({
         title: "Export Successful",
-        description: `${data.length} contacts exported as CSV`,
+        description: `Exported ${contacts.length} contacts to CSV.`,
       });
     } catch (error) {
-      console.error('Error exporting contacts:', error);
+      console.error("Error exporting contacts:", error);
       toast({
-        title: "Export Failed",
-        description: "There was an error exporting contacts",
+        title: "Export Error",
+        description: "Failed to export contacts. Please try again.",
         variant: "destructive",
       });
     }
   }, [contacts, toast]);
 
-  return { exportContactsToCsv };
+  return {
+    exportContactsToCsv
+  };
 };

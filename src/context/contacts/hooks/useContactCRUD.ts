@@ -2,108 +2,116 @@
 import { useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
-import { contactToDbRecord, processContacts } from "../utils/contactDataProcessing";
+import { transformDatabaseContact, transformAppContact } from "../contactUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export const useContactCRUD = (setContacts: React.Dispatch<React.SetStateAction<Contact[]>>) => {
-  const { toast } = useToast();
+  const { user } = useAuth();
   const { currentOrganization } = useOrganizations();
+  const { toast } = useToast();
 
-  const addContact = useCallback(async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
+  const addContact = useCallback(async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">): Promise<Contact | null> => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
     try {
-      // Ensure organization_id is set
-      const dataWithOrg = {
-        ...contactData,
-        organizationId: currentOrganization?.id
+      const dbContact = {
+        ...transformAppContact(contactData),
+        organization_id: currentOrganization.id,
+        created_at: new Date().toISOString(),
       };
-      
-      const dbRecord = contactToDbRecord(dataWithOrg);
-      
+
       const { data, error } = await supabase
-        .from('contacts')
-        .insert([dbRecord])
+        .from("contacts")
+        .insert([dbContact])
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating contact:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      if (!data) return null;
-      
-      const newContact = processContacts([data])[0];
+      const newContact = transformDatabaseContact(data);
       setContacts(prev => [newContact, ...prev]);
       
+      console.log("Contact added successfully:", newContact.id);
       return newContact;
     } catch (error) {
-      console.error('Error adding contact:', error);
+      console.error("Error adding contact:", error);
       toast({
         title: "Error",
-        description: "Failed to add contact",
+        description: "Failed to add contact. Please try again.",
         variant: "destructive",
       });
-      return null;
+      throw error;
     }
-  }, [toast, currentOrganization, setContacts]);
+  }, [user, currentOrganization, setContacts, toast]);
 
-  const updateContact = useCallback(async (id: string, contactData: Partial<Contact>) => {
+  const updateContact = useCallback(async (id: string, contactData: Partial<Contact>): Promise<Contact | null> => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
     try {
-      const updates = contactToDbRecord(contactData);
+      const dbContact = transformAppContact(contactData);
 
       const { data, error } = await supabase
-        .from('contacts')
-        .update(updates)
-        .eq('id', id)
+        .from("contacts")
+        .update(dbContact)
+        .eq("id", id)
+        .eq("organization_id", currentOrganization.id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Error updating contact:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      if (!data) return null;
-
-      const updatedContact = processContacts([data])[0];
+      const updatedContact = transformDatabaseContact(data);
       setContacts(prev => prev.map(contact => 
-        contact.id === id ? { ...contact, ...updatedContact } : contact
+        contact.id === id ? updatedContact : contact
       ));
       
+      console.log("Contact updated successfully:", updatedContact.id);
       return updatedContact;
     } catch (error) {
-      console.error('Error updating contact:', error);
+      console.error("Error updating contact:", error);
       toast({
         title: "Error",
-        description: "Failed to update contact",
+        description: "Failed to update contact. Please try again.",
         variant: "destructive",
       });
-      return null;
+      throw error;
     }
-  }, [toast, setContacts]);
+  }, [user, currentOrganization, setContacts, toast]);
 
-  const deleteContact = useCallback(async (id: string) => {
+  const deleteContact = useCallback(async (id: string): Promise<boolean> => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
     try {
-      const { error } = await supabase.from('contacts').delete().eq('id', id);
-      
-      if (error) {
-        console.error('Error deleting contact:', error);
-        throw error;
-      }
-      
+      const { error } = await supabase
+        .from("contacts")
+        .delete()
+        .eq("id", id)
+        .eq("organization_id", currentOrganization.id);
+
+      if (error) throw error;
+
       setContacts(prev => prev.filter(contact => contact.id !== id));
+      
+      console.log("Contact deleted successfully:", id);
       return true;
     } catch (error) {
-      console.error('Error deleting contact:', error);
+      console.error("Error deleting contact:", error);
       toast({
         title: "Error",
-        description: "Failed to delete contact",
+        description: "Failed to delete contact. Please try again.",
         variant: "destructive",
       });
       return false;
     }
-  }, [toast, setContacts]);
+  }, [user, currentOrganization, setContacts, toast]);
 
   return {
     addContact,

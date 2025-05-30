@@ -1,48 +1,30 @@
 
-import { createContext, useContext, useEffect, ReactNode } from "react";
-import { TasksContextType } from "./types";
+import React, { createContext, useContext, useEffect, ReactNode } from "react";
 import { useTasksOperations } from "./useTasksOperations";
-import { getTaskById, getTasksByContactId } from "./taskUtils";
+import { TasksContextType } from "./types";
 import { useAuth } from "@/context/AuthContext";
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  const { 
-    tasks, 
-    loading, 
-    addTask, 
-    updateTask, 
-    deleteTask, 
-    refreshTasks 
-  } = useTasksOperations();
+  const operations = useTasksOperations();
 
+  // Fetch tasks when the component mounts or when auth state changes
   useEffect(() => {
     if (isAuthenticated) {
-      refreshTasks();
+      operations.refreshTasks();
     }
   }, [isAuthenticated]);
 
   return (
-    <TasksContext.Provider
-      value={{
-        tasks,
-        loading,
-        addTask,
-        updateTask,
-        deleteTask,
-        getTaskById: (id) => getTaskById(tasks, id),
-        getTasksByContactId: (contactId) => getTasksByContactId(tasks, contactId),
-        refreshTasks,
-      }}
-    >
+    <TasksContext.Provider value={operations}>
       {children}
     </TasksContext.Provider>
   );
 };
 
-export const useTasks = () => {
+export const useTasks = (): TasksContextType => {
   const context = useContext(TasksContext);
   if (context === undefined) {
     throw new Error("useTasks must be used within a TasksProvider");

@@ -1,59 +1,47 @@
 
-import * as React from 'react';
+import { useCallback } from "react";
 import { Contact } from "@/types";
-import { useAnalytics } from "@/hooks/use-analytics";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useContactAnalytics = (contacts: Contact[]) => {
-  const analytics = useAnalytics();
-  
-  // Track when contact details are viewed
-  const trackContactView = React.useCallback((contactId: string) => {
-    const contact = contacts.find(c => c.id === contactId);
-    if (contact) {
-      analytics.trackEvent('contact_viewed', {
-        contactId,
-        contactName: contact.fullName,
-        contactCompany: contact.company
-      });
+  const trackContactView = useCallback(async (contactId: string) => {
+    try {
+      await supabase
+        .from("analytics_events")
+        .insert([{
+          event_name: "contact_viewed",
+          event_data: { contact_id: contactId },
+        }]);
+    } catch (error) {
+      console.error("Error tracking contact view:", error);
     }
-  }, [contacts, analytics]);
-  
-  // Analyze contact data for reporting
-  const analyzeContactData = React.useCallback(() => {
-    // Group contacts by source
-    const contactsBySource = contacts.reduce((acc, contact) => {
-      const source = contact.source || 'Unknown';
-      if (!acc[source]) {
-        acc[source] = [];
+  }, []);
+
+  const analyzeContactData = useCallback(() => {
+    const totalContacts = contacts.length;
+    const sources = contacts.reduce((acc, contact) => {
+      if (contact.source) {
+        acc[contact.source] = (acc[contact.source] || 0) + 1;
       }
-      acc[source].push(contact);
       return acc;
-    }, {} as Record<string, Contact[]>);
-    
-    // Group contacts by company
-    const contactsByCompany = contacts.reduce((acc, contact) => {
-      const company = contact.company || 'Unknown';
-      if (!acc[company]) {
-        acc[company] = [];
+    }, {} as Record<string, number>);
+
+    const agents = contacts.reduce((acc, contact) => {
+      if (contact.agentName) {
+        acc[contact.agentName] = (acc[contact.agentName] || 0) + 1;
       }
-      acc[company].push(contact);
       return acc;
-    }, {} as Record<string, Contact[]>);
-    
+    }, {} as Record<string, number>);
+
     return {
-      totalContacts: contacts.length,
-      contactsBySource,
-      contactsByCompany,
-      sources: Object.keys(contactsBySource),
-      companies: Object.keys(contactsByCompany),
-      sourceDistribution: Object.entries(contactsBySource).map(([source, contacts]) => ({
-        source,
-        count: contacts.length,
-        percentage: (contacts.length / Math.max(1, contacts.length)) * 100
-      }))
+      totalContacts,
+      sources,
+      agents,
+      contactsWithEmail: contacts.filter(c => c.email).length,
+      contactsWithPhone: contacts.filter(c => c.phone || c.mobile).length,
     };
   }, [contacts]);
-  
+
   return {
     trackContactView,
     analyzeContactData

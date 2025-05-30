@@ -1,53 +1,30 @@
 
-import { createContext, useContext, useEffect, ReactNode } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { ProductsContextType } from "./types";
+import React, { createContext, useContext, useEffect, ReactNode } from "react";
 import { useProductsOperations } from "./useProductsOperations";
+import { ProductsContextType } from "./types";
+import { useAuth } from "@/context/AuthContext";
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  const {
-    products,
-    loading,
-    refreshProducts,
-    addProduct,
-    updateProduct,
-    deleteProduct,
-    getProductById,
-    getProductByCode,
-    importProducts,
-    importProductsFromFile,
-  } = useProductsOperations();
+  const operations = useProductsOperations();
 
+  // Fetch products when the component mounts or when auth state changes
   useEffect(() => {
     if (isAuthenticated) {
-      refreshProducts();
+      operations.refreshProducts();
     }
   }, [isAuthenticated]);
 
   return (
-    <ProductsContext.Provider
-      value={{
-        products,
-        loading,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        getProductById,
-        getProductByCode,
-        importProducts,
-        importProductsFromFile,
-        refreshProducts,
-      }}
-    >
+    <ProductsContext.Provider value={operations}>
       {children}
     </ProductsContext.Provider>
   );
 };
 
-export const useProducts = () => {
+export const useProducts = (): ProductsContextType => {
   const context = useContext(ProductsContext);
   if (context === undefined) {
     throw new Error("useProducts must be used within a ProductsProvider");

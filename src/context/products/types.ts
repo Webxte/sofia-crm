@@ -4,12 +4,12 @@ import { Product } from "@/types";
 export interface ProductsContextType {
   products: Product[];
   loading: boolean;
-  addProduct: (product: Omit<Product, "id" | "createdAt" | "updatedAt">) => Promise<void>;
-  updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
-  deleteProduct: (id: string) => Promise<void>;
+  addProduct: (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => Promise<Product | null>;
+  updateProduct: (id: string, productData: Partial<Product>) => Promise<Product | null>;
+  deleteProduct: (id: string) => Promise<boolean>;
   getProductById: (id: string) => Product | undefined;
   getProductByCode: (code: string) => Product | undefined;
-  importProducts: (csvData: string) => Promise<void>;
-  importProductsFromFile: (file: File) => Promise<void>;
+  searchProducts: (query: string) => Product[];
   refreshProducts: () => Promise<void>;
+  importProductsFromCsv: (file: File) => Promise<void>;
 }

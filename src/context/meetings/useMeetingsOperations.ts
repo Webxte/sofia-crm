@@ -1,318 +1,225 @@
-import { useState } from "react";
+
+import { useState, useCallback } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { supabaseToMeeting, meetingToSupabase, newMeetingToSupabase } from "./meetingUtils";
-import { useContacts } from "@/context/ContactsContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useToast } from "@/hooks/use-toast";
 
-export const useMeetingsOperations = (initialMeetings: Meeting[] = []) => {
-  const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const { getContactById } = useContacts();
-  const { currentOrganization } = useOrganizations();
-  const { user } = useAuth();
-
-  // Helper function to sort meetings by date and time
-  const sortMeetingsByDateTime = (meetingsToSort: Meeting[]) => {
-    return [...meetingsToSort].sort((a, b) => {
-      // First compare by date
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      const dateComparison = dateA.getTime() - dateB.getTime();
-      
-      // If dates are the same, compare by time
-      if (dateComparison === 0) {
-        const timeA = a.time ? a.time.split(':').map(Number) : [0, 0];
-        const timeB = b.time ? b.time.split(':').map(Number) : [0, 0];
-        
-        // Compare hours first
-        if (timeA[0] !== timeB[0]) {
-          return timeA[0] - timeB[0];
-        }
-        
-        // If hours are the same, compare minutes
-        return timeA[1] - timeB[1];
-      }
-      
-      return dateComparison;
-    });
+// Transform database meeting to app meeting
+const transformDatabaseMeeting = (dbMeeting: any): Meeting => {
+  return {
+    id: dbMeeting.id,
+    organizationId: dbMeeting.organization_id,
+    contactId: dbMeeting.contact_id,
+    contactName: dbMeeting.contact_name,
+    type: dbMeeting.type as "meeting" | "phone" | "email" | "online" | "other",
+    date: dbMeeting.date,
+    time: dbMeeting.time,
+    location: dbMeeting.location,
+    notes: dbMeeting.notes,
+    followUpScheduled: dbMeeting.follow_up_scheduled,
+    followUpDate: dbMeeting.follow_up_date,
+    followUpTime: dbMeeting.follow_up_time,
+    followUpNotes: dbMeeting.follow_up_notes,
+    nextSteps: dbMeeting.next_steps,
+    agentId: dbMeeting.agent_id,
+    agentName: dbMeeting.agent_name,
+    createdAt: new Date(dbMeeting.created_at),
+    updatedAt: new Date(dbMeeting.updated_at),
   };
+};
 
-  // Function to fetch meetings from Supabase
-  const refreshMeetings = async (isAuthenticated = true) => {
+// Transform app meeting to database meeting
+const transformAppMeeting = (meeting: Partial<Meeting>): any => {
+  return {
+    organization_id: meeting.organizationId,
+    contact_id: meeting.contactId,
+    contact_name: meeting.contactName,
+    type: meeting.type,
+    date: meeting.date,
+    time: meeting.time,
+    location: meeting.location,
+    notes: meeting.notes,
+    follow_up_scheduled: meeting.followUpScheduled,
+    follow_up_date: meeting.followUpDate,
+    follow_up_time: meeting.followUpTime,
+    follow_up_notes: meeting.followUpNotes,
+    next_steps: meeting.nextSteps,
+    agent_id: meeting.agentId,
+    agent_name: meeting.agentName,
+    updated_at: new Date().toISOString(),
+  };
+};
+
+export const useMeetingsOperations = () => {
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganizations();
+  const { toast } = useToast();
+
+  const fetchMeetings = useCallback(async () => {
+    if (!user || !currentOrganization) {
+      console.log("No user or organization, skipping meetings fetch");
+      return;
+    }
+
+    setLoading(true);
     try {
-      setLoading(true);
-      console.log("Attempting to fetch meetings...");
+      console.log("Fetching meetings for organization:", currentOrganization.id);
       
-      if (!isAuthenticated || !user?.id) {
-        console.log("User not authenticated, skipping meetings fetch");
-        setMeetings([]);
-        setLoading(false);
-        return [];
-      }
-      
-      console.log("Current organization:", currentOrganization?.id);
-      console.log("Current user:", user.id);
-      
-      // Create a base query
-      let query = supabase.from('meetings').select('*');
-      
-      // Apply organization filter if available
-      if (currentOrganization?.id) {
-        console.log(`Filtering meetings by organization: ${currentOrganization.id}`);
-        query = query.eq('organization_id', currentOrganization.id);
-      } else {
-        // Fallback to agent_id filter if no organization is selected
-        console.log(`Filtering meetings by agent: ${user.id}`);
-        query = query.eq('agent_id', user.id);
-      }
-      
-      // Execute query with order
-      const { data, error } = await query.order('date', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching meetings:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load meetings. Please try again later.",
-          variant: "destructive",
-        });
-        setMeetings([]);
-        setLoading(false);
-        return [];
-      }
-      
-      if (!data || data.length === 0) {
-        console.log("No meetings found");
-        setMeetings([]);
-        setLoading(false);
-        return [];
-      }
-      
-      console.log(`Successfully fetched ${data.length} meetings`);
-      
-      // Transform the Supabase data to match our Meeting type
-      let formattedMeetings: Meeting[] = [];
-      
-      for (const meeting of data) {
-        try {
-          // Create meeting with basic data
-          const formattedMeeting = supabaseToMeeting(meeting);
-          
-          // Try to get contact name
-          if (meeting.contact_id) {
-            try {
-              const contact = getContactById(meeting.contact_id);
-              
-              if (contact) {
-                formattedMeeting.contactName = contact.company || contact.fullName || "Unknown";
-              } else if (meeting.contact_name) {
-                formattedMeeting.contactName = meeting.contact_name;
-              } else {
-                formattedMeeting.contactName = "Unknown";
-              }
-            } catch (err) {
-              console.warn("Error getting contact name for meeting:", meeting.id, err);
-              formattedMeeting.contactName = meeting.contact_name || "Unknown";
-            }
-          } else {
-            formattedMeeting.contactName = meeting.contact_name || "Unknown";
-          }
-          
-          formattedMeetings.push(formattedMeeting);
-        } catch (err) {
-          console.error("Error processing meeting data:", err, meeting);
-        }
-      }
-      
-      // Sort meetings by date AND time
-      const sortedMeetings = sortMeetingsByDateTime(formattedMeetings);
-      console.log(`Processed ${sortedMeetings.length} meetings`);
-      
-      setMeetings(sortedMeetings);
-      return sortedMeetings;
-    } catch (err) {
-      console.error('Unexpected error fetching meetings:', err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while loading meetings",
-        variant: "destructive",
-      });
-      setMeetings([]);
-      return [];
+      const { data, error } = await supabase
+        .from("meetings")
+        .select("*")
+        .eq("organization_id", currentOrganization.id)
+        .order("date", { ascending: false });
+
+      if (error) throw error;
+
+      const transformedMeetings = data?.map(transformDatabaseMeeting) || [];
+      console.log(`Fetched ${transformedMeetings.length} meetings`);
+      setMeetings(transformedMeetings);
+    } catch (error) {
+      console.error("Error fetching meetings:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, currentOrganization]);
 
-  const addMeeting = async (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">, userId?: string, userName?: string) => {
+  const addMeeting = useCallback(async (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">): Promise<Meeting | null> => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
     try {
-      if (!userId) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to add meetings",
-          variant: "destructive",
-        });
-        return null;
-      }
-      
-      // Add contact name if not present
-      if (!meetingData.contactName) {
-        const contact = getContactById(meetingData.contactId);
-        meetingData.contactName = contact ? (contact.company || contact.fullName || "Unknown") : "Unknown";
-      }
-      
-      // Add agent information
-      const agentData = {
-        agent_id: userId,
-        agent_name: userName || ''
+      const dbMeeting = {
+        ...transformAppMeeting(meetingData),
+        organization_id: currentOrganization.id,
+        created_at: new Date().toISOString(),
       };
-      
-      // Add organization information
-      if (currentOrganization?.id) {
-        meetingData.organizationId = currentOrganization.id;
-      }
-      
-      // Convert Meeting type to Supabase table format
-      const newMeetingData = newMeetingToSupabase(meetingData, agentData);
-      
+
       const { data, error } = await supabase
-        .from('meetings')
-        .insert(newMeetingData)
-        .select('*')
+        .from("meetings")
+        .insert([dbMeeting])
+        .select()
         .single();
-      
-      if (error) {
-        console.error('Error adding meeting:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add meeting. " + error.message,
-          variant: "destructive",
-        });
-        return null;
-      }
-      
-      // Transform and add the new meeting to state
-      const newMeeting = supabaseToMeeting(data);
-      
-      // Sort after adding new meeting
-      setMeetings(prevMeetings => sortMeetingsByDateTime([...prevMeetings, newMeeting]));
-      
-      toast({
-        title: "Success",
-        description: "Meeting added successfully",
-      });
+
+      if (error) throw error;
+
+      const newMeeting = transformDatabaseMeeting(data);
+      setMeetings(prev => [newMeeting, ...prev]);
       
       return newMeeting;
-    } catch (err) {
-      console.error('Unexpected error adding meeting:', err);
+    } catch (error) {
+      console.error("Error adding meeting:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "Failed to add meeting. Please try again.",
         variant: "destructive",
       });
-      return null;
+      throw error;
     }
-  };
+  }, [user, currentOrganization, toast]);
 
-  const updateMeeting = async (id: string, meetingData: Partial<Meeting>) => {
+  const updateMeeting = useCallback(async (id: string, meetingData: Partial<Meeting>): Promise<Meeting | null> => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
     try {
-      // Convert Meeting type to Supabase table format
-      const updateData = meetingToSupabase(meetingData);
+      const dbMeeting = transformAppMeeting(meetingData);
+
+      const { data, error } = await supabase
+        .from("meetings")
+        .update(dbMeeting)
+        .eq("id", id)
+        .eq("organization_id", currentOrganization.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedMeeting = transformDatabaseMeeting(data);
+      setMeetings(prev => prev.map(meeting => 
+        meeting.id === id ? updatedMeeting : meeting
+      ));
       
-      // Add updated_at
-      updateData.updated_at = new Date().toISOString();
-      
-      const { error } = await supabase
-        .from('meetings')
-        .update(updateData)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating meeting:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update meeting. " + error.message,
-          variant: "destructive",
-        });
-        return false;
-      }
-      
-      // Refresh meetings to get updated data
-      await refreshMeetings();
-      
-      toast({
-        title: "Success",
-        description: "Meeting updated successfully",
-      });
-      return true;
-    } catch (err) {
-      console.error('Unexpected error updating meeting:', err);
+      return updatedMeeting;
+    } catch (error) {
+      console.error("Error updating meeting:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "Failed to update meeting. Please try again.",
         variant: "destructive",
       });
-      return false;
+      throw error;
     }
-  };
+  }, [user, currentOrganization, toast]);
 
-  const deleteMeeting = async (id: string) => {
+  const deleteMeeting = useCallback(async (id: string): Promise<boolean> => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
     try {
       const { error } = await supabase
-        .from('meetings')
+        .from("meetings")
         .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error deleting meeting:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete meeting. " + error.message,
-          variant: "destructive",
-        });
-        return false;
-      }
-      
-      // Remove the meeting from state
-      setMeetings(prevMeetings => prevMeetings.filter(meeting => meeting.id !== id));
-      
-      toast({
-        title: "Success",
-        description: "Meeting deleted successfully",
-      });
+        .eq("id", id)
+        .eq("organization_id", currentOrganization.id);
+
+      if (error) throw error;
+
+      setMeetings(prev => prev.filter(meeting => meeting.id !== id));
       return true;
-    } catch (err) {
-      console.error('Unexpected error deleting meeting:', err);
+    } catch (error) {
+      console.error("Error deleting meeting:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "Failed to delete meeting. Please try again.",
         variant: "destructive",
       });
       return false;
     }
-  };
+  }, [user, currentOrganization, toast]);
 
-  const getMeetingById = (id: string) => {
+  // Utility functions
+  const getMeetingById = useCallback((id: string): Meeting | undefined => {
     return meetings.find(meeting => meeting.id === id);
-  };
+  }, [meetings]);
 
-  const getMeetingsByContactId = (contactId: string) => {
-    const contactMeetings = meetings.filter(meeting => meeting.contactId === contactId);
-    return sortMeetingsByDateTime(contactMeetings);
-  };
+  const getMeetingsByContactId = useCallback((contactId: string): Meeting[] => {
+    return meetings.filter(meeting => meeting.contactId === contactId);
+  }, [meetings]);
+
+  const getMeetingsByAgentId = useCallback((agentId: string): Meeting[] => {
+    return meetings.filter(meeting => meeting.agentId === agentId);
+  }, [meetings]);
+
+  const sendMeetingEmail = useCallback(async (meetingId: string, emailData: any): Promise<boolean> => {
+    try {
+      console.log("Sending meeting email for:", meetingId);
+      // This would integrate with your email service
+      return true;
+    } catch (error) {
+      console.error("Error sending meeting email:", error);
+      return false;
+    }
+  }, []);
 
   return {
     meetings,
     loading,
-    refreshMeetings,
+    fetchMeetings,
     addMeeting,
     updateMeeting,
     deleteMeeting,
     getMeetingById,
     getMeetingsByContactId,
+    getMeetingsByAgentId,
+    refreshMeetings: fetchMeetings,
+    sendMeetingEmail
   };
 };
