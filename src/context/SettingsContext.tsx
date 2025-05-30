@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Settings } from "@/types";
+import { Settings, CustomLink } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
@@ -49,6 +49,17 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data) {
+        // Safely parse custom_links from JSONB
+        let customLinksArray: CustomLink[] = [];
+        if (data.custom_links && Array.isArray(data.custom_links)) {
+          customLinksArray = data.custom_links.map((link: any) => ({
+            id: link.id || undefined,
+            name: link.name || undefined,
+            url: link.url || "",
+            description: link.description || undefined,
+          }));
+        }
+
         // Transform database settings to app settings
         const transformedSettings: Settings = {
           id: data.id,
@@ -71,8 +82,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
           catalogUrl: data.catalog_url,
           price_list_url: data.price_list_url,
           priceListUrl: data.price_list_url,
-          custom_links: Array.isArray(data.custom_links) ? data.custom_links : [],
-          customLinks: Array.isArray(data.custom_links) ? data.custom_links : [],
+          custom_links: customLinksArray,
+          customLinks: customLinksArray,
           default_contact_email_message: data.default_contact_email_message,
           defaultContactEmailMessage: data.default_contact_email_message,
           default_email_subject: data.default_email_subject,
