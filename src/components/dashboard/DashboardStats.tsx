@@ -1,10 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, CheckSquare, ShoppingCart } from "lucide-react";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import { useMeetings } from "@/context/meetings";
 import { useTasks } from "@/context/tasks";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders } from "@/context/orders/OrdersContext";
 
 export function DashboardStats() {
   const { contacts } = useContacts();
@@ -13,7 +13,7 @@ export function DashboardStats() {
   const { orders } = useOrders();
 
   const activeTasks = tasks.filter(task => task.status === "active");
-  const pendingOrders = orders.filter(order => order.status === "pending");
+  const draftOrders = orders.filter(order => order.status === "draft");
 
   const stats = [
     {
@@ -35,10 +35,10 @@ export function DashboardStats() {
       description: "Tasks to complete"
     },
     {
-      title: "Pending Orders",
-      value: pendingOrders.length,
+      title: "Draft Orders",
+      value: draftOrders.length,
       icon: ShoppingCart,
-      description: "Orders awaiting processing"
+      description: "Orders in draft status"
     }
   ];
 

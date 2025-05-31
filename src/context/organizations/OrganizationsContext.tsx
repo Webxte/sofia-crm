@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Organization } from "@/types";
+import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,11 @@ interface OrganizationsContextType {
   initialLoadComplete: boolean;
   switchOrganization: (organizationId: string) => Promise<boolean>;
   refreshOrganizations: () => Promise<void>;
+  createOrganization: (name: string, slug: string) => Promise<Organization | null>;
+  updateOrganization: (id: string, data: Partial<Organization>) => Promise<boolean>;
+  getOrganizationBySlug: (slug: string) => Promise<Organization | null>;
+  fetchOrganizations: () => Promise<void>;
+  canUserPerformAction: (action: "delete" | "update" | "invite") => boolean;
 }
 
 const OrganizationsContext = createContext<OrganizationsContextType | undefined>(undefined);
@@ -140,6 +145,176 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
+  // Create a new organization
+  const createOrganization = async (name: string, slug: string): Promise<Organization | null> => {
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create an organization.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    try {
+      // First create the organization
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .insert([{
+          name,
+          slug,
+        }])
+        .select()
+        .single();
+
+      if (orgError) {
+        console.error('Error creating organization:', orgError);
+        toast({
+          title: "Error",
+          description: "Failed to create organization. The slug may already be taken.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      // Then add the user as an admin member
+      const { error: memberError } = await supabase
+        .from('organization_members')
+        .insert([{
+          organization_id: orgData.id,
+          user_id: user.id,
+          role: 'admin'
+        }]);
+
+      if (memberError) {
+        console.error('Error adding user to organization:', memberError);
+        // Try to clean up the organization if member creation failed
+        await supabase.from('organizations').delete().eq('id', orgData.id);
+        toast({
+          title: "Error",
+          description: "Failed to set up organization membership.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      const newOrg: Organization = {
+        id: orgData.id,
+        name: orgData.name,
+        slug: orgData.slug,
+        logoUrl: orgData.logo_url,
+        primaryColor: orgData.primary_color,
+        secondaryColor: orgData.secondary_color,
+        createdAt: new Date(orgData.created_at),
+        updatedAt: new Date(orgData.updated_at),
+      };
+
+      // Update local state
+      setOrganizations(prev => [...prev, newOrg]);
+      setCurrentOrganization(newOrg);
+      localStorage.setItem('currentOrganizationId', newOrg.id);
+
+      toast({
+        title: "Success",
+        description: `Organization "${name}" created successfully!`,
+      });
+
+      return newOrg;
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while creating the organization.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  // Update organization
+  const updateOrganization = async (id: string, data: Partial<Organization>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update(data)
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating organization:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update organization.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Update local state
+      setOrganizations(prev => 
+        prev.map(org => org.id === id ? { ...org, ...data } : org)
+      );
+
+      if (currentOrganization?.id === id) {
+        setCurrentOrganization(prev => prev ? { ...prev, ...data } : null);
+      }
+
+      toast({
+        title: "Success",
+        description: "Organization updated successfully!",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error updating organization:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while updating the organization.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  // Get organization by slug
+  const getOrganizationBySlug = async (slug: string): Promise<Organization | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null; // Not found
+        }
+        console.error('Error fetching organization by slug:', error);
+        return null;
+      }
+
+      return {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        logoUrl: data.logo_url,
+        primaryColor: data.primary_color,
+        secondaryColor: data.secondary_color,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error fetching organization by slug:', error);
+      return null;
+    }
+  };
+
+  // Check if user can perform action (simplified for now)
+  const canUserPerformAction = (action: "delete" | "update" | "invite"): boolean => {
+    // For now, assume all authenticated users can perform actions
+    // This would typically check the user's role in the organization
+    return !!user;
+  };
+
   // Refresh organizations
   const refreshOrganizations = async () => {
     await fetchOrganizations();
@@ -168,6 +343,11 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         initialLoadComplete,
         switchOrganization,
         refreshOrganizations,
+        createOrganization,
+        updateOrganization,
+        getOrganizationBySlug,
+        fetchOrganizations,
+        canUserPerformAction,
       }}
     >
       {children}
