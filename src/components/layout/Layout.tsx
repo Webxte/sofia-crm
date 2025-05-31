@@ -1,55 +1,44 @@
 
-import { useEffect } from "react";
-import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { Sidebar } from "./Sidebar";
+import { AppSidebar } from "./AppSidebar";
 import { Header } from "./Header";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
-import { LoadingScreen } from "./LoadingScreen";
-import { useSmoothScroll } from "./hooks/useSmoothScroll";
-import { useAuth } from "@/context/AuthContext";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-export const Layout = () => {
-  const { 
-    isLoadingOrganizations,
-    initialLoadComplete,
-    organizations 
-  } = useOrganizations();
-  
-  const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-  
-  // Use the extracted smooth scroll hook
-  useSmoothScroll(location);
-  
-  // Show loading screen while initializing/loading organizations
-  if (isLoading || isLoadingOrganizations || !initialLoadComplete) {
-    return <LoadingScreen message="Loading your account" description="Please wait while we set up your workspace" />;
-  }
-  
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+export default function Layout() {
+  const { currentOrganization, isLoadingOrganizations } = useOrganizations();
+
+  if (isLoadingOrganizations) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner message="Loading workspace..." />
+      </div>
+    );
   }
 
-  // Redirect to organizations/new if authenticated but no organizations
-  if (initialLoadComplete && organizations.length === 0) {
-    return <Navigate to="/organizations/new" replace />;
+  if (!currentOrganization) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">No Organization Selected</h2>
+          <p className="text-muted-foreground">Please select an organization to continue.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <SidebarProvider defaultOpen={!window.matchMedia('(max-width: 768px)').matches}>
-      <div className="flex min-h-screen w-full bg-background">
-        <Sidebar />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
         <div className="flex-1 flex flex-col">
           <Header />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
+          <main className="flex-1 p-4 md:p-6 overflow-auto">
             <Outlet />
           </main>
         </div>
       </div>
     </SidebarProvider>
   );
-};
-
-export default Layout;
+}

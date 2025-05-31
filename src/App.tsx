@@ -54,19 +54,19 @@ export default function App() {
         {/* Protected routes - these need all providers and are wrapped in Layout */}
         <Route path="/" element={
           <ProtectedRoute>
-            <ContactsProvider>
-              <MeetingsProvider>
-                <TasksProvider>
-                  <ProductsProvider>
-                    <OrdersProvider>
-                      <SettingsProvider>
+            <SettingsProvider>
+              <ContactsProvider>
+                <MeetingsProvider>
+                  <TasksProvider>
+                    <ProductsProvider>
+                      <OrdersProvider>
                         <Layout />
-                      </SettingsProvider>
-                    </OrdersProvider>
-                  </ProductsProvider>
-                </TasksProvider>
-              </MeetingsProvider>
-            </ContactsProvider>
+                      </OrdersProvider>
+                    </ProductsProvider>
+                  </TasksProvider>
+                </MeetingsProvider>
+              </ContactsProvider>
+            </SettingsProvider>
           </ProtectedRoute>
         }>
           <Route path="/dashboard" element={<Dashboard />} />
