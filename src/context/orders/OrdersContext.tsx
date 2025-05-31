@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, ReactNode } from "react";
 import { Order, OrderItem } from "@/types";
 import { OrdersContextType } from "./types";
 import { useOrdersOperations } from "./useOrdersOperations";
-import { getOrderById, getOrdersByContactId, generateOrderReference, sendOrderEmail } from "./orderUtils";
+import { getOrderById, getOrdersByContactId, generateOrderReference } from "./orderUtils";
 import { useAuth } from "@/context/AuthContext";
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -30,6 +30,12 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   // Create a function that passes user data from the component level
   const generateOrderReferenceWithUserInfo = () => {
     return generateOrderReference(orders, user?.email, user?.id);
+  };
+
+  const sendOrderEmail = async (orderId: string, emailData: any): Promise<boolean> => {
+    // Implementation for sending order emails would go here
+    console.log("Order email not yet implemented");
+    return false;
   };
 
   return (

@@ -315,12 +315,11 @@ ${settings.companyEmail}`;
     setIsSendingEmail(true);
     
     try {
-      const emailSent = await sendOrderEmail(
-        order.id,
-        emailData.recipient,
-        emailData.subject,
-        emailData.message
-      );
+      const emailSent = await sendOrderEmail(order.id, {
+        recipient: emailData.recipient,
+        subject: emailData.subject,
+        message: emailData.message
+      });
       
       if (emailSent) {
         toast({
