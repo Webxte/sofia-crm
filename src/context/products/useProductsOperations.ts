@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Product } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +36,6 @@ export const useProductsOperations = (): ProductsContextType => {
         caseQuantity: item.case_quantity || undefined,
         firstOrderCommission: item.first_order_commission ? Number(item.first_order_commission) : undefined,
         nextOrdersCommission: item.next_orders_commission ? Number(item.next_orders_commission) : undefined,
-        imageUrl: item.image_url || undefined,
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at),
       }));
@@ -71,7 +69,6 @@ export const useProductsOperations = (): ProductsContextType => {
           case_quantity: productData.caseQuantity,
           first_order_commission: productData.firstOrderCommission,
           next_orders_commission: productData.nextOrdersCommission,
-          image_url: productData.imageUrl,
         }])
         .select()
         .single();
@@ -89,7 +86,6 @@ export const useProductsOperations = (): ProductsContextType => {
         caseQuantity: data.case_quantity || undefined,
         firstOrderCommission: data.first_order_commission ? Number(data.first_order_commission) : undefined,
         nextOrdersCommission: data.next_orders_commission ? Number(data.next_orders_commission) : undefined,
-        imageUrl: data.image_url || undefined,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -125,7 +121,6 @@ export const useProductsOperations = (): ProductsContextType => {
           case_quantity: productData.caseQuantity,
           first_order_commission: productData.firstOrderCommission,
           next_orders_commission: productData.nextOrdersCommission,
-          image_url: productData.imageUrl,
         })
         .eq("id", id)
         .select()
@@ -144,7 +139,6 @@ export const useProductsOperations = (): ProductsContextType => {
         caseQuantity: data.case_quantity || undefined,
         firstOrderCommission: data.first_order_commission ? Number(data.first_order_commission) : undefined,
         nextOrdersCommission: data.next_orders_commission ? Number(data.next_orders_commission) : undefined,
-        imageUrl: data.image_url || undefined,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
