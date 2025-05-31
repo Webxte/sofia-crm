@@ -17,8 +17,31 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated]);
 
+  // Utility methods
+  const getTaskById = (id: string) => {
+    return operations.tasks.find(task => task.id === id);
+  };
+
+  const getTasksByContactId = (contactId: string) => {
+    return operations.tasks.filter(task => task.contactId === contactId);
+  };
+
+  const getTasksByAgentId = (agentId: string) => {
+    return operations.tasks.filter(task => task.agentId === agentId);
+  };
+
+  const getTasksByStatus = (status: "active" | "completed") => {
+    return operations.tasks.filter(task => task.status === status);
+  };
+
   return (
-    <TasksContext.Provider value={operations}>
+    <TasksContext.Provider value={{
+      ...operations,
+      getTaskById,
+      getTasksByContactId,
+      getTasksByAgentId,
+      getTasksByStatus,
+    }}>
       {children}
     </TasksContext.Provider>
   );

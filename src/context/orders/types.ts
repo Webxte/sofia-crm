@@ -1,16 +1,16 @@
 
-import { Order, OrderItem, Product } from "@/types";
+import { Order, OrderItem } from "@/types";
 
 export interface OrdersContextType {
   orders: Order[];
   loading: boolean;
-  addOrder: (order: Omit<Order, "id" | "createdAt" | "updatedAt">) => Promise<void>;
-  updateOrder: (id: string, order: Partial<Order>) => Promise<void>;
-  deleteOrder: (id: string) => Promise<void>;
+  addOrder: (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => Promise<Order | null>;
+  updateOrder: (id: string, orderData: Partial<Order>) => Promise<Order | null>;
+  deleteOrder: (id: string) => Promise<boolean>;
   getOrderById: (id: string) => Order | undefined;
   getOrdersByContactId: (contactId: string) => Order[];
-  createOrderItem: (productId: string, quantity: number) => OrderItem | undefined;
-  sendOrderEmail: (orderId: string, recipient: string, subject: string, message: string, cc?: string[]) => Promise<boolean>;
+  createOrderItem: (orderItem: Omit<OrderItem, "id">) => Promise<OrderItem | null>;
+  sendOrderEmail: (orderId: string, emailData: any) => Promise<boolean>;
   generateOrderReference: () => string;
   refreshOrders: () => Promise<void>;
 }

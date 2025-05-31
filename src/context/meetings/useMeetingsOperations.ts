@@ -36,11 +36,12 @@ export const useMeetingsOperations = () => {
 
       const formattedMeetings: Meeting[] = (data || []).map(meeting => ({
         id: meeting.id,
+        organizationId: meeting.organization_id,
         contactId: meeting.contact_id,
         contactName: meeting.contact_name || '',
         date: meeting.date,
         time: meeting.time,
-        type: meeting.type,
+        type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",
         location: meeting.location || '',
         notes: meeting.notes,
         agentId: meeting.agent_id || '',
@@ -107,11 +108,12 @@ export const useMeetingsOperations = () => {
 
       const formattedMeeting: Meeting = {
         id: data.id,
+        organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || '',
         date: data.date,
         time: data.time,
-        type: data.type,
+        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         location: data.location || '',
         notes: data.notes,
         agentId: data.agent_id || '',
@@ -174,11 +176,12 @@ export const useMeetingsOperations = () => {
 
       const formattedMeeting: Meeting = {
         id: data.id,
+        organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || '',
         date: data.date,
         time: data.time,
-        type: data.type,
+        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         location: data.location || '',
         notes: data.notes,
         agentId: data.agent_id || '',
@@ -245,6 +248,25 @@ export const useMeetingsOperations = () => {
     await fetchMeetings();
   };
 
+  // Utility methods
+  const getMeetingById = (id: string): Meeting | undefined => {
+    return meetings.find(meeting => meeting.id === id);
+  };
+
+  const getMeetingsByContactId = (contactId: string): Meeting[] => {
+    return meetings.filter(meeting => meeting.contactId === contactId);
+  };
+
+  const getMeetingsByAgentId = (agentId: string): Meeting[] => {
+    return meetings.filter(meeting => meeting.agentId === agentId);
+  };
+
+  const sendMeetingEmail = async (meetingId: string, emailData: any): Promise<boolean> => {
+    // Implementation for sending meeting emails would go here
+    console.log("Meeting email not yet implemented");
+    return false;
+  };
+
   return {
     meetings,
     loading,
@@ -253,5 +275,9 @@ export const useMeetingsOperations = () => {
     deleteMeeting,
     refreshMeetings,
     fetchMeetings,
+    getMeetingById,
+    getMeetingsByContactId,
+    getMeetingsByAgentId,
+    sendMeetingEmail,
   };
 };

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +35,7 @@ export const useContactsOperations = () => {
 
       const formattedContacts: Contact[] = (data || []).map(contact => ({
         id: contact.id,
+        organizationId: contact.organization_id,
         fullName: contact.full_name || '',
         company: contact.company || '',
         email: contact.email || '',
@@ -101,6 +101,7 @@ export const useContactsOperations = () => {
 
       const formattedContact: Contact = {
         id: data.id,
+        organizationId: data.organization_id,
         fullName: data.full_name || '',
         company: data.company || '',
         email: data.email || '',
@@ -162,6 +163,7 @@ export const useContactsOperations = () => {
 
       const formattedContact: Contact = {
         id: data.id,
+        organizationId: data.organization_id,
         fullName: data.full_name || '',
         company: data.company || '',
         email: data.email || '',

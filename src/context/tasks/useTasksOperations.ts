@@ -36,6 +36,7 @@ export const useTasksOperations = () => {
 
       const formattedTasks: Task[] = (data || []).map(task => ({
         id: task.id,
+        organizationId: task.organization_id,
         title: task.title,
         description: task.description || '',
         dueDate: task.due_date || undefined,
@@ -97,6 +98,7 @@ export const useTasksOperations = () => {
 
       const formattedTask: Task = {
         id: data.id,
+        organizationId: data.organization_id,
         title: data.title,
         description: data.description || '',
         dueDate: data.due_date || undefined,
@@ -154,6 +156,7 @@ export const useTasksOperations = () => {
 
       const formattedTask: Task = {
         id: data.id,
+        organizationId: data.organization_id,
         title: data.title,
         description: data.description || '',
         dueDate: data.due_date || undefined,
