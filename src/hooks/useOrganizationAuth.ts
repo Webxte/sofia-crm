@@ -104,60 +104,51 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       return false;
     }
     
+    if (switchAttemptInProgress.current) {
+      console.log("Switch attempt already in progress");
+      return false;
+    }
+    
     setIsSubmitting(true);
     setError(null);
     setAttempts(prev => prev + 1);
+    switchAttemptInProgress.current = true;
     
     try {
       console.log(`Attempting to verify password for organization: ${organizationName} (ID: ${organizationId})`);
       
       const isPasswordCorrect = await verifyPassword(password);
       
-      if (isPasswordCorrect) {
-        console.log("Password verification successful");
-        
-        // Ensure the user is a member of this organization
-        if (user?.id) {
-          await ensureUserMembership(organizationId);
-        }
-        
-        // Switch to the organization
-        console.log(`Switching to organization: ${organizationId}`);
-        
-        if (switchAttemptInProgress.current) {
-          console.log("Switch attempt already in progress, skipping");
-          return true;
-        }
-        
-        switchAttemptInProgress.current = true;
-        
-        try {
-          const success = await switchOrganization(organizationId);
-          
-          if (success) {
-            console.log("Successfully switched to organization");
-            
-            toast({
-              title: "Success", 
-              description: `Access granted to ${organizationName}`
-            });
-            
-            return true;
-          } else {
-            console.error("Failed to switch to organization");
-            setError("Failed to switch to organization");
-            return false;
-          }
-        } catch (switchError) {
-          console.error("Error during organization switch:", switchError);
-          setError("Failed to switch to organization");
-          return false;
-        } finally {
-          switchAttemptInProgress.current = false;
-        }
-      } else {
+      if (!isPasswordCorrect) {
         console.log("Password verification failed");
         setError("Incorrect password for this organization");
+        return false;
+      }
+      
+      console.log("Password verification successful");
+      
+      // Ensure the user is a member of this organization
+      if (user?.id) {
+        await ensureUserMembership(organizationId);
+      }
+      
+      // Switch to the organization
+      console.log(`Switching to organization: ${organizationId}`);
+      
+      const success = await switchOrganization(organizationId);
+      
+      if (success) {
+        console.log("Successfully switched to organization");
+        
+        toast({
+          title: "Success", 
+          description: `Access granted to ${organizationName}`
+        });
+        
+        return true;
+      } else {
+        console.error("Failed to switch to organization");
+        setError("Failed to switch to organization");
         return false;
       }
     } catch (error: any) {
@@ -166,6 +157,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       return false;
     } finally {
       setIsSubmitting(false);
+      switchAttemptInProgress.current = false;
     }
   };
 
@@ -177,7 +169,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       console.log("User is authenticated, redirecting to dashboard");
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 500); // Give more time for state updates
+      }, 1000); // Give more time for state updates
     } else {
       console.log("User is not authenticated, redirecting to login");
       setTimeout(() => {

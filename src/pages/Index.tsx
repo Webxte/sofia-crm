@@ -16,6 +16,17 @@ const Index = () => {
     isLoadingOrganizations 
   } = useOrganizations();
   
+  useEffect(() => {
+    console.log("Index page state:", {
+      isAuthenticated,
+      authLoading,
+      currentOrganization: currentOrganization?.name,
+      organizationsCount: organizations.length,
+      initialLoadComplete,
+      isLoadingOrganizations
+    });
+  }, [isAuthenticated, authLoading, currentOrganization, organizations, initialLoadComplete, isLoadingOrganizations]);
+  
   // Show loading state while checking auth and orgs
   if (authLoading || isLoadingOrganizations || !initialLoadComplete) {
     return (
@@ -30,23 +41,22 @@ const Index = () => {
   }
 
   // Handle redirects based on authentication and organization state
+  console.log("Index: Determining redirect logic");
   
-  // First, redirect to organization login if no organization is selected
-  if (!currentOrganization) {
-    return <Navigate to={`/organizations/login?slug=${DEFAULT_ORG_SLUG}`} replace />;
-  }
-  
-  // Then, if authenticated but no organizations, redirect to create a new one
-  if (isAuthenticated && organizations.length === 0) {
-    return <Navigate to="/organizations/new" replace />;
-  }
-  
-  // If not authenticated, redirect to login
+  // If not authenticated, redirect to login first
   if (!isAuthenticated) {
+    console.log("Index: Not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
-  // If all conditions are met (authenticated and has organization), redirect to dashboard
+  // If authenticated but no current organization, redirect to organization login
+  if (!currentOrganization) {
+    console.log("Index: No current organization, redirecting to org login");
+    return <Navigate to={`/organizations/login?slug=${DEFAULT_ORG_SLUG}`} replace />;
+  }
+  
+  // If authenticated and has organization, redirect to dashboard
+  console.log("Index: Authenticated with organization, redirecting to dashboard");
   return <Navigate to="/dashboard" replace />;
 };
 

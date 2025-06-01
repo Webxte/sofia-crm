@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,9 +28,48 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
+  // Get organization by slug - including direct database lookup
+  const getOrganizationBySlug = async (slug: string): Promise<Organization | null> => {
+    try {
+      console.log("Getting organization by slug:", slug);
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log("Organization not found with slug:", slug);
+          return null; // Not found
+        }
+        console.error('Error fetching organization by slug:', error);
+        return null;
+      }
+
+      const org: Organization = {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        logoUrl: data.logo_url,
+        primaryColor: data.primary_color,
+        secondaryColor: data.secondary_color,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+
+      console.log("Found organization:", org.name);
+      return org;
+    } catch (error) {
+      console.error('Error fetching organization by slug:', error);
+      return null;
+    }
+  };
+
   // Fetch organizations that the user is a member of
   const fetchOrganizations = async () => {
     if (!user?.id) {
+      console.log("No user ID, clearing organization data");
       setOrganizations([]);
       setCurrentOrganization(null);
       setIsLoadingOrganizations(false);
@@ -41,6 +79,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
     try {
       setIsLoadingOrganizations(true);
+      console.log("Fetching organizations for user:", user.id);
       
       // Get organizations through membership
       const { data: memberships, error: membershipError } = await supabase
@@ -66,6 +105,8 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         throw membershipError;
       }
 
+      console.log("Raw memberships data:", memberships);
+
       const userOrganizations: Organization[] = (memberships || [])
         .filter(membership => membership.organizations)
         .map(membership => ({
@@ -79,7 +120,23 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           updatedAt: new Date(membership.organizations.updated_at),
         }));
 
+      console.log("Formatted user organizations:", userOrganizations);
       setOrganizations(userOrganizations);
+
+      // If no organizations found but we need Belmorso, try to get it directly
+      if (userOrganizations.length === 0) {
+        console.log("No organizations found via membership, trying to get Belmorso directly");
+        const belmorso = await getOrganizationBySlug('belmorso');
+        if (belmorso) {
+          console.log("Found Belmorso organization, adding to list");
+          setOrganizations([belmorso]);
+          setCurrentOrganization(belmorso);
+          localStorage.setItem('currentOrganizationId', belmorso.id);
+          setIsLoadingOrganizations(false);
+          setInitialLoadComplete(true);
+          return;
+        }
+      }
 
       // Set current organization from localStorage or first available
       const storedOrgId = localStorage.getItem('currentOrganizationId');
@@ -87,12 +144,20 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
       if (storedOrgId) {
         selectedOrg = userOrganizations.find(org => org.id === storedOrgId);
+        console.log("Found stored organization:", selectedOrg?.name || "none");
       }
 
       // If no stored org or stored org not found, use first available
       if (!selectedOrg && userOrganizations.length > 0) {
         selectedOrg = userOrganizations[0];
         localStorage.setItem('currentOrganizationId', selectedOrg.id);
+        console.log("Using first available organization:", selectedOrg.name);
+      }
+
+      if (selectedOrg) {
+        console.log("Setting current organization to:", selectedOrg.name);
+      } else {
+        console.log("No organization to set as current");
       }
 
       setCurrentOrganization(selectedOrg);
@@ -113,26 +178,53 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   // Switch to a different organization
   const switchOrganization = async (organizationId: string): Promise<boolean> => {
     try {
-      const targetOrg = organizations.find(org => org.id === organizationId);
+      console.log("Attempting to switch to organization ID:", organizationId);
       
+      // First, try to find in current organizations list
+      let targetOrg = organizations.find(org => org.id === organizationId);
+      
+      // If not found, try to fetch from database
       if (!targetOrg) {
-        console.error('Organization not found in user organizations:', organizationId);
-        toast({
-          title: "Error",
-          description: "Organization not found or you don't have access to it.",
-          variant: "destructive",
+        console.log("Organization not in current list, fetching from database");
+        const { data: orgData, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', organizationId)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching organization:", error);
+          toast({
+            title: "Error",
+            description: "Organization not found or you don't have access to it.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        targetOrg = {
+          id: orgData.id,
+          name: orgData.name,
+          slug: orgData.slug,
+          logoUrl: orgData.logo_url,
+          primaryColor: orgData.primary_color,
+          secondaryColor: orgData.secondary_color,
+          createdAt: new Date(orgData.created_at),
+          updatedAt: new Date(orgData.updated_at),
+        };
+        
+        // Add to organizations list if not already there
+        setOrganizations(prev => {
+          const exists = prev.find(org => org.id === organizationId);
+          return exists ? prev : [...prev, targetOrg!];
         });
-        return false;
       }
 
+      console.log("Switching to organization:", targetOrg.name);
       setCurrentOrganization(targetOrg);
       localStorage.setItem('currentOrganizationId', organizationId);
       
-      toast({
-        title: "Success",
-        description: `Switched to ${targetOrg.name}`,
-      });
-      
+      console.log("Organization switch completed successfully");
       return true;
     } catch (error) {
       console.error('Error switching organization:', error);
@@ -275,39 +367,6 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
-  // Get organization by slug
-  const getOrganizationBySlug = async (slug: string): Promise<Organization | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return null; // Not found
-        }
-        console.error('Error fetching organization by slug:', error);
-        return null;
-      }
-
-      return {
-        id: data.id,
-        name: data.name,
-        slug: data.slug,
-        logoUrl: data.logo_url,
-        primaryColor: data.primary_color,
-        secondaryColor: data.secondary_color,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-      };
-    } catch (error) {
-      console.error('Error fetching organization by slug:', error);
-      return null;
-    }
-  };
-
   // Check if user can perform action (simplified for now)
   const canUserPerformAction = (action: "delete" | "update" | "invite"): boolean => {
     // For now, assume all authenticated users can perform actions
@@ -323,9 +382,11 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   // Load organizations when user changes
   useEffect(() => {
     if (isAuthenticated && user) {
+      console.log("User authenticated, fetching organizations");
       fetchOrganizations();
     } else {
       // User logged out, clear organization data
+      console.log("User not authenticated, clearing organization data");
       setOrganizations([]);
       setCurrentOrganization(null);
       setIsLoadingOrganizations(false);
