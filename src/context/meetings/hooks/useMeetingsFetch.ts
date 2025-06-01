@@ -44,12 +44,12 @@ export const useMeetingsFetch = () => {
         agentId: meeting.agent_id || '',
         agentName: meeting.agent_name || '',
         type: meeting.type,
-        date: new Date(meeting.date),
+        date: meeting.date, // Keep as ISO string
         time: meeting.time,
         location: meeting.location || '',
         notes: meeting.notes,
         followUpScheduled: meeting.follow_up_scheduled,
-        followUpDate: meeting.follow_up_date ? new Date(meeting.follow_up_date) : undefined,
+        followUpDate: meeting.follow_up_date || undefined, // Keep as ISO string
         followUpTime: meeting.follow_up_time || '',
         followUpNotes: meeting.follow_up_notes || '',
         nextSteps: meeting.next_steps || [],

@@ -43,7 +43,7 @@ export const useTasksFetch = () => {
         description: task.description || '',
         status: task.status as "active" | "completed",
         priority: task.priority as "low" | "medium" | "high",
-        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        dueDate: task.due_date || undefined, // Keep as ISO string
         dueTime: task.due_time || '',
         contactId: task.contact_id || '',
         agentId: task.agent_id || '',
