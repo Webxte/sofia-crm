@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect, useState, useRef } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
@@ -15,22 +15,14 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const { isAuthenticated, isLoading, isAdmin } = useAuth();
   const { 
     currentOrganization, 
-    organizations, 
-    initialLoadComplete,
-    isLoadingOrganizations
+    isLoadingOrganizations,
+    initialLoadComplete
   } = useOrganizations();
   const navigate = useNavigate();
   const location = useLocation();
-  const [checksPassed, setChecksPassed] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Checking authentication");
-  const redirectAttempted = useRef(false);
 
   useEffect(() => {
-    // Skip if already attempted a redirect in this render cycle
-    if (redirectAttempted.current) {
-      return;
-    }
-    
     // Update loading message based on current state
     if (isLoading) {
       setLoadingMessage("Verifying authentication");
@@ -45,7 +37,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
         location.pathname === '/register' ||
         location.pathname === '/organizations/new' ||
         location.pathname.startsWith('/organizations/login')) {
-      setChecksPassed(true);
       return;
     }
 
@@ -53,48 +44,25 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     if (isLoading || isLoadingOrganizations || !initialLoadComplete) return;
     
     try {
-      // First priority: If no current organization, redirect to organization login
-      // This happens even before authentication check
-      if (!currentOrganization) {
-        // Mark that we attempted a redirect
-        redirectAttempted.current = true;
-        
-        console.log("No organization selected, redirecting to org login");
-        navigate("/organizations/login?slug=belmorso", { 
-          replace: true,
-          state: { from: location } // Save the location we were trying to access
-        });
-        return;
-      }
-      
-      // Second priority: If authenticated but no organizations at all, go to new org page
-      if (isAuthenticated && organizations.length === 0) {
-        // Mark that we attempted a redirect
-        redirectAttempted.current = true;
-        
-        console.log("No organizations found, redirecting to create new org");
-        navigate("/organizations/new", { replace: true });
-        return;
-      }
-      
-      // Third priority: If not authenticated, redirect to login
-      // But only after organization is selected
+      // If not authenticated, redirect to login
       if (!isAuthenticated) {
-        // Mark that we attempted a redirect
-        redirectAttempted.current = true;
-        
         console.log("Not authenticated, redirecting to login");
         navigate("/login", { 
           replace: true,
-          state: { from: location } // Save the location we were trying to access
+          state: { from: location }
         });
         return;
       }
 
-      // If we made it here, all checks passed
-      setChecksPassed(true);
-      // Reset redirect flag after checks pass
-      redirectAttempted.current = false;
+      // If authenticated but no organization, redirect to organization login
+      if (!currentOrganization) {
+        console.log("No organization selected, redirecting to org login");
+        navigate("/organizations/login?slug=belmorso", { 
+          replace: true,
+          state: { from: location }
+        });
+        return;
+      }
     } catch (error) {
       console.error("Error in protection checks:", error);
       toast({
@@ -108,14 +76,13 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     isLoadingOrganizations,
     initialLoadComplete,
     isAuthenticated, 
-    organizations, 
     currentOrganization, 
     navigate,
     location
   ]);
 
   // Show loading state while checking auth and orgs
-  if (isLoading || isLoadingOrganizations || !initialLoadComplete || !checksPassed) {
+  if (isLoading || isLoadingOrganizations || !initialLoadComplete) {
     // Don't show loading for auth routes
     if (location.pathname === '/login' || 
         location.pathname === '/register' ||
@@ -131,16 +98,16 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     );
   }
 
-  // Block access if no current organization is set (except in the org pages)
+  // Block access if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Block access if no current organization is set
   if (!currentOrganization && 
       !location.pathname.startsWith('/organizations/login') && 
       !location.pathname.startsWith('/organizations/new')) {
     return <Navigate to="/organizations/login?slug=belmorso" replace />;
-  }
-
-  // Block access if not authenticated (after organization check)
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Block access for non-admins if admin required

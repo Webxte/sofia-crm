@@ -11,7 +11,6 @@ const Index = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { 
     currentOrganization, 
-    organizations, 
     initialLoadComplete, 
     isLoadingOrganizations 
   } = useOrganizations();
@@ -21,11 +20,10 @@ const Index = () => {
       isAuthenticated,
       authLoading,
       currentOrganization: currentOrganization?.name,
-      organizationsCount: organizations.length,
       initialLoadComplete,
       isLoadingOrganizations
     });
-  }, [isAuthenticated, authLoading, currentOrganization, organizations, initialLoadComplete, isLoadingOrganizations]);
+  }, [isAuthenticated, authLoading, currentOrganization, initialLoadComplete, isLoadingOrganizations]);
   
   // Show loading state while checking auth and orgs
   if (authLoading || isLoadingOrganizations || !initialLoadComplete) {

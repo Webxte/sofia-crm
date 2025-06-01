@@ -3,28 +3,30 @@ import { useState, useCallback } from "react";
 import { Task } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useAuth } from "@/context/AuthContext";
 
 export const useTasksFetch = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { currentOrganization } = useOrganizations();
+  const { isAuthenticated, user } = useAuth();
 
   const fetchTasks = useCallback(async () => {
-    if (!currentOrganization) {
-      console.log("useTasksFetch: No current organization, skipping tasks fetch");
+    // Only fetch if user is authenticated
+    if (!isAuthenticated || !user) {
+      console.log("useTasksFetch: Not authenticated, skipping tasks fetch");
+      setTasks([]);
       return;
     }
 
     try {
       setLoading(true);
-      console.log("useTasksFetch: Fetching tasks for organization:", currentOrganization.id, currentOrganization.name);
+      console.log("useTasksFetch: Fetching all tasks for authenticated user:", user.id);
       
+      // Simple query - get all tasks (RLS policies handle access control)
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -41,8 +43,8 @@ export const useTasksFetch = () => {
         description: task.description || '',
         status: task.status as "active" | "completed",
         priority: task.priority as "low" | "medium" | "high",
-        dueDate: task.due_date || undefined,
-        dueTime: task.due_time || undefined,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        dueTime: task.due_time || '',
         contactId: task.contact_id || '',
         agentId: task.agent_id || '',
         agentName: task.agent_name || '',
@@ -50,7 +52,7 @@ export const useTasksFetch = () => {
         updatedAt: new Date(task.updated_at),
       }));
 
-      console.log(`useTasksFetch: Formatted ${formattedTasks.length} tasks for organization ${currentOrganization.name}`);
+      console.log(`useTasksFetch: Successfully formatted ${formattedTasks.length} tasks`);
       setTasks(formattedTasks);
     } catch (error) {
       console.error('useTasksFetch: Error in fetchTasks:', error);
@@ -59,11 +61,11 @@ export const useTasksFetch = () => {
         description: "Failed to load tasks. Please check your connection and try again.",
         variant: "destructive",
       });
-      setTasks([]); // Set empty array on error
+      setTasks([]);
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization, toast]);
+  }, [isAuthenticated, user, toast]);
 
   return {
     tasks,

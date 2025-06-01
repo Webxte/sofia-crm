@@ -3,29 +3,31 @@ import { useState, useCallback } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useAuth } from "@/context/AuthContext";
 
 export const useMeetingsFetch = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { currentOrganization } = useOrganizations();
+  const { isAuthenticated, user } = useAuth();
 
   const fetchMeetings = useCallback(async () => {
-    if (!currentOrganization) {
-      console.log("useMeetingsFetch: No current organization, skipping meetings fetch");
+    // Only fetch if user is authenticated
+    if (!isAuthenticated || !user) {
+      console.log("useMeetingsFetch: Not authenticated, skipping meetings fetch");
+      setMeetings([]);
       return;
     }
 
     try {
       setLoading(true);
-      console.log("useMeetingsFetch: Fetching meetings for organization:", currentOrganization.id, currentOrganization.name);
+      console.log("useMeetingsFetch: Fetching all meetings for authenticated user:", user.id);
       
+      // Simple query - get all meetings (RLS policies handle access control)
       const { data, error } = await supabase
         .from('meetings')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
-        .order('created_at', { ascending: false });
+        .order('date', { ascending: false });
 
       if (error) {
         console.error('useMeetingsFetch: Error fetching meetings:', error);
@@ -39,23 +41,23 @@ export const useMeetingsFetch = () => {
         organizationId: meeting.organization_id,
         contactId: meeting.contact_id,
         contactName: meeting.contact_name || '',
-        date: meeting.date,
-        time: meeting.time,
-        type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",
-        location: meeting.location || '',
-        notes: meeting.notes,
         agentId: meeting.agent_id || '',
         agentName: meeting.agent_name || '',
-        nextSteps: meeting.next_steps || [],
+        type: meeting.type,
+        date: new Date(meeting.date),
+        time: meeting.time,
+        location: meeting.location || '',
+        notes: meeting.notes,
         followUpScheduled: meeting.follow_up_scheduled,
         followUpDate: meeting.follow_up_date ? new Date(meeting.follow_up_date) : undefined,
-        followUpTime: meeting.follow_up_time || undefined,
-        followUpNotes: meeting.follow_up_notes || undefined,
+        followUpTime: meeting.follow_up_time || '',
+        followUpNotes: meeting.follow_up_notes || '',
+        nextSteps: meeting.next_steps || [],
         createdAt: new Date(meeting.created_at),
         updatedAt: new Date(meeting.updated_at),
       }));
 
-      console.log(`useMeetingsFetch: Formatted ${formattedMeetings.length} meetings for organization ${currentOrganization.name}`);
+      console.log(`useMeetingsFetch: Successfully formatted ${formattedMeetings.length} meetings`);
       setMeetings(formattedMeetings);
     } catch (error) {
       console.error('useMeetingsFetch: Error in fetchMeetings:', error);
@@ -64,11 +66,11 @@ export const useMeetingsFetch = () => {
         description: "Failed to load meetings. Please check your connection and try again.",
         variant: "destructive",
       });
-      setMeetings([]); // Set empty array on error
+      setMeetings([]);
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization, toast]);
+  }, [isAuthenticated, user, toast]);
 
   return {
     meetings,

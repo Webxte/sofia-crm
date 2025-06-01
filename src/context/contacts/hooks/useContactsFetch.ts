@@ -3,29 +3,30 @@ import { useState, useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useAuth } from "@/context/AuthContext";
 
 export const useContactsFetch = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { currentOrganization } = useOrganizations();
+  const { isAuthenticated, user } = useAuth();
 
   const fetchContacts = useCallback(async () => {
-    if (!currentOrganization) {
-      console.log("useContactsFetch: No current organization, skipping contacts fetch");
+    // Only fetch if user is authenticated
+    if (!isAuthenticated || !user) {
+      console.log("useContactsFetch: Not authenticated, skipping contacts fetch");
       setContacts([]);
       return;
     }
 
     try {
       setLoading(true);
-      console.log("useContactsFetch: Fetching contacts for organization:", currentOrganization.id, currentOrganization.name);
+      console.log("useContactsFetch: Fetching all contacts for authenticated user:", user.id);
       
+      // Simple query - get all contacts (RLS policies handle access control)
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -53,11 +54,10 @@ export const useContactsFetch = () => {
           createdAt: new Date(contact.created_at),
           updatedAt: new Date(contact.updated_at),
         };
-        console.log("useContactsFetch: Formatted contact:", formatted);
         return formatted;
       });
 
-      console.log(`useContactsFetch: Successfully formatted ${formattedContacts.length} contacts for organization ${currentOrganization.name}`);
+      console.log(`useContactsFetch: Successfully formatted ${formattedContacts.length} contacts`);
       setContacts(formattedContacts);
     } catch (error) {
       console.error('useContactsFetch: Error in fetchContacts:', error);
@@ -66,11 +66,11 @@ export const useContactsFetch = () => {
         description: "Failed to load contacts. Please check your connection and try again.",
         variant: "destructive",
       });
-      setContacts([]); // Set empty array on error
+      setContacts([]);
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization, toast]);
+  }, [isAuthenticated, user, toast]);
 
   return {
     contacts,

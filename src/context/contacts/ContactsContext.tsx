@@ -9,7 +9,6 @@ import {
   searchContacts 
 } from "./contactUtils";
 import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface ContactsContextType {
@@ -30,7 +29,6 @@ const ContactsContext = createContext<ContactsContextType | undefined>(undefined
 
 export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user } = useAuth();
-  const { currentOrganization, initialLoadComplete } = useOrganizations();
   const { toast } = useToast();
   const { 
     contacts, 
@@ -43,17 +41,16 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when authentication and organization are ready
+  // Fetch contacts when authentication is ready
   useEffect(() => {
-    console.log("ContactsContext: Checking conditions for fetch", {
+    console.log("ContactsContext: Checking authentication state", {
       isAuthenticated,
-      currentOrganization: currentOrganization?.name,
-      initialLoadComplete,
+      user: user?.id,
       loading
     });
 
-    if (isAuthenticated && currentOrganization && initialLoadComplete && !loading) {
-      console.log("ContactsContext: All conditions met, fetching contacts for organization:", currentOrganization.name);
+    if (isAuthenticated && user && !loading) {
+      console.log("ContactsContext: User authenticated, fetching contacts");
       fetchContacts().catch(err => {
         console.error("Error during contacts fetch:", err);
         toast({
@@ -63,14 +60,9 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         });
       });
     } else {
-      console.log("ContactsContext: Conditions not met for fetch:", {
-        needsAuth: !isAuthenticated,
-        needsOrg: !currentOrganization,
-        needsInitialLoad: !initialLoadComplete,
-        isLoading: loading
-      });
+      console.log("ContactsContext: Waiting for authentication or already loading");
     }
-  }, [isAuthenticated, currentOrganization?.id, initialLoadComplete, fetchContacts, loading, toast]);
+  }, [isAuthenticated, user?.id, fetchContacts, loading, toast]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {
