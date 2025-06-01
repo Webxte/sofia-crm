@@ -1,34 +1,41 @@
-import { useState } from "react";
+
+import { useState, useCallback } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useProducts } from "@/context/products/ProductsContext";
 
 export const useOrdersFetch = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { getProductById } = useProducts();
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { currentOrganization } = useOrganizations();
+  const { getProductById } = useProducts();
 
-  const refreshOrders = async () => {
+  const fetchOrders = useCallback(async () => {
+    if (!currentOrganization) {
+      console.log("useOrdersFetch: No current organization, skipping orders fetch");
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log("useOrdersFetch: Fetching orders for organization:", currentOrganization.id, currentOrganization.name);
       
-      // First get all orders
+      // First get all orders for the organization
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
+        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
       
       if (ordersError) {
-        console.error('Error fetching orders:', ordersError);
-        toast({
-          title: "Error",
-          description: "Failed to load orders",
-          variant: "destructive",
-        });
-        return;
+        console.error('useOrdersFetch: Error fetching orders:', ordersError);
+        throw ordersError;
       }
+
+      console.log("useOrdersFetch: Raw orders data from Supabase:", ordersData);
       
       // Then get all order items
       const { data: itemsData, error: itemsError } = await supabase
@@ -36,13 +43,8 @@ export const useOrdersFetch = () => {
         .select('*');
       
       if (itemsError) {
-        console.error('Error fetching order items:', itemsError);
-        toast({
-          title: "Error",
-          description: "Failed to load order items",
-          variant: "destructive",
-        });
-        return;
+        console.error('useOrdersFetch: Error fetching order items:', itemsError);
+        throw itemsError;
       }
       
       // Map items to their respective orders
@@ -80,7 +82,7 @@ export const useOrdersFetch = () => {
           contactId: order.contact_id,
           agentId: order.agent_id,
           agentName: order.agent_name,
-          date: order.date, // Already a string from the database
+          date: order.date,
           status: order.status as "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled",
           items: orderItems,
           total: order.total,
@@ -93,23 +95,25 @@ export const useOrdersFetch = () => {
         };
       });
       
+      console.log(`useOrdersFetch: Formatted ${formattedOrders.length} orders for organization ${currentOrganization.name}`);
       setOrders(formattedOrders);
     } catch (err) {
-      console.error('Unexpected error fetching orders:', err);
+      console.error('useOrdersFetch: Unexpected error fetching orders:', err);
       toast({
         title: "Error",
-        description: "An unexpected error occurred while loading orders",
+        description: "Failed to load orders. Please check your connection and try again.",
         variant: "destructive",
       });
+      setOrders([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentOrganization, getProductById, toast]);
 
   return {
     orders,
     setOrders,
     loading,
-    refreshOrders
+    fetchOrders
   };
 };
