@@ -46,7 +46,7 @@ export const useTasksFetch = () => {
         dueDate: task.due_date || undefined, // Keep as ISO string
         dueTime: task.due_time || '',
         contactId: task.contact_id || '',
-        contactName: task.contact_name || '',
+        contactName: '', // Set empty string since contact_name doesn't exist in DB
         agentId: task.agent_id || '',
         agentName: task.agent_name || '',
         createdAt: new Date(task.created_at),
