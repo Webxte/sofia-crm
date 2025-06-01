@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,7 +66,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
-  // Fetch organizations - simplified to avoid RLS issues
+  // Fetch organizations and ensure user membership
   const fetchOrganizations = async () => {
     if (!user?.id) {
       console.log("No user ID, clearing organization data");
@@ -82,12 +81,39 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       setIsLoadingOrganizations(true);
       console.log("Fetching organizations for user:", user.id);
       
-      // First try to get Belmorso organization directly (bypassing membership checks for now)
-      console.log("Trying to get Belmorso organization directly");
+      // Get Belmorso organization
       const belmorso = await getOrganizationBySlug('belmorso');
       
       if (belmorso) {
-        console.log("Found Belmorso organization, setting as current");
+        console.log("Found Belmorso organization, ensuring user membership");
+        
+        // Check if user is already a member
+        const { data: existingMembership } = await supabase
+          .from('organization_members')
+          .select('id')
+          .eq('organization_id', belmorso.id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (!existingMembership) {
+          console.log("Adding user to Belmorso organization");
+          const { error: insertError } = await supabase
+            .from('organization_members')
+            .insert({
+              organization_id: belmorso.id,
+              user_id: user.id,
+              role: 'member'
+            });
+
+          if (insertError) {
+            console.error('Error adding user to organization:', insertError);
+          } else {
+            console.log('Successfully added user to Belmorso organization');
+          }
+        } else {
+          console.log('User is already a member of Belmorso organization');
+        }
+
         const userOrganizations = [belmorso];
         setOrganizations(userOrganizations);
         setCurrentOrganization(belmorso);
@@ -97,7 +123,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         return;
       }
 
-      // If no Belmorso found, try to get organizations through membership
+      // Fallback: try to get organizations through membership
       const { data: memberships, error: membershipError } = await supabase
         .from('organization_members')
         .select(`
@@ -118,7 +144,6 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
       if (membershipError) {
         console.error('Error fetching organization memberships:', membershipError);
-        // Don't throw here, continue with fallback
       }
 
       console.log("Raw memberships data:", memberships);

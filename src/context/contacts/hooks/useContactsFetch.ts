@@ -57,7 +57,7 @@ export const useContactsFetch = () => {
         return formatted;
       });
 
-      console.log(`useContactsFetch: Formatted ${formattedContacts.length} contacts for organization ${currentOrganization.name}`);
+      console.log(`useContactsFetch: Successfully formatted ${formattedContacts.length} contacts for organization ${currentOrganization.name}`);
       setContacts(formattedContacts);
     } catch (error) {
       console.error('useContactsFetch: Error in fetchContacts:', error);
