@@ -43,7 +43,7 @@ export const useMeetingsFetch = () => {
         contactName: meeting.contact_name || '',
         agentId: meeting.agent_id || '',
         agentName: meeting.agent_name || '',
-        type: meeting.type,
+        type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",
         date: meeting.date, // Keep as ISO string
         time: meeting.time,
         location: meeting.location || '',
