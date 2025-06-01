@@ -39,11 +39,11 @@ export const useTasksOperations = () => {
         organizationId: task.organization_id,
         title: task.title,
         description: task.description || '',
+        status: task.status as "active" | "completed",
+        priority: task.priority as "low" | "medium" | "high",
         dueDate: task.due_date || undefined,
         dueTime: task.due_time || undefined,
-        priority: task.priority as "low" | "medium" | "high",
-        status: task.status as "active" | "completed",
-        contactId: task.contact_id || undefined,
+        contactId: task.contact_id || '',
         agentId: task.agent_id || '',
         agentName: task.agent_name || '',
         createdAt: new Date(task.created_at),
@@ -78,10 +78,10 @@ export const useTasksOperations = () => {
       const newTask = {
         title: taskData.title,
         description: taskData.description,
-        due_date: taskData.dueDate,
-        due_time: taskData.dueTime,
-        priority: taskData.priority,
         status: taskData.status,
+        priority: taskData.priority,
+        due_date: taskData.dueDate || null,
+        due_time: taskData.dueTime,
         contact_id: taskData.contactId,
         agent_id: taskData.agentId || user?.id,
         agent_name: taskData.agentName || user?.user_metadata?.name || 'Unknown',
@@ -101,11 +101,11 @@ export const useTasksOperations = () => {
         organizationId: data.organization_id,
         title: data.title,
         description: data.description || '',
+        status: data.status as "active" | "completed",
+        priority: data.priority as "low" | "medium" | "high",
         dueDate: data.due_date || undefined,
         dueTime: data.due_time || undefined,
-        priority: data.priority as "low" | "medium" | "high",
-        status: data.status as "active" | "completed",
-        contactId: data.contact_id || undefined,
+        contactId: data.contact_id || '',
         agentId: data.agent_id || '',
         agentName: data.agent_name || '',
         createdAt: new Date(data.created_at),
@@ -136,10 +136,10 @@ export const useTasksOperations = () => {
       const updateData = {
         title: taskData.title,
         description: taskData.description,
-        due_date: taskData.dueDate,
-        due_time: taskData.dueTime,
-        priority: taskData.priority,
         status: taskData.status,
+        priority: taskData.priority,
+        due_date: taskData.dueDate || null,
+        due_time: taskData.dueTime,
         contact_id: taskData.contactId,
         agent_id: taskData.agentId,
         agent_name: taskData.agentName,
@@ -159,11 +159,11 @@ export const useTasksOperations = () => {
         organizationId: data.organization_id,
         title: data.title,
         description: data.description || '',
+        status: data.status as "active" | "completed",
+        priority: data.priority as "low" | "medium" | "high",
         dueDate: data.due_date || undefined,
         dueTime: data.due_time || undefined,
-        priority: data.priority as "low" | "medium" | "high",
-        status: data.status as "active" | "completed",
-        contactId: data.contact_id || undefined,
+        contactId: data.contact_id || '',
         agentId: data.agent_id || '',
         agentName: data.agent_name || '',
         createdAt: new Date(data.created_at),
@@ -223,6 +223,12 @@ export const useTasksOperations = () => {
     await fetchTasks();
   };
 
+  const sendTaskEmail = async (taskId: string, emailData: any): Promise<boolean> => {
+    // Implementation for sending task emails would go here
+    console.log("Task email not yet implemented");
+    return false;
+  };
+
   return {
     tasks,
     loading,
@@ -231,5 +237,6 @@ export const useTasksOperations = () => {
     deleteTask,
     refreshTasks,
     fetchTasks,
+    sendTaskEmail,
   };
 };

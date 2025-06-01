@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,10 +42,10 @@ export const useContactsOperations = () => {
         email: contact.email || '',
         phone: contact.phone || '',
         mobile: contact.mobile || '',
-        address: contact.address || '',
-        notes: contact.notes || '',
-        source: contact.source || '',
         position: contact.position || '',
+        address: contact.address || '',
+        source: contact.source || '',
+        notes: contact.notes || '',
         agentId: contact.agent_id || '',
         agentName: contact.agent_name || '',
         createdAt: new Date(contact.created_at),
@@ -82,10 +83,10 @@ export const useContactsOperations = () => {
         email: contactData.email,
         phone: contactData.phone,
         mobile: contactData.mobile,
-        address: contactData.address,
-        notes: contactData.notes,
-        source: contactData.source,
         position: contactData.position,
+        address: contactData.address,
+        source: contactData.source,
+        notes: contactData.notes,
         agent_id: contactData.agentId || user?.id,
         agent_name: contactData.agentName || user?.user_metadata?.name || 'Unknown',
         organization_id: currentOrganization.id,
@@ -107,10 +108,10 @@ export const useContactsOperations = () => {
         email: data.email || '',
         phone: data.phone || '',
         mobile: data.mobile || '',
-        address: data.address || '',
-        notes: data.notes || '',
-        source: data.source || '',
         position: data.position || '',
+        address: data.address || '',
+        source: data.source || '',
+        notes: data.notes || '',
         agentId: data.agent_id || '',
         agentName: data.agent_name || '',
         createdAt: new Date(data.created_at),
@@ -144,10 +145,10 @@ export const useContactsOperations = () => {
         email: contactData.email,
         phone: contactData.phone,
         mobile: contactData.mobile,
-        address: contactData.address,
-        notes: contactData.notes,
-        source: contactData.source,
         position: contactData.position,
+        address: contactData.address,
+        source: contactData.source,
+        notes: contactData.notes,
         agent_id: contactData.agentId,
         agent_name: contactData.agentName,
       };
@@ -169,10 +170,10 @@ export const useContactsOperations = () => {
         email: data.email || '',
         phone: data.phone || '',
         mobile: data.mobile || '',
-        address: data.address || '',
-        notes: data.notes || '',
-        source: data.source || '',
         position: data.position || '',
+        address: data.address || '',
+        source: data.source || '',
+        notes: data.notes || '',
         agentId: data.agent_id || '',
         agentName: data.agent_name || '',
         createdAt: new Date(data.created_at),
@@ -232,19 +233,54 @@ export const useContactsOperations = () => {
     await fetchContacts();
   };
 
-  const importContactsFromCsv = async (file: File) => {
-    // Implementation for CSV import would go here
-    console.log("CSV import not yet implemented");
+  const sendContactEmail = async (contactId: string, emailData: any): Promise<boolean> => {
+    // Implementation for sending contact emails would go here
+    console.log("Contact email not yet implemented");
+    return false;
+  };
+
+  const bulkUpdateContacts = async (contactIds: string[], updateData: Partial<Contact>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .update({
+          agent_id: updateData.agentId,
+          agent_name: updateData.agentName,
+          source: updateData.source,
+        })
+        .in('id', contactIds);
+
+      if (error) throw error;
+
+      // Refresh contacts to get updated data
+      await refreshContacts();
+      
+      toast({
+        title: "Success",
+        description: `Updated ${contactIds.length} contacts`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error bulk updating contacts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update contacts",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   return {
     contacts,
     loading,
-    fetchContacts,
-    refreshContacts,
     addContact,
     updateContact,
     deleteContact,
-    importContactsFromCsv,
+    refreshContacts,
+    fetchContacts,
+    sendContactEmail,
+    bulkUpdateContacts,
   };
 };
