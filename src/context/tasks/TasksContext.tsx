@@ -3,19 +3,24 @@ import React, { createContext, useContext, useEffect, ReactNode } from "react";
 import { useTasksOperations } from "./useTasksOperations";
 import { TasksContextType } from "./types";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
+  const { currentOrganization } = useOrganizations();
   const operations = useTasksOperations();
 
-  // Fetch tasks when the component mounts or when auth state changes
+  // Fetch tasks when the component mounts or when auth/org state changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && currentOrganization) {
+      console.log("TasksContext: User authenticated and organization set, fetching tasks");
       operations.refreshTasks();
+    } else {
+      console.log("TasksContext: Missing auth or organization, skipping tasks fetch");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentOrganization?.id]);
 
   // Utility methods
   const getTaskById = (id: string) => {

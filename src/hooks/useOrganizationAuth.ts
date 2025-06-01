@@ -116,11 +116,6 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       if (isPasswordCorrect) {
         console.log("Password verification successful");
         
-        toast({
-          title: "Success", 
-          description: `Access granted to ${organizationName}`
-        });
-        
         // Ensure the user is a member of this organization
         if (user?.id) {
           await ensureUserMembership(organizationId);
@@ -135,15 +130,31 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
         }
         
         switchAttemptInProgress.current = true;
-        const success = await switchOrganization(organizationId);
-        switchAttemptInProgress.current = false;
         
-        if (!success) {
-          console.error("Failed to switch to organization");
-          throw new Error("Failed to switch to organization");
+        try {
+          const success = await switchOrganization(organizationId);
+          
+          if (success) {
+            console.log("Successfully switched to organization");
+            
+            toast({
+              title: "Success", 
+              description: `Access granted to ${organizationName}`
+            });
+            
+            return true;
+          } else {
+            console.error("Failed to switch to organization");
+            setError("Failed to switch to organization");
+            return false;
+          }
+        } catch (switchError) {
+          console.error("Error during organization switch:", switchError);
+          setError("Failed to switch to organization");
+          return false;
+        } finally {
+          switchAttemptInProgress.current = false;
         }
-        
-        return true;
       } else {
         console.log("Password verification failed");
         setError("Incorrect password for this organization");
@@ -166,7 +177,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       console.log("User is authenticated, redirecting to dashboard");
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 100);
+      }, 500); // Give more time for state updates
     } else {
       console.log("User is not authenticated, redirecting to login");
       setTimeout(() => {

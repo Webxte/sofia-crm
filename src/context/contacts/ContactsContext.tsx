@@ -45,8 +45,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch contacts when component mounts and when authentication state changes
   useEffect(() => {
-    if (isAuthenticated) {
-      console.log("ContactsContext: User authenticated, fetching contacts");
+    if (isAuthenticated && currentOrganization) {
+      console.log("ContactsContext: User authenticated and organization set, fetching contacts");
       fetchContacts().catch(err => {
         console.error("Error during initial contacts fetch:", err);
         toast({
@@ -56,29 +56,9 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         });
       });
     } else {
-      console.log("ContactsContext: User not authenticated, skipping contacts fetch");
+      console.log("ContactsContext: Missing auth or organization, skipping contacts fetch");
     }
-  }, [isAuthenticated, fetchContacts, toast]);
-
-  // Fetch contacts when organization changes
-  useEffect(() => {
-    if (isAuthenticated && currentOrganization) {
-      console.log("ContactsContext: Organization changed to", currentOrganization.id, "- fetching contacts");
-      // Add a small delay to allow other organization-related operations to complete
-      const timer = setTimeout(() => {
-        fetchContacts().catch(err => {
-          console.error("Error during organization change contacts fetch:", err);
-          toast({
-            title: "Error",
-            description: "Failed to load contacts after organization change. Please try refreshing.",
-            variant: "destructive",
-          });
-        });
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [currentOrganization?.id, isAuthenticated, fetchContacts, toast]);
+  }, [isAuthenticated, currentOrganization?.id, fetchContacts, toast]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {

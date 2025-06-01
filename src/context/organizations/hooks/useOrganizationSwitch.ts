@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Organization } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
 
 interface OrganizationSwitchProps {
   organizations: Organization[];
@@ -39,7 +38,7 @@ export const useOrganizationSwitch = (props: OrganizationSwitchProps) => {
       await ensureUserMembership(id);
       
       // Find the organization in the current list
-      const org = organizations.find(o => o.id === id);
+      let org = organizations.find(o => o.id === id);
       
       // If organization wasn't found in the current list, try to fetch it
       if (!org) {
@@ -59,8 +58,8 @@ export const useOrganizationSwitch = (props: OrganizationSwitchProps) => {
           throw new Error("Organization not found");
         }
         
-        // Format and set as current organization
-        const fetchedOrg: Organization = {
+        // Format the organization
+        org = {
           id: orgData.id,
           name: orgData.name,
           slug: orgData.slug,
@@ -70,26 +69,26 @@ export const useOrganizationSwitch = (props: OrganizationSwitchProps) => {
           createdAt: new Date(orgData.created_at),
           updatedAt: new Date(orgData.updated_at)
         };
-        
-        // Store in localStorage first
-        localStorage.setItem('currentOrganizationId', fetchedOrg.id);
-        
-        // Then update state
-        setCurrentOrganization(fetchedOrg);
-        console.log(`Set current organization to ${fetchedOrg.name} (ID: ${fetchedOrg.id})`);
-      } else {
-        // Organization found in current list
-        localStorage.setItem('currentOrganizationId', org.id);
-        setCurrentOrganization(org);
-        console.log(`Set current organization to ${org.name} (ID: ${org.id})`);
       }
       
-      // Verify the current organization was set
-      setTimeout(() => {
-        const savedOrgId = localStorage.getItem('currentOrganizationId');
-        console.log(`Verification: currentOrganizationId in localStorage: ${savedOrgId}`);
-      }, 100);
+      // Store in localStorage first
+      localStorage.setItem('currentOrganizationId', org.id);
+      console.log(`Stored organization ID ${org.id} in localStorage`);
       
+      // Then update state
+      setCurrentOrganization(org);
+      console.log(`Set current organization to ${org.name} (ID: ${org.id})`);
+      
+      // Wait a bit for state to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verify the switch was successful
+      const savedOrgId = localStorage.getItem('currentOrganizationId');
+      if (savedOrgId !== org.id) {
+        throw new Error("Failed to save organization ID to localStorage");
+      }
+      
+      console.log(`Organization switch successful: ${org.name}`);
       return true;
     } catch (error) {
       console.error('Error switching organization:', error);
