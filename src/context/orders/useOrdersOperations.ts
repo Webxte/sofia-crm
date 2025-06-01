@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -385,6 +386,9 @@ export const useOrdersOperations = () => {
     orders,
     setOrders,
     loading,
+    addOrder,
+    updateOrder,
+    deleteOrder,
     refreshOrders,
     fetchOrders,
     createOrderItem,
