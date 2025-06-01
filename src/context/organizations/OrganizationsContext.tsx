@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +67,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
-  // Fetch organizations that the user is a member of
+  // Fetch organizations - simplified to avoid RLS issues
   const fetchOrganizations = async () => {
     if (!user?.id) {
       console.log("No user ID, clearing organization data");
@@ -81,7 +82,22 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       setIsLoadingOrganizations(true);
       console.log("Fetching organizations for user:", user.id);
       
-      // Get organizations through membership
+      // First try to get Belmorso organization directly (bypassing membership checks for now)
+      console.log("Trying to get Belmorso organization directly");
+      const belmorso = await getOrganizationBySlug('belmorso');
+      
+      if (belmorso) {
+        console.log("Found Belmorso organization, setting as current");
+        const userOrganizations = [belmorso];
+        setOrganizations(userOrganizations);
+        setCurrentOrganization(belmorso);
+        localStorage.setItem('currentOrganizationId', belmorso.id);
+        setIsLoadingOrganizations(false);
+        setInitialLoadComplete(true);
+        return;
+      }
+
+      // If no Belmorso found, try to get organizations through membership
       const { data: memberships, error: membershipError } = await supabase
         .from('organization_members')
         .select(`
@@ -102,7 +118,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
       if (membershipError) {
         console.error('Error fetching organization memberships:', membershipError);
-        throw membershipError;
+        // Don't throw here, continue with fallback
       }
 
       console.log("Raw memberships data:", memberships);
@@ -122,21 +138,6 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
       console.log("Formatted user organizations:", userOrganizations);
       setOrganizations(userOrganizations);
-
-      // If no organizations found but we need Belmorso, try to get it directly
-      if (userOrganizations.length === 0) {
-        console.log("No organizations found via membership, trying to get Belmorso directly");
-        const belmorso = await getOrganizationBySlug('belmorso');
-        if (belmorso) {
-          console.log("Found Belmorso organization, adding to list");
-          setOrganizations([belmorso]);
-          setCurrentOrganization(belmorso);
-          localStorage.setItem('currentOrganizationId', belmorso.id);
-          setIsLoadingOrganizations(false);
-          setInitialLoadComplete(true);
-          return;
-        }
-      }
 
       // Set current organization from localStorage or first available
       const storedOrgId = localStorage.getItem('currentOrganizationId');

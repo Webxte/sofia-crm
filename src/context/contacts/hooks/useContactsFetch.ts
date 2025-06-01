@@ -14,6 +14,7 @@ export const useContactsFetch = () => {
   const fetchContacts = useCallback(async () => {
     if (!currentOrganization) {
       console.log("useContactsFetch: No current organization, skipping contacts fetch");
+      setContacts([]);
       return;
     }
 
