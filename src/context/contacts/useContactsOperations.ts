@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import Papa from "papaparse";
 
 export const useContactsOperations = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -272,6 +273,81 @@ export const useContactsOperations = () => {
     }
   };
 
+  const importContactsFromCsv = useCallback(async (file: File) => {
+    if (!currentOrganization) {
+      toast({
+        title: "Error",
+        description: "No organization selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log("Starting CSV import for file:", file.name);
+      
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          try {
+            console.log("CSV parsed successfully, rows:", results.data.length);
+            
+            const contactsToInsert = (results.data as any[]).map(row => ({
+              full_name: row.full_name || row.name || '',
+              company: row.company || '',
+              email: row.email || '',
+              phone: row.phone || '',
+              mobile: row.mobile || '',
+              position: row.position || '',
+              address: row.address || '',
+              source: row.source || file.name.replace('.csv', ''),
+              notes: row.notes || '',
+              agent_id: user?.id,
+              agent_name: user?.user_metadata?.name || 'Unknown',
+              organization_id: currentOrganization.id,
+            }));
+
+            const { error } = await supabase
+              .from('contacts')
+              .insert(contactsToInsert);
+
+            if (error) throw error;
+
+            await refreshContacts();
+            
+            toast({
+              title: "Import Successful",
+              description: `Imported ${contactsToInsert.length} contacts from CSV.`,
+            });
+          } catch (error) {
+            console.error("Error processing CSV data:", error);
+            toast({
+              title: "Import Error",
+              description: "Failed to process CSV data. Please check the format.",
+              variant: "destructive",
+            });
+          }
+        },
+        error: (error) => {
+          console.error("CSV parsing error:", error);
+          toast({
+            title: "CSV Error",
+            description: "Failed to parse CSV file. Please check the format.",
+            variant: "destructive",
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Error importing contacts:", error);
+      toast({
+        title: "Import Error",
+        description: "Failed to import contacts. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [currentOrganization, user, toast, refreshContacts]);
+
   return {
     contacts,
     loading,
@@ -282,5 +358,6 @@ export const useContactsOperations = () => {
     fetchContacts,
     sendContactEmail,
     bulkUpdateContacts,
+    importContactsFromCsv,
   };
 };
