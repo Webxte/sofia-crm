@@ -61,7 +61,7 @@ export interface Meeting {
   location?: string;
   notes: string;
   followUpScheduled: boolean;
-  followUpDate?: string;
+  followUpDate?: string; // ISO date string, not Date
   followUpTime?: string;
   followUpNotes?: string;
   nextSteps?: string[];
@@ -593,8 +593,6 @@ export interface ThemeColors {
 
 export interface ThemeConfig {
   colors: ThemeColors;
-  borderRadius: string;
-  fontFamily: string;
   fontSize: {
     xs: string;
     sm: string;
