@@ -16,8 +16,7 @@ const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
   const slug = searchParams.get("slug") || DEFAULT_ORG_SLUG;
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-  const [attemptsCount, setAttemptsCount] = useState(0);
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const navigate = useNavigate();
   
   // Use our custom hooks for organization loading and authentication
@@ -41,8 +40,8 @@ const OrganizationLogin = () => {
   
   // Effect to handle automatic redirect if already authenticated with an organization
   useEffect(() => {
-    // Prevent infinite loops - only try auto-navigation once
-    if (redirectAttempted) {
+    // Prevent multiple redirect attempts
+    if (hasAttemptedRedirect) {
       return;
     }
     
@@ -52,17 +51,18 @@ const OrganizationLogin = () => {
     }
 
     // If authenticated and organization exists, try auto-navigation
-    if (isAuthenticated && organization && attemptsCount === 0) {
-      setAttemptsCount(prev => prev + 1);
-      setRedirectAttempted(true);
+    if (isAuthenticated && organization) {
+      setHasAttemptedRedirect(true);
       console.log("User already authenticated and organization found, attempting to navigate to dashboard");
       
-      // Add delay to ensure state updates complete
-      setTimeout(() => {
+      // Navigate to dashboard with a small delay to ensure state is properly set
+      const timer = setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 100);
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, organization, navigate, attemptsCount, authLoading, isLoaded, redirectAttempted]);
+  }, [isAuthenticated, organization, navigate, authLoading, isLoaded, hasAttemptedRedirect]);
   
   const handleSubmit = async (password: string) => {
     if (!organization) {
@@ -80,8 +80,12 @@ const OrganizationLogin = () => {
       
       if (success) {
         console.log("Login successful, navigating...");
-        setRedirectAttempted(true);
-        handleSuccessfulLogin(isAuthenticated, user?.id);
+        // Set the redirect flag to prevent loops
+        setHasAttemptedRedirect(true);
+        // Navigate after a short delay to ensure state updates
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 1000);
       } else {
         console.log("Login failed");
       }

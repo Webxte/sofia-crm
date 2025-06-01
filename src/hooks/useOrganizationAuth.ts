@@ -14,6 +14,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
   const { switchOrganization } = useOrganizations();
   const { isAuthenticated, user } = useAuth();
   const switchAttemptInProgress = useRef(false);
+  const lastSuccessfulSwitch = useRef<string | null>(null);
   
   /**
    * Verify organization password
@@ -104,9 +105,10 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       return false;
     }
     
-    if (switchAttemptInProgress.current) {
-      console.log("Switch attempt already in progress");
-      return false;
+    // Prevent duplicate switches
+    if (switchAttemptInProgress.current || lastSuccessfulSwitch.current === organizationId) {
+      console.log("Switch attempt already in progress or recently completed");
+      return lastSuccessfulSwitch.current === organizationId;
     }
     
     setIsSubmitting(true);
@@ -139,6 +141,7 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
       
       if (success) {
         console.log("Successfully switched to organization");
+        lastSuccessfulSwitch.current = organizationId;
         
         toast({
           title: "Success", 
@@ -167,14 +170,10 @@ export const useOrganizationAuth = (organizationId: string | undefined, organiza
   const handleSuccessfulLogin = (isAuthenticated: boolean, userId: string | undefined) => {
     if (isAuthenticated && userId) {
       console.log("User is authenticated, redirecting to dashboard");
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 1000); // Give more time for state updates
+      // Don't use setTimeout here as it's handled by the calling component
     } else {
       console.log("User is not authenticated, redirecting to login");
-      setTimeout(() => {
-        navigate('/login', { replace: true });
-      }, 100);
+      navigate('/login', { replace: true });
     }
   };
   
