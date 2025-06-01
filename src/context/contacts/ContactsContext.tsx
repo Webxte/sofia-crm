@@ -30,7 +30,7 @@ const ContactsContext = createContext<ContactsContextType | undefined>(undefined
 
 export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user } = useAuth();
-  const { currentOrganization } = useOrganizations();
+  const { currentOrganization, initialLoadComplete } = useOrganizations();
   const { toast } = useToast();
   const { 
     contacts, 
@@ -43,22 +43,34 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when component mounts and when authentication state changes
+  // Fetch contacts when authentication and organization are ready
   useEffect(() => {
-    if (isAuthenticated && currentOrganization) {
-      console.log("ContactsContext: User authenticated and organization set, fetching contacts");
+    console.log("ContactsContext: Checking conditions for fetch", {
+      isAuthenticated,
+      currentOrganization: currentOrganization?.name,
+      initialLoadComplete,
+      loading
+    });
+
+    if (isAuthenticated && currentOrganization && initialLoadComplete && !loading) {
+      console.log("ContactsContext: All conditions met, fetching contacts for organization:", currentOrganization.name);
       fetchContacts().catch(err => {
-        console.error("Error during initial contacts fetch:", err);
+        console.error("Error during contacts fetch:", err);
         toast({
           title: "Error",
-          description: "Failed to load contacts on initial load. Please try refreshing.",
+          description: "Failed to load contacts. Please try refreshing the page.",
           variant: "destructive",
         });
       });
     } else {
-      console.log("ContactsContext: Missing auth or organization, skipping contacts fetch");
+      console.log("ContactsContext: Conditions not met for fetch:", {
+        needsAuth: !isAuthenticated,
+        needsOrg: !currentOrganization,
+        needsInitialLoad: !initialLoadComplete,
+        isLoading: loading
+      });
     }
-  }, [isAuthenticated, currentOrganization?.id, fetchContacts, toast]);
+  }, [isAuthenticated, currentOrganization?.id, initialLoadComplete, fetchContacts, loading, toast]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {
@@ -85,6 +97,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         deleteContact,
         refreshContacts: async () => { 
           try {
+            console.log("ContactsContext: Manual refresh requested");
             await fetchContacts(); 
           } catch (err) {
             console.error("Error refreshing contacts:", err);

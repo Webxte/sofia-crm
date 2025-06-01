@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,13 +14,13 @@ export const useMeetingsOperations = () => {
 
   const fetchMeetings = useCallback(async () => {
     if (!currentOrganization) {
-      console.log("No current organization, skipping meetings fetch");
+      console.log("useMeetingsOperations: No current organization, skipping meetings fetch");
       return;
     }
 
     try {
       setLoading(true);
-      console.log("Fetching meetings for organization:", currentOrganization.id);
+      console.log("useMeetingsOperations: Fetching meetings for organization:", currentOrganization.id, currentOrganization.name);
       
       const { data, error } = await supabase
         .from('meetings')
@@ -30,9 +29,11 @@ export const useMeetingsOperations = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching meetings:', error);
+        console.error('useMeetingsOperations: Error fetching meetings:', error);
         throw error;
       }
+
+      console.log("useMeetingsOperations: Raw meetings data from Supabase:", data);
 
       const formattedMeetings: Meeting[] = (data || []).map(meeting => ({
         id: meeting.id,
@@ -55,15 +56,16 @@ export const useMeetingsOperations = () => {
         updatedAt: new Date(meeting.updated_at),
       }));
 
-      console.log("Fetched meetings:", formattedMeetings.length);
+      console.log(`useMeetingsOperations: Formatted ${formattedMeetings.length} meetings for organization ${currentOrganization.name}`);
       setMeetings(formattedMeetings);
     } catch (error) {
-      console.error('Error in fetchMeetings:', error);
+      console.error('useMeetingsOperations: Error in fetchMeetings:', error);
       toast({
         title: "Error",
-        description: "Failed to load meetings",
+        description: "Failed to load meetings. Please check your connection and try again.",
         variant: "destructive",
       });
+      setMeetings([]); // Set empty array on error
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,13 +15,13 @@ export const useContactsOperations = () => {
 
   const fetchContacts = useCallback(async () => {
     if (!currentOrganization) {
-      console.log("No current organization, skipping contacts fetch");
+      console.log("useContactsOperations: No current organization, skipping contacts fetch");
       return;
     }
 
     try {
       setLoading(true);
-      console.log("Fetching contacts for organization:", currentOrganization.id);
+      console.log("useContactsOperations: Fetching contacts for organization:", currentOrganization.id, currentOrganization.name);
       
       const { data, error } = await supabase
         .from('contacts')
@@ -31,37 +30,44 @@ export const useContactsOperations = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching contacts:', error);
+        console.error('useContactsOperations: Error fetching contacts:', error);
         throw error;
       }
 
-      const formattedContacts: Contact[] = (data || []).map(contact => ({
-        id: contact.id,
-        organizationId: contact.organization_id,
-        fullName: contact.full_name || '',
-        company: contact.company || '',
-        email: contact.email || '',
-        phone: contact.phone || '',
-        mobile: contact.mobile || '',
-        position: contact.position || '',
-        address: contact.address || '',
-        source: contact.source || '',
-        notes: contact.notes || '',
-        agentId: contact.agent_id || '',
-        agentName: contact.agent_name || '',
-        createdAt: new Date(contact.created_at),
-        updatedAt: new Date(contact.updated_at),
-      }));
+      console.log("useContactsOperations: Raw contacts data from Supabase:", data);
 
-      console.log("Fetched contacts:", formattedContacts.length);
+      const formattedContacts: Contact[] = (data || []).map(contact => {
+        const formatted = {
+          id: contact.id,
+          organizationId: contact.organization_id,
+          fullName: contact.full_name || '',
+          company: contact.company || '',
+          email: contact.email || '',
+          phone: contact.phone || '',
+          mobile: contact.mobile || '',
+          position: contact.position || '',
+          address: contact.address || '',
+          source: contact.source || '',
+          notes: contact.notes || '',
+          agentId: contact.agent_id || '',
+          agentName: contact.agent_name || '',
+          createdAt: new Date(contact.created_at),
+          updatedAt: new Date(contact.updated_at),
+        };
+        console.log("useContactsOperations: Formatted contact:", formatted);
+        return formatted;
+      });
+
+      console.log(`useContactsOperations: Formatted ${formattedContacts.length} contacts for organization ${currentOrganization.name}`);
       setContacts(formattedContacts);
     } catch (error) {
-      console.error('Error in fetchContacts:', error);
+      console.error('useContactsOperations: Error in fetchContacts:', error);
       toast({
         title: "Error",
-        description: "Failed to load contacts",
+        description: "Failed to load contacts. Please check your connection and try again.",
         variant: "destructive",
       });
+      setContacts([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -78,6 +84,8 @@ export const useContactsOperations = () => {
     }
 
     try {
+      console.log("useContactsOperations: Adding contact for organization:", currentOrganization.id);
+      
       const newContact = {
         full_name: contactData.fullName,
         company: contactData.company,
@@ -93,13 +101,20 @@ export const useContactsOperations = () => {
         organization_id: currentOrganization.id,
       };
 
+      console.log("useContactsOperations: Inserting contact data:", newContact);
+
       const { data, error } = await supabase
         .from('contacts')
         .insert([newContact])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("useContactsOperations: Error inserting contact:", error);
+        throw error;
+      }
+
+      console.log("useContactsOperations: Contact inserted successfully:", data);
 
       const formattedContact: Contact = {
         id: data.id,
@@ -128,10 +143,10 @@ export const useContactsOperations = () => {
 
       return formattedContact;
     } catch (error) {
-      console.error('Error adding contact:', error);
+      console.error('useContactsOperations: Error adding contact:', error);
       toast({
         title: "Error",
-        description: "Failed to add contact",
+        description: "Failed to add contact. Please try again.",
         variant: "destructive",
       });
       return null;

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Task } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,13 +14,13 @@ export const useTasksOperations = () => {
 
   const fetchTasks = useCallback(async () => {
     if (!currentOrganization) {
-      console.log("No current organization, skipping tasks fetch");
+      console.log("useTasksOperations: No current organization, skipping tasks fetch");
       return;
     }
 
     try {
       setLoading(true);
-      console.log("Fetching tasks for organization:", currentOrganization.id);
+      console.log("useTasksOperations: Fetching tasks for organization:", currentOrganization.id, currentOrganization.name);
       
       const { data, error } = await supabase
         .from('tasks')
@@ -30,9 +29,11 @@ export const useTasksOperations = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching tasks:', error);
+        console.error('useTasksOperations: Error fetching tasks:', error);
         throw error;
       }
+
+      console.log("useTasksOperations: Raw tasks data from Supabase:", data);
 
       const formattedTasks: Task[] = (data || []).map(task => ({
         id: task.id,
@@ -50,15 +51,16 @@ export const useTasksOperations = () => {
         updatedAt: new Date(task.updated_at),
       }));
 
-      console.log("Fetched tasks:", formattedTasks.length);
+      console.log(`useTasksOperations: Formatted ${formattedTasks.length} tasks for organization ${currentOrganization.name}`);
       setTasks(formattedTasks);
     } catch (error) {
-      console.error('Error in fetchTasks:', error);
+      console.error('useTasksOperations: Error in fetchTasks:', error);
       toast({
         title: "Error",
-        description: "Failed to load tasks",
+        description: "Failed to load tasks. Please check your connection and try again.",
         variant: "destructive",
       });
+      setTasks([]); // Set empty array on error
     } finally {
       setLoading(false);
     }

@@ -1,10 +1,10 @@
-
 import { useState, useCallback } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useProducts } from "@/context/products/ProductsContext";
 
 export const useOrdersOperations = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -12,93 +12,104 @@ export const useOrdersOperations = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentOrganization } = useOrganizations();
+  const { getProductById } = useProducts();
 
   const fetchOrders = useCallback(async () => {
     if (!currentOrganization) {
-      console.log("No current organization, skipping orders fetch");
+      console.log("useOrdersOperations: No current organization, skipping orders fetch");
       return;
     }
 
     try {
       setLoading(true);
-      console.log("Fetching orders for organization:", currentOrganization.id);
+      console.log("useOrdersOperations: Fetching orders for organization:", currentOrganization.id, currentOrganization.name);
       
-      // First fetch orders
+      // First get all orders for the organization
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
         .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
-
+      
       if (ordersError) {
-        console.error('Error fetching orders:', ordersError);
+        console.error('useOrdersOperations: Error fetching orders:', ordersError);
         throw ordersError;
       }
 
-      // Then fetch order items for all orders
-      const orderIds = ordersData?.map(order => order.id) || [];
-      let orderItemsData: any[] = [];
+      console.log("useOrdersOperations: Raw orders data from Supabase:", ordersData);
       
-      if (orderIds.length > 0) {
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('order_items')
-          .select('*')
-          .in('order_id', orderIds);
-
-        if (itemsError) {
-          console.error('Error fetching order items:', itemsError);
-        } else {
-          orderItemsData = itemsData || [];
-        }
+      // Then get all order items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('order_items')
+        .select('*');
+      
+      if (itemsError) {
+        console.error('useOrdersOperations: Error fetching order items:', itemsError);
+        throw itemsError;
       }
-
-      // Combine orders with their items
-      const formattedOrders: Order[] = (ordersData || []).map(order => {
-        const orderItems = orderItemsData.filter(item => item.order_id === order.id);
-        const formattedItems: OrderItem[] = orderItems.map(item => ({
-          id: item.id,
-          productId: item.product_id,
-          code: item.code,
-          description: item.description,
-          price: item.price,
-          quantity: item.quantity,
-          vat: item.vat || 0,
-          subtotal: item.subtotal,
-          product: undefined // Will be populated if needed
-        }));
-
+      
+      // Map items to their respective orders
+      const formattedOrders = ordersData.map(order => {
+        // Find all items for this order
+        const orderItems = itemsData
+          .filter(item => item.order_id === order.id)
+          .map(item => {
+            // Get the corresponding product
+            const product = getProductById(item.product_id) || {
+              id: item.product_id,
+              code: item.code,
+              description: item.description,
+              price: item.price,
+              cost: item.price * 0.7, // Estimate cost if not available
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            
+            return {
+              id: item.id,
+              productId: item.product_id,
+              code: item.code,
+              description: item.description,
+              price: item.price,
+              quantity: item.quantity,
+              vat: item.vat,
+              subtotal: item.subtotal,
+              product
+            } as OrderItem;
+          });
+        
         return {
           id: order.id,
-          organizationId: order.organization_id,
           contactId: order.contact_id,
-          date: order.date,
+          agentId: order.agent_id,
+          agentName: order.agent_name,
+          date: order.date, // Already a string from the database
           status: order.status as "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled",
-          notes: order.notes || '',
-          items: formattedItems,
+          items: orderItems,
           total: order.total,
-          vatTotal: order.vat_total || 0,
-          termsAndConditions: order.terms_and_conditions || '',
-          reference: order.reference || '',
-          agentId: order.agent_id || '',
-          agentName: order.agent_name || '',
+          vatTotal: order.vat_total,
+          notes: order.notes,
+          termsAndConditions: order.terms_and_conditions,
+          reference: order.reference,
           createdAt: new Date(order.created_at),
           updatedAt: new Date(order.updated_at),
         };
       });
-
-      console.log("Fetched orders:", formattedOrders.length);
+      
+      console.log(`useOrdersOperations: Formatted ${formattedOrders.length} orders for organization ${currentOrganization.name}`);
       setOrders(formattedOrders);
-    } catch (error) {
-      console.error('Error in fetchOrders:', error);
+    } catch (err) {
+      console.error('useOrdersOperations: Unexpected error fetching orders:', err);
       toast({
         title: "Error",
-        description: "Failed to load orders",
+        description: "Failed to load orders. Please check your connection and try again.",
         variant: "destructive",
       });
+      setOrders([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization, toast]);
+  }, [currentOrganization, getProductById, toast]);
 
   const addOrder = async (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">): Promise<Order | null> => {
     if (!currentOrganization) {
@@ -372,10 +383,8 @@ export const useOrdersOperations = () => {
 
   return {
     orders,
+    setOrders,
     loading,
-    addOrder,
-    updateOrder,
-    deleteOrder,
     refreshOrders,
     fetchOrders,
     createOrderItem,
