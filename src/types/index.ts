@@ -1,3 +1,4 @@
+
 // Core entity types matching the database schema
 
 export interface Organization {
@@ -61,7 +62,7 @@ export interface Meeting {
   location?: string;
   notes: string;
   followUpScheduled: boolean;
-  followUpDate?: string; // Changed from Date to string to match database
+  followUpDate?: string; // Changed to string to match database
   followUpTime?: string;
   followUpNotes?: string;
   nextSteps?: string[];
