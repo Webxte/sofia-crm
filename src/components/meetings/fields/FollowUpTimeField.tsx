@@ -56,6 +56,7 @@ export const FollowUpTimeField = ({ form }: any) => {
                   onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
                   disabled={(date) => date < new Date()}
                   initialFocus
+                  className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>

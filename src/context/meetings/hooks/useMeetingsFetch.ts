@@ -49,7 +49,7 @@ export const useMeetingsFetch = () => {
         location: meeting.location || '',
         notes: meeting.notes,
         followUpScheduled: meeting.follow_up_scheduled,
-        followUpDate: meeting.follow_up_date || undefined, // Keep as ISO string or undefined
+        followUpDate: meeting.follow_up_date || undefined, // Keep as string or undefined
         followUpTime: meeting.follow_up_time || '',
         followUpNotes: meeting.follow_up_notes || '',
         nextSteps: meeting.next_steps || [],

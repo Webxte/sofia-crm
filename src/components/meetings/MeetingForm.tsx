@@ -38,7 +38,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     location: meeting?.location || "",
     notes: meeting?.notes || "",
     followUpScheduled: meeting?.followUpScheduled || false,
-    followUpDate: meeting?.followUpDate ? new Date(meeting.followUpDate) : new Date(),
+    followUpDate: meeting?.followUpDate || "", // Keep as string
     followUpTime: meeting?.followUpTime || format(new Date(), "HH:mm"),
     nextSteps: meeting?.nextSteps || [],
   };
@@ -61,7 +61,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
         notes: data.notes,
         location: data.location || "",
         followUpScheduled: data.followUpScheduled,
-        followUpDate: data.followUpScheduled && data.followUpDate ? data.followUpDate.toISOString().split('T')[0] : undefined, // Convert to ISO date string
+        followUpDate: data.followUpScheduled && data.followUpDate ? data.followUpDate : undefined, // Keep as string
         followUpTime: data.followUpScheduled ? data.followUpTime || "" : "",
         followUpNotes: data.followUpScheduled ? data.followUpNotes || "" : "",
         nextSteps: data.nextSteps || [],
