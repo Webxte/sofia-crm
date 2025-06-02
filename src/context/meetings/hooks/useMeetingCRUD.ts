@@ -43,7 +43,7 @@ export const useMeetingCRUD = () => {
 
       const { data, error } = await supabase
         .from('meetings')
-        .insert([newMeeting])
+        .insert(newMeeting)
         .select()
         .single();
 
