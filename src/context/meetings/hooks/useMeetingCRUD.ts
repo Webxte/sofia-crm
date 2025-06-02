@@ -1,3 +1,4 @@
+
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +27,7 @@ export const useMeetingCRUD = () => {
       const newMeeting = {
         contact_id: meetingData.contactId,
         contact_name: meetingData.contactName,
-        date: meetingData.date, // Already a string from form conversion
+        date: meetingData.date,
         time: meetingData.time,
         type: meetingData.type,
         location: meetingData.location,
@@ -35,7 +36,7 @@ export const useMeetingCRUD = () => {
         agent_name: meetingData.agentName || user?.user_metadata?.name || 'Unknown',
         next_steps: meetingData.nextSteps,
         follow_up_scheduled: meetingData.followUpScheduled,
-        follow_up_date: meetingData.followUpDate || null, // Keep as string or null
+        follow_up_date: meetingData.followUpDate || null,
         follow_up_time: meetingData.followUpTime,
         follow_up_notes: meetingData.followUpNotes,
         organization_id: currentOrganization.id,
@@ -54,7 +55,7 @@ export const useMeetingCRUD = () => {
         organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || '',
-        date: data.date, // Keep as string
+        date: data.date,
         time: data.time,
         type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         location: data.location || '',
@@ -63,7 +64,7 @@ export const useMeetingCRUD = () => {
         agentName: data.agent_name || '',
         nextSteps: data.next_steps || [],
         followUpScheduled: data.follow_up_scheduled,
-        followUpDate: data.follow_up_date || undefined, // Keep as string or undefined
+        followUpDate: data.follow_up_date || undefined,
         followUpTime: data.follow_up_time || undefined,
         followUpNotes: data.follow_up_notes || undefined,
         createdAt: new Date(data.created_at),
@@ -98,7 +99,7 @@ export const useMeetingCRUD = () => {
       const updateData = {
         contact_id: meetingData.contactId,
         contact_name: meetingData.contactName,
-        date: meetingData.date, // Already a string
+        date: meetingData.date,
         time: meetingData.time,
         type: meetingData.type,
         location: meetingData.location,
@@ -107,7 +108,7 @@ export const useMeetingCRUD = () => {
         agent_name: meetingData.agentName,
         next_steps: meetingData.nextSteps,
         follow_up_scheduled: meetingData.followUpScheduled,
-        follow_up_date: meetingData.followUpDate || null, // Keep as string or null
+        follow_up_date: meetingData.followUpDate || null,
         follow_up_time: meetingData.followUpTime,
         follow_up_notes: meetingData.followUpNotes,
       };
@@ -126,7 +127,7 @@ export const useMeetingCRUD = () => {
         organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || '',
-        date: data.date, // Keep as string
+        date: data.date,
         time: data.time,
         type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         location: data.location || '',
@@ -135,7 +136,7 @@ export const useMeetingCRUD = () => {
         agentName: data.agent_name || '',
         nextSteps: data.next_steps || [],
         followUpScheduled: data.follow_up_scheduled,
-        followUpDate: data.follow_up_date || undefined, // Keep as string or undefined
+        followUpDate: data.follow_up_date || undefined,
         followUpTime: data.follow_up_time || undefined,
         followUpNotes: data.follow_up_notes || undefined,
         createdAt: new Date(data.created_at),

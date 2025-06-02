@@ -38,7 +38,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     location: meeting?.location || "",
     notes: meeting?.notes || "",
     followUpScheduled: meeting?.followUpScheduled || false,
-    followUpDate: meeting?.followUpDate || "", // Keep as string
+    followUpDate: meeting?.followUpDate || "",
     followUpTime: meeting?.followUpTime || format(new Date(), "HH:mm"),
     nextSteps: meeting?.nextSteps || [],
   };
@@ -56,16 +56,16 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
       const meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt"> = {
         contactId: data.contactId,
         type: data.type,
-        date: format(data.date, 'yyyy-MM-dd'), // Convert Date to ISO date string
+        date: format(data.date, 'yyyy-MM-dd'),
         time: data.time,
         notes: data.notes,
         location: data.location || "",
         followUpScheduled: data.followUpScheduled,
-        followUpDate: data.followUpScheduled && data.followUpDate ? data.followUpDate : undefined, // Keep as string
+        followUpDate: data.followUpScheduled && data.followUpDate ? data.followUpDate : undefined,
         followUpTime: data.followUpScheduled ? data.followUpTime || "" : "",
         followUpNotes: data.followUpScheduled ? data.followUpNotes || "" : "",
         nextSteps: data.nextSteps || [],
-        organizationId: "", // This will be set by the backend
+        organizationId: "",
         contactName: "",
         agentId: "",
         agentName: ""
