@@ -1,4 +1,3 @@
-
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +26,7 @@ export const useMeetingCRUD = () => {
       const newMeeting = {
         contact_id: meetingData.contactId,
         contact_name: meetingData.contactName,
-        date: meetingData.date,
+        date: meetingData.date, // Already a string from form conversion
         time: meetingData.time,
         type: meetingData.type,
         location: meetingData.location,
@@ -55,7 +54,7 @@ export const useMeetingCRUD = () => {
         organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || '',
-        date: data.date,
+        date: data.date, // Keep as string
         time: data.time,
         type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         location: data.location || '',
@@ -99,7 +98,7 @@ export const useMeetingCRUD = () => {
       const updateData = {
         contact_id: meetingData.contactId,
         contact_name: meetingData.contactName,
-        date: meetingData.date,
+        date: meetingData.date, // Already a string
         time: meetingData.time,
         type: meetingData.type,
         location: meetingData.location,
@@ -127,7 +126,7 @@ export const useMeetingCRUD = () => {
         organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || '',
-        date: data.date,
+        date: data.date, // Keep as string
         time: data.time,
         type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         location: data.location || '',

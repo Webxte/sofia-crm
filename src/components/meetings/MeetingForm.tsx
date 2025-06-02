@@ -56,7 +56,7 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
       const meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt"> = {
         contactId: data.contactId,
         type: data.type,
-        date: data.date.toISOString().split('T')[0], // Convert to ISO date string
+        date: data.date.toISOString().split('T')[0], // Convert Date to ISO date string
         time: data.time,
         notes: data.notes,
         location: data.location || "",

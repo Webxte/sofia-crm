@@ -19,7 +19,7 @@ export const meetingSchema = z.object({
     required_error: "Meeting notes are required",
   }).min(1, "Meeting notes are required"),
   followUpScheduled: z.boolean().default(false),
-  followUpDate: z.string().optional(), // Changed from z.date().nullable().optional() to z.string().optional()
+  followUpDate: z.string().optional(), // Keep as string to match database
   followUpTime: z.string().optional(),
   followUpNotes: z.string().optional(),
   nextSteps: z.array(z.string()).optional(),

@@ -61,7 +61,7 @@ export interface Meeting {
   location?: string;
   notes: string;
   followUpScheduled: boolean;
-  followUpDate?: string; // ISO date string, not Date
+  followUpDate?: string; // Changed from Date to string to match database
   followUpTime?: string;
   followUpNotes?: string;
   nextSteps?: string[];
