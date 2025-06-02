@@ -114,10 +114,6 @@ export type Database = {
           contact_name: string | null
           created_at: string
           date: string
-          follow_up_date: string | null
-          follow_up_notes: string | null
-          follow_up_scheduled: boolean
-          follow_up_time: string | null
           id: string
           location: string | null
           next_steps: string[] | null
@@ -134,10 +130,6 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           date: string
-          follow_up_date?: string | null
-          follow_up_notes?: string | null
-          follow_up_scheduled?: boolean
-          follow_up_time?: string | null
           id?: string
           location?: string | null
           next_steps?: string[] | null
@@ -154,10 +146,6 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           date?: string
-          follow_up_date?: string | null
-          follow_up_notes?: string | null
-          follow_up_scheduled?: boolean
-          follow_up_time?: string | null
           id?: string
           location?: string | null
           next_steps?: string[] | null

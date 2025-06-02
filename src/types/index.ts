@@ -1,4 +1,3 @@
-
 // Core entity types matching the database schema
 
 export interface Organization {
@@ -61,10 +60,6 @@ export interface Meeting {
   time: string;
   location?: string;
   notes: string;
-  followUpScheduled: boolean;
-  followUpDate?: string; // Changed to string to match database
-  followUpTime?: string;
-  followUpNotes?: string;
   nextSteps?: string[];
   agentId?: string;
   agentName?: string;
@@ -266,10 +261,6 @@ export interface MeetingFormData {
   time: string;
   location?: string;
   notes: string;
-  followUpScheduled: boolean;
-  followUpDate?: string;
-  followUpTime?: string;
-  followUpNotes?: string;
   nextSteps?: string[];
 }
 
@@ -494,10 +485,6 @@ export interface DatabaseMeeting {
   time: string;
   location?: string;
   notes: string;
-  follow_up_scheduled: boolean;
-  follow_up_date?: string;
-  follow_up_time?: string;
-  follow_up_notes?: string;
   next_steps?: string[];
   agent_id?: string;
   agent_name?: string;

@@ -16,7 +16,6 @@ import { MeetingTypeField } from "./fields/MeetingTypeField";
 import { DateTimeFields } from "./fields/DateTimeFields";
 import { LocationField } from "./fields/LocationField";
 import { NotesField } from "./fields/NotesField";
-import { FollowUpFields } from "./fields/FollowUpFields";
 
 interface MeetingFormProps {
   meeting?: Meeting;
@@ -37,9 +36,6 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
     time: meeting?.time || format(new Date(), "HH:mm"),
     location: meeting?.location || "",
     notes: meeting?.notes || "",
-    followUpScheduled: meeting?.followUpScheduled || false,
-    followUpDate: meeting?.followUpDate || "",
-    followUpTime: meeting?.followUpTime || format(new Date(), "HH:mm"),
     nextSteps: meeting?.nextSteps || [],
   };
 
@@ -60,10 +56,6 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
         time: data.time,
         notes: data.notes,
         location: data.location || "",
-        followUpScheduled: data.followUpScheduled,
-        followUpDate: data.followUpScheduled && data.followUpDate ? data.followUpDate : undefined,
-        followUpTime: data.followUpScheduled ? data.followUpTime || "" : "",
-        followUpNotes: data.followUpScheduled ? data.followUpNotes || "" : "",
         nextSteps: data.nextSteps || [],
         organizationId: "",
         contactName: "",
@@ -123,7 +115,6 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
 
           <LocationField form={form} />
           <NotesField form={form} />
-          <FollowUpFields form={form} />
 
           <div className="flex justify-end gap-4">
             <Button 

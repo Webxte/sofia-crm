@@ -30,9 +30,6 @@ export const MeetingsList = ({ meetings, onViewMeeting, onCreateOrder, onDeleteM
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
 
-  // We'll use the meetings as they're passed in, already sorted by the parent component
-  // (No additional sorting needed here)
-
   return (
     <div className="space-y-4">
       {meetings.map((meeting) => (

@@ -73,7 +73,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting }) => {
           )}
         </div>
         <div className="flex gap-2 items-center">
-          <Badge>{meeting.followUpScheduled ? "Follow-up Scheduled" : "Completed"}</Badge>
+          <Badge>Completed</Badge>
           <Button 
             variant="ghost" 
             size="sm" 
