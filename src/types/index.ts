@@ -56,7 +56,7 @@ export interface Meeting {
   contactId: string;
   contactName?: string;
   type: "meeting" | "phone" | "email" | "online" | "other";
-  date: string; // ISO date string
+  date: string; // Always ISO date string to match database
   time: string;
   location?: string;
   notes: string;
