@@ -53,7 +53,7 @@ export const FollowUpTimeField = ({ form }: any) => {
                 <Calendar
                   mode="single"
                   selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                  onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
                   disabled={(date) => date < new Date()}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
