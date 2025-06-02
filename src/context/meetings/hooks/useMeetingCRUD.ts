@@ -1,194 +1,158 @@
 
+import { useState } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const useMeetingCRUD = () => {
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { currentOrganization } = useOrganizations();
+  const { toast } = useToast();
 
-  const addMeeting = async (
-    meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">,
-    setMeetings: React.Dispatch<React.SetStateAction<Meeting[]>>
-  ): Promise<Meeting | null> => {
-    if (!currentOrganization) {
-      toast({
-        title: "Error",
-        description: "No organization selected",
-        variant: "destructive",
-      });
-      return null;
+  const createMeeting = async (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">) => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
     }
 
+    setLoading(true);
     try {
       const newMeeting = {
+        organization_id: currentOrganization.id,
         contact_id: meetingData.contactId,
         contact_name: meetingData.contactName,
+        type: meetingData.type,
         date: meetingData.date,
         time: meetingData.time,
-        type: meetingData.type,
         location: meetingData.location,
         notes: meetingData.notes,
-        agent_id: meetingData.agentId || user?.id,
-        agent_name: meetingData.agentName || user?.user_metadata?.name || 'Unknown',
         next_steps: meetingData.nextSteps,
-        organization_id: currentOrganization.id,
+        agent_id: user.id,
+        agent_name: user.name || user.email || "",
       };
 
       const { data, error } = await supabase
-        .from('meetings')
-        .insert(newMeeting)
+        .from("meetings")
+        .insert([newMeeting])
         .select()
         .single();
 
       if (error) throw error;
 
-      const formattedMeeting: Meeting = {
+      return {
         id: data.id,
         organizationId: data.organization_id,
         contactId: data.contact_id,
-        contactName: data.contact_name || '',
+        contactName: data.contact_name || "",
+        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         date: data.date,
         time: data.time,
-        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
-        location: data.location || '',
+        location: data.location || "",
         notes: data.notes,
-        agentId: data.agent_id || '',
-        agentName: data.agent_name || '',
         nextSteps: data.next_steps || [],
+        agentId: data.agent_id || "",
+        agentName: data.agent_name || "",
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
-      };
-
-      setMeetings(prev => [formattedMeeting, ...prev]);
-      
-      toast({
-        title: "Success",
-        description: "Meeting added successfully",
-      });
-
-      return formattedMeeting;
+      } as Meeting;
     } catch (error) {
-      console.error('Error adding meeting:', error);
+      console.error("Error creating meeting:", error);
       toast({
         title: "Error",
-        description: "Failed to add meeting",
+        description: "Failed to create meeting",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateMeeting = async (
-    id: string, 
-    meetingData: Partial<Meeting>,
-    setMeetings: React.Dispatch<React.SetStateAction<Meeting[]>>
-  ): Promise<Meeting | null> => {
+  const updateMeeting = async (id: string, meetingData: Partial<Meeting>) => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
+    setLoading(true);
     try {
       const updateData = {
         contact_id: meetingData.contactId,
         contact_name: meetingData.contactName,
+        type: meetingData.type,
         date: meetingData.date,
         time: meetingData.time,
-        type: meetingData.type,
         location: meetingData.location,
         notes: meetingData.notes,
-        agent_id: meetingData.agentId,
-        agent_name: meetingData.agentName,
         next_steps: meetingData.nextSteps,
+        updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
-        .from('meetings')
+        .from("meetings")
         .update(updateData)
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single();
 
       if (error) throw error;
 
-      const formattedMeeting: Meeting = {
+      return {
         id: data.id,
         organizationId: data.organization_id,
         contactId: data.contact_id,
-        contactName: data.contact_name || '',
+        contactName: data.contact_name || "",
+        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
         date: data.date,
         time: data.time,
-        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
-        location: data.location || '',
+        location: data.location || "",
         notes: data.notes,
-        agentId: data.agent_id || '',
-        agentName: data.agent_name || '',
         nextSteps: data.next_steps || [],
+        agentId: data.agent_id || "",
+        agentName: data.agent_name || "",
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
-      };
-
-      setMeetings(prev => prev.map(meeting => 
-        meeting.id === id ? formattedMeeting : meeting
-      ));
-
-      toast({
-        title: "Success",
-        description: "Meeting updated successfully",
-      });
-
-      return formattedMeeting;
+      } as Meeting;
     } catch (error) {
-      console.error('Error updating meeting:', error);
+      console.error("Error updating meeting:", error);
       toast({
         title: "Error",
         description: "Failed to update meeting",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deleteMeeting = async (
-    id: string,
-    setMeetings: React.Dispatch<React.SetStateAction<Meeting[]>>
-  ): Promise<boolean> => {
+  const deleteMeeting = async (id: string) => {
+    setLoading(true);
     try {
       const { error } = await supabase
-        .from('meetings')
+        .from("meetings")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
-
-      setMeetings(prev => prev.filter(meeting => meeting.id !== id));
-      
-      toast({
-        title: "Success",
-        description: "Meeting deleted successfully",
-      });
-
-      return true;
     } catch (error) {
-      console.error('Error deleting meeting:', error);
+      console.error("Error deleting meeting:", error);
       toast({
         title: "Error",
         description: "Failed to delete meeting",
         variant: "destructive",
       });
-      return false;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const sendMeetingEmail = async (meetingId: string, emailData: any): Promise<boolean> => {
-    // Implementation for sending meeting emails would go here
-    console.log("Meeting email not yet implemented");
-    return false;
-  };
-
   return {
-    addMeeting,
+    createMeeting,
     updateMeeting,
     deleteMeeting,
-    sendMeetingEmail,
+    loading
   };
 };

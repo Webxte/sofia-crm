@@ -1,32 +1,26 @@
 
+import { useState } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const useContactCRUD = () => {
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { currentOrganization } = useOrganizations();
+  const { toast } = useToast();
 
-  const addContact = async (
-    contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">,
-    setContacts: React.Dispatch<React.SetStateAction<Contact[]>>
-  ): Promise<Contact | null> => {
-    if (!currentOrganization) {
-      toast({
-        title: "Error",
-        description: "No organization selected",
-        variant: "destructive",
-      });
-      return null;
+  const createContact = async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
     }
 
+    setLoading(true);
     try {
-      console.log("useContactCRUD: Adding contact for organization:", currentOrganization.id);
-      
       const newContact = {
+        organization_id: currentOrganization.id,
         full_name: contactData.fullName,
         company: contactData.company,
         email: contactData.email,
@@ -36,68 +30,54 @@ export const useContactCRUD = () => {
         address: contactData.address,
         source: contactData.source,
         notes: contactData.notes,
-        agent_id: contactData.agentId || user?.id,
-        agent_name: contactData.agentName || user?.user_metadata?.name || 'Unknown',
-        organization_id: currentOrganization.id,
+        agent_id: user.id,
+        agent_name: user.name || user.email || "",
       };
 
-      console.log("useContactCRUD: Inserting contact data:", newContact);
-
       const { data, error } = await supabase
-        .from('contacts')
+        .from("contacts")
         .insert([newContact])
         .select()
         .single();
 
-      if (error) {
-        console.error("useContactCRUD: Error inserting contact:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("useContactCRUD: Contact inserted successfully:", data);
-
-      const formattedContact: Contact = {
+      return {
         id: data.id,
         organizationId: data.organization_id,
-        fullName: data.full_name || '',
-        company: data.company || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        mobile: data.mobile || '',
-        position: data.position || '',
-        address: data.address || '',
-        source: data.source || '',
-        notes: data.notes || '',
-        agentId: data.agent_id || '',
-        agentName: data.agent_name || '',
+        fullName: data.full_name || "",
+        company: data.company || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        mobile: data.mobile || "",
+        position: data.position || "",
+        address: data.address || "",
+        source: data.source || "",
+        notes: data.notes || "",
+        agentId: data.agent_id || "",
+        agentName: data.agent_name || "",
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
-      };
-
-      setContacts(prev => [formattedContact, ...prev]);
-      
-      toast({
-        title: "Success",
-        description: "Contact added successfully",
-      });
-
-      return formattedContact;
+      } as Contact;
     } catch (error) {
-      console.error('useContactCRUD: Error adding contact:', error);
+      console.error("Error creating contact:", error);
       toast({
         title: "Error",
-        description: "Failed to add contact. Please try again.",
+        description: "Failed to create contact",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateContact = async (
-    id: string, 
-    contactData: Partial<Contact>,
-    setContacts: React.Dispatch<React.SetStateAction<Contact[]>>
-  ): Promise<Contact | null> => {
+  const updateContact = async (id: string, contactData: Partial<Contact>) => {
+    if (!user || !currentOrganization) {
+      throw new Error("User or organization not found");
+    }
+
+    setLoading(true);
     try {
       const updateData = {
         full_name: contactData.fullName,
@@ -109,92 +89,74 @@ export const useContactCRUD = () => {
         address: contactData.address,
         source: contactData.source,
         notes: contactData.notes,
-        agent_id: contactData.agentId,
-        agent_name: contactData.agentName,
+        updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
-        .from('contacts')
+        .from("contacts")
         .update(updateData)
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single();
 
       if (error) throw error;
 
-      const formattedContact: Contact = {
+      return {
         id: data.id,
         organizationId: data.organization_id,
-        fullName: data.full_name || '',
-        company: data.company || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        mobile: data.mobile || '',
-        position: data.position || '',
-        address: data.address || '',
-        source: data.source || '',
-        notes: data.notes || '',
-        agentId: data.agent_id || '',
-        agentName: data.agent_name || '',
+        fullName: data.full_name || "",
+        company: data.company || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        mobile: data.mobile || "",
+        position: data.position || "",
+        address: data.address || "",
+        source: data.source || "",
+        notes: data.notes || "",
+        agentId: data.agent_id || "",
+        agentName: data.agent_name || "",
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
-      };
-
-      setContacts(prev => prev.map(contact => 
-        contact.id === id ? formattedContact : contact
-      ));
-
-      toast({
-        title: "Success",
-        description: "Contact updated successfully",
-      });
-
-      return formattedContact;
+      } as Contact;
     } catch (error) {
-      console.error('Error updating contact:', error);
+      console.error("Error updating contact:", error);
       toast({
         title: "Error",
         description: "Failed to update contact",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deleteContact = async (
-    id: string,
-    setContacts: React.Dispatch<React.SetStateAction<Contact[]>>
-  ): Promise<boolean> => {
+  const deleteContact = async (id: string) => {
+    setLoading(true);
     try {
       const { error } = await supabase
-        .from('contacts')
+        .from("contacts")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
-
-      setContacts(prev => prev.filter(contact => contact.id !== id));
-      
-      toast({
-        title: "Success",
-        description: "Contact deleted successfully",
-      });
-
-      return true;
     } catch (error) {
-      console.error('Error deleting contact:', error);
+      console.error("Error deleting contact:", error);
       toast({
         title: "Error",
         description: "Failed to delete contact",
         variant: "destructive",
       });
-      return false;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
-    addContact,
+    createContact,
     updateContact,
     deleteContact,
+    loading
   };
 };
