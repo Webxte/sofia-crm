@@ -41,7 +41,7 @@ export const FollowUpTimeField = ({ form }: any) => {
                     disabled={!form.watch("followUpScheduled")}
                   >
                     {field.value ? (
-                      format(field.value, "PPP")
+                      format(new Date(field.value), "PPP")
                     ) : (
                       <span>Pick a date</span>
                     )}
@@ -52,8 +52,8 @@ export const FollowUpTimeField = ({ form }: any) => {
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={field.value as Date}
-                  onSelect={field.onChange}
+                  selected={field.value ? new Date(field.value) : undefined}
+                  onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
                   disabled={(date) => date < new Date()}
                   initialFocus
                 />

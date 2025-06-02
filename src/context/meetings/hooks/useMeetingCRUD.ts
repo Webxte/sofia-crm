@@ -1,4 +1,3 @@
-
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +35,7 @@ export const useMeetingCRUD = () => {
         agent_name: meetingData.agentName || user?.user_metadata?.name || 'Unknown',
         next_steps: meetingData.nextSteps,
         follow_up_scheduled: meetingData.followUpScheduled,
-        follow_up_date: meetingData.followUpDate ? meetingData.followUpDate.toISOString().split('T')[0] : null,
+        follow_up_date: meetingData.followUpDate || null, // Keep as string
         follow_up_time: meetingData.followUpTime,
         follow_up_notes: meetingData.followUpNotes,
         organization_id: currentOrganization.id,
@@ -64,7 +63,7 @@ export const useMeetingCRUD = () => {
         agentName: data.agent_name || '',
         nextSteps: data.next_steps || [],
         followUpScheduled: data.follow_up_scheduled,
-        followUpDate: data.follow_up_date ? new Date(data.follow_up_date) : undefined,
+        followUpDate: data.follow_up_date || undefined, // Keep as string
         followUpTime: data.follow_up_time || undefined,
         followUpNotes: data.follow_up_notes || undefined,
         createdAt: new Date(data.created_at),
@@ -108,7 +107,7 @@ export const useMeetingCRUD = () => {
         agent_name: meetingData.agentName,
         next_steps: meetingData.nextSteps,
         follow_up_scheduled: meetingData.followUpScheduled,
-        follow_up_date: meetingData.followUpDate ? meetingData.followUpDate.toISOString().split('T')[0] : null,
+        follow_up_date: meetingData.followUpDate || null, // Keep as string
         follow_up_time: meetingData.followUpTime,
         follow_up_notes: meetingData.followUpNotes,
       };
@@ -136,7 +135,7 @@ export const useMeetingCRUD = () => {
         agentName: data.agent_name || '',
         nextSteps: data.next_steps || [],
         followUpScheduled: data.follow_up_scheduled,
-        followUpDate: data.follow_up_date ? new Date(data.follow_up_date) : undefined,
+        followUpDate: data.follow_up_date || undefined, // Keep as string
         followUpTime: data.follow_up_time || undefined,
         followUpNotes: data.follow_up_notes || undefined,
         createdAt: new Date(data.created_at),

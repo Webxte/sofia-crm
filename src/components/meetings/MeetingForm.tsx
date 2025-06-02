@@ -56,15 +56,19 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
       const meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt"> = {
         contactId: data.contactId,
         type: data.type,
-        date: data.date.toISOString(),
+        date: data.date.toISOString().split('T')[0], // Convert to ISO date string
         time: data.time,
         notes: data.notes,
         location: data.location || "",
         followUpScheduled: data.followUpScheduled,
-        followUpDate: data.followUpScheduled ? data.followUpDate : null,
+        followUpDate: data.followUpScheduled && data.followUpDate ? data.followUpDate.toISOString().split('T')[0] : undefined, // Convert to ISO date string
         followUpTime: data.followUpScheduled ? data.followUpTime || "" : "",
         followUpNotes: data.followUpScheduled ? data.followUpNotes || "" : "",
         nextSteps: data.nextSteps || [],
+        organizationId: "", // This will be set by the backend
+        contactName: "",
+        agentId: "",
+        agentName: ""
       };
       
       if (isEditing && meeting) {
