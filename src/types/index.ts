@@ -7,7 +7,6 @@ export interface Organization {
   logoUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
-  password?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,7 +15,7 @@ export interface OrganizationMember {
   id: string;
   organizationId: string;
   userId: string;
-  role: "owner" | "admin" | "manager" | "member" | "guest";
+  role: "owner" | "admin" | "agent";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,7 +24,7 @@ export interface OrganizationInvite {
   id: string;
   organizationId: string;
   email: string;
-  role: "owner" | "admin" | "manager" | "member" | "guest";
+  role: "owner" | "admin" | "agent";
   token: string;
   expiresAt: Date;
   createdAt: Date;

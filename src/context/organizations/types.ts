@@ -3,7 +3,7 @@ import { Organization, OrganizationMember, OrganizationInvite } from "@/types";
 
 // Extended Organization type that includes role information
 export interface OrganizationWithRole extends Organization {
-  role?: OrganizationMember['role'];
+  role?: "owner" | "admin" | "agent";
 }
 
 export interface OrganizationsContextType {
@@ -18,13 +18,13 @@ export interface OrganizationsContextType {
   updateOrganization: (id: string, data: Partial<Organization>) => Promise<boolean>;
   deleteOrganization: (id: string) => Promise<boolean>;
   switchOrganization: (id: string) => Promise<boolean>;
-  inviteMember: (email: string, role: OrganizationMember['role']) => Promise<boolean>;
+  inviteMember: (email: string, role: "owner" | "admin" | "agent") => Promise<boolean>;
   removeMember: (userId: string) => Promise<boolean>;
-  updateMemberRole: (userId: string, role: OrganizationMember['role']) => Promise<boolean>;
-  getUserRole: () => OrganizationMember['role'] | null;
+  updateMemberRole: (userId: string, role: "owner" | "admin" | "agent") => Promise<boolean>;
+  getUserRole: () => "owner" | "admin" | "agent" | null;
   canUserPerformAction: (action: "delete" | "update" | "invite") => boolean;
   
-  // Missing properties and methods
+  // Additional properties and methods
   organization: OrganizationWithRole | null;
   getOrganizationBySlug: (slug: string) => Promise<Organization | null>;
   getOrganizationMembers: (slug: string) => Promise<void>;
