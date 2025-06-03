@@ -1,38 +1,64 @@
 
-import { useCallback, useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { OrganizationMember } from "@/types";
+
+export interface OrganizationMember {
+  id: string;
+  userId: string;
+  organizationId: string;
+  role: "owner" | "admin" | "member" | "manager" | "guest";
+  name?: string;
+  email?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export const useOrganizationMembers = () => {
-  const { toast } = useToast();
   const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const { toast } = useToast();
 
-  const ensureOrganizationMembership = useCallback(async (organizationId: string, userId: string): Promise<boolean> => {
+  const checkMembership = useCallback(async (organizationId: string, userId: string): Promise<boolean> => {
+    if (!organizationId || !userId) {
+      console.log("checkMembership: Missing organizationId or userId");
+      return false;
+    }
+
     try {
-      console.log("Checking membership for user:", userId, "in organization:", organizationId);
+      console.log("checkMembership: Checking membership", { organizationId, userId });
       
-      // Check if user is already a member
-      const { data: isMember, error: checkError } = await supabase.rpc(
-        'is_member_of_organization',
-        {
-          _user_id: userId,
-          _organization_id: organizationId
-        }
-      );
+      // Use the RPC function to check membership
+      const { data, error } = await supabase.rpc('is_user_organization_member', {
+        user_uuid: userId,
+        org_uuid: organizationId
+      });
 
-      if (checkError) {
-        console.error("Error checking membership:", checkError);
+      if (error) {
+        console.error("checkMembership: Error checking membership:", error);
         return false;
       }
 
+      console.log("checkMembership: Result:", data);
+      return data === true;
+    } catch (error) {
+      console.error("checkMembership: Exception:", error);
+      return false;
+    }
+  }, []);
+
+  const ensureOrganizationMembership = useCallback(async (organizationId: string, userId: string): Promise<boolean> => {
+    try {
+      console.log("ensureOrganizationMembership: Checking/creating membership", { organizationId, userId });
+      
+      // First check if already a member
+      const isMember = await checkMembership(organizationId, userId);
       if (isMember) {
-        console.log("User is already a member of organization:", organizationId);
+        console.log("ensureOrganizationMembership: User is already a member");
         return true;
       }
 
-      console.log("Adding user to organization:", organizationId);
-      const { error: addError } = await supabase
+      // If not a member, add them
+      const { error } = await supabase
         .from('organization_members')
         .insert({
           organization_id: organizationId,
@@ -40,132 +66,131 @@ export const useOrganizationMembers = () => {
           role: 'member'
         });
 
-      if (addError) {
-        console.error("Error adding user to organization:", addError);
+      if (error) {
+        console.error("ensureOrganizationMembership: Error creating membership:", error);
         return false;
       }
 
-      console.log("Successfully added user to organization:", organizationId);
+      console.log("ensureOrganizationMembership: Successfully created membership");
       return true;
     } catch (error) {
-      console.error("Error in ensureOrganizationMembership:", error);
+      console.error("ensureOrganizationMembership: Exception:", error);
       return false;
     }
-  }, []);
+  }, [checkMembership]);
 
-  const checkMembership = useCallback(async (organizationId: string, userId: string): Promise<boolean> => {
-    if (!userId) return false;
-
-    try {
-      const { data, error } = await supabase.rpc(
-        'is_member_of_organization',
-        {
-          _user_id: userId,
-          _organization_id: organizationId
-        }
-      );
-
-      if (error) {
-        console.error("Error checking membership:", error);
-        return false;
-      }
-
-      return !!data;
-    } catch (error) {
-      console.error("Error checking membership:", error);
-      return false;
-    }
-  }, []);
-
-  const fetchOrganizationMembers = useCallback(async (organizationId: string): Promise<void> => {
+  const fetchOrganizationMembers = useCallback(async (organizationId: string) => {
     try {
       const { data, error } = await supabase
         .from('organization_members')
         .select('*')
         .eq('organization_id', organizationId);
 
-      if (error) {
-        console.error("Error fetching organization members:", error);
-        return;
-      }
+      if (error) throw error;
 
-      const formattedMembers: OrganizationMember[] = data.map(member => ({
+      const formattedMembers: OrganizationMember[] = (data || []).map(member => ({
         id: member.id,
-        organizationId: member.organization_id,
         userId: member.user_id,
+        organizationId: member.organization_id,
         role: member.role as "owner" | "admin" | "member" | "manager" | "guest",
         createdAt: new Date(member.created_at),
-        updatedAt: new Date(member.updated_at)
+        updatedAt: new Date(member.updated_at),
       }));
 
       setMembers(formattedMembers);
     } catch (error) {
-      console.error("Error in fetchOrganizationMembers:", error);
+      console.error('Error fetching organization members:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load organization members",
+        variant: "destructive",
+      });
     }
-  }, []);
+  }, [toast]);
 
-  const getOrganizationMembers = useCallback(async (organizationId: string): Promise<void> => {
+  const getOrganizationMembers = useCallback(async (organizationId: string) => {
     await fetchOrganizationMembers(organizationId);
   }, [fetchOrganizationMembers]);
 
-  const inviteMember = useCallback(async (email: string, role: "owner" | "admin" | "member" | "manager" | "guest"): Promise<boolean> => {
+  const inviteMember = useCallback(async (organizationId: string, email: string, role: string): Promise<boolean> => {
     try {
-      // Implementation for inviting members
-      console.log("Inviting member:", email, "with role:", role);
-      // Add actual implementation here
+      const { error } = await supabase
+        .from('organization_invites')
+        .insert({
+          organization_id: organizationId,
+          email,
+          role,
+          token: crypto.randomUUID(),
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+        });
+
+      if (error) throw error;
       return true;
     } catch (error) {
-      console.error("Error inviting member:", error);
+      console.error('Error inviting member:', error);
       return false;
     }
   }, []);
 
-  const removeMember = useCallback(async (userId: string): Promise<boolean> => {
+  const removeMember = useCallback(async (memberId: string): Promise<boolean> => {
     try {
-      // Implementation for removing members
-      console.log("Removing member:", userId);
-      // Add actual implementation here
+      const { error } = await supabase
+        .from('organization_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
       return true;
     } catch (error) {
-      console.error("Error removing member:", error);
+      console.error('Error removing member:', error);
       return false;
     }
   }, []);
 
-  const updateMemberRole = useCallback(async (userId: string, role: "owner" | "admin" | "member" | "manager" | "guest"): Promise<boolean> => {
+  const updateMemberRole = useCallback(async (memberId: string, role: string): Promise<boolean> => {
     try {
-      // Implementation for updating member role
-      console.log("Updating member role:", userId, "to:", role);
-      // Add actual implementation here
+      const { error } = await supabase
+        .from('organization_members')
+        .update({ role })
+        .eq('id', memberId);
+
+      if (error) throw error;
       return true;
     } catch (error) {
-      console.error("Error updating member role:", error);
+      console.error('Error updating member role:', error);
       return false;
     }
   }, []);
 
-  const getUserRole = useCallback((): "owner" | "admin" | "member" | "manager" | "guest" | null => {
-    // Implementation for getting user role
-    return null;
-  }, []);
+  const getUserRole = useCallback((userId: string, organizationId: string): string | null => {
+    const member = members.find(m => m.userId === userId && m.organizationId === organizationId);
+    return member?.role || null;
+  }, [members]);
 
-  const canUserPerformAction = useCallback((action: "delete" | "update" | "invite"): boolean => {
-    // Implementation for checking user permissions
-    console.log("Checking permission for action:", action);
-    return true;
-  }, []);
+  const canUserPerformAction = useCallback((userId: string, organizationId: string, requiredRole?: string): boolean => {
+    const userRole = getUserRole(userId, organizationId);
+    if (!userRole) return false;
+    
+    if (!requiredRole) return true;
+    
+    const roleHierarchy = ['guest', 'member', 'manager', 'admin', 'owner'];
+    const userRoleIndex = roleHierarchy.indexOf(userRole);
+    const requiredRoleIndex = roleHierarchy.indexOf(requiredRole);
+    
+    return userRoleIndex >= requiredRoleIndex;
+  }, [getUserRole]);
 
   return {
-    ensureOrganizationMembership,
-    checkMembership,
     members,
     setMembers,
+    checkMembership,
+    ensureOrganizationMembership,
     fetchOrganizationMembers,
     getOrganizationMembers,
     inviteMember,
     removeMember,
     updateMemberRole,
     getUserRole,
-    canUserPerformAction
+    canUserPerformAction,
   };
 };

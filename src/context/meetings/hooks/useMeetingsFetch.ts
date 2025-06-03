@@ -29,10 +29,10 @@ export const useMeetingsFetch = () => {
       setLoading(true);
       console.log("useMeetingsFetch: Fetching meetings for organization:", currentOrganization.id);
       
+      // With RLS policies in place, we can query directly without explicit organization_id filter
       const { data, error } = await supabase
         .from('meetings')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
         .order('date', { ascending: false });
 
       if (error) {

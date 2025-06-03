@@ -46,7 +46,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     try {
       // If not authenticated, redirect to login
       if (!isAuthenticated) {
-        console.log("Not authenticated, redirecting to login");
+        console.log("ProtectedRoute: Not authenticated, redirecting to login");
         navigate("/login", { 
           replace: true,
           state: { from: location }
@@ -56,7 +56,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
 
       // If authenticated but no organization, redirect to organization login
       if (!currentOrganization) {
-        console.log("No organization selected, redirecting to org login");
+        console.log("ProtectedRoute: No organization selected, redirecting to org login");
         navigate("/organizations/login?slug=belmorso", { 
           replace: true,
           state: { from: location }
@@ -64,7 +64,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
         return;
       }
     } catch (error) {
-      console.error("Error in protection checks:", error);
+      console.error("ProtectedRoute: Error in protection checks:", error);
       toast({
         title: "Navigation error",
         description: "An error occurred while checking your access. Please refresh the page.",
@@ -120,7 +120,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
         description: "You don't have permission to access this page.",
         variant: "destructive"
       });
-      return <Navigate to="/" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
   }
 

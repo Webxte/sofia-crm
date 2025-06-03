@@ -34,12 +34,11 @@ export const useContactsFetch = () => {
         userId: user.id
       });
       
-      // With RLS policies in place, we can query directly without organization_id filter
+      // With RLS policies in place, we can query directly without explicit organization_id filter
       // The RLS policy will automatically filter by organization membership
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
 
       if (error) {

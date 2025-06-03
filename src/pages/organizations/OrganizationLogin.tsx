@@ -200,6 +200,7 @@ const OrganizationLogin = () => {
         title="Organization Not Found"
         error={`The organization "${slug}" could not be found.`}
         showHomeButton={true}
+        hideDefaultButtons={true}
       >
         <div />
       </OrganizationContainer>
@@ -211,6 +212,7 @@ const OrganizationLogin = () => {
       <OrganizationContainer 
         title="Authentication Required"
         description="You need to be logged in to access this organization."
+        hideDefaultButtons={false}
       >
         <div />
       </OrganizationContainer>
@@ -221,6 +223,7 @@ const OrganizationLogin = () => {
     <OrganizationContainer 
       organization={organization}
       description="Enter the organization password to continue"
+      hideDefaultButtons={true}
     >
       <LoginForm 
         onSubmit={handlePasswordSubmit}

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {
   onSubmit: (password: string) => Promise<void>;
@@ -12,55 +12,51 @@ interface LoginFormProps {
 
 export const LoginForm = ({ onSubmit, loading = false }: LoginFormProps) => {
   const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password.trim() || isSubmitting || loading) return;
-
-    setIsSubmitting(true);
-    try {
-      await onSubmit(password);
-    } catch (error) {
-      console.error("Login form error:", error);
-    } finally {
-      setIsSubmitting(false);
+    if (password.trim()) {
+      await onSubmit(password.trim());
     }
   };
 
-  const isLoading = loading || isSubmitting;
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
         <Label htmlFor="password">Organization Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter password"
-          disabled={isLoading}
-          required
-        />
+        <div className="mt-1 relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter organization password"
+            required
+            disabled={loading}
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            disabled={loading}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4 text-gray-400" />
+            ) : (
+              <Eye className="h-4 w-4 text-gray-400" />
+            )}
+          </button>
+        </div>
       </div>
-      
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={!password.trim() || isLoading}
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={loading || !password.trim()}
       >
-        {isLoading ? (
-          <>
-            <Lock className="mr-2 h-4 w-4 animate-spin" />
-            Verifying...
-          </>
-        ) : (
-          <>
-            <Lock className="mr-2 h-4 w-4" />
-            Access Organization
-          </>
-        )}
+        {loading ? "Verifying..." : "Access Organization"}
       </Button>
     </form>
   );

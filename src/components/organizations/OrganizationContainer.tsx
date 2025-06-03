@@ -12,6 +12,7 @@ interface OrganizationContainerProps {
   error?: string;
   organization?: Organization;
   showHomeButton?: boolean;
+  hideDefaultButtons?: boolean;
 }
 
 export const OrganizationContainer = ({ 
@@ -20,7 +21,8 @@ export const OrganizationContainer = ({
   description, 
   error, 
   organization,
-  showHomeButton = false 
+  showHomeButton = false,
+  hideDefaultButtons = false
 }: OrganizationContainerProps) => {
   const navigate = useNavigate();
 
@@ -62,8 +64,8 @@ export const OrganizationContainer = ({
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {children}
           
-          {/* Show navigation buttons for Authentication Required case only */}
-          {title === "Authentication Required" && (
+          {/* Only show default buttons if not hidden and is auth required */}
+          {!hideDefaultButtons && title === "Authentication Required" && (
             <div className="mt-6 space-y-3">
               <Button 
                 onClick={handleLoginClick}
