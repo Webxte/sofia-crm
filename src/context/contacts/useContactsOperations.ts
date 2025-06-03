@@ -9,14 +9,25 @@ export const useContactsOperations = () => {
   const { sendContactEmail, bulkUpdateContacts: bulkUpdateContactsBase, importContactsFromCsv: importContactsFromCsvBase } = useContactUtils();
 
   // Wrap CRUD operations to pass setContacts
-  const addContact = (contactData: Parameters<typeof addContactBase>[0]) => 
-    addContactBase(contactData, setContacts);
+  const addContact = async (contactData: Parameters<typeof addContactBase>[0]) => {
+    const result = await addContactBase(contactData);
+    await fetchContacts(); // Refresh contacts after adding
+    return result;
+  };
 
-  const updateContact = (id: string, contactData: Parameters<typeof updateContactBase>[1]) => 
-    updateContactBase(id, contactData, setContacts);
+  const updateContact = async (id: string, contactData: Parameters<typeof updateContactBase>[1]) => {
+    const result = await updateContactBase(id, contactData);
+    await fetchContacts(); // Refresh contacts after updating
+    return result;
+  };
 
-  const deleteContact = (id: string) => 
-    deleteContactBase(id, setContacts);
+  const deleteContact = async (id: string) => {
+    const result = await deleteContactBase(id);
+    if (result) {
+      await fetchContacts(); // Refresh contacts after deleting
+    }
+    return result;
+  };
 
   const refreshContacts = async () => {
     await fetchContacts();

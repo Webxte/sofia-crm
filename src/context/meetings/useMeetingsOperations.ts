@@ -8,15 +8,26 @@ export const useMeetingsOperations = () => {
   const { addMeeting: addMeetingBase, updateMeeting: updateMeetingBase, deleteMeeting: deleteMeetingBase, sendMeetingEmail } = useMeetingCRUD();
   const { getMeetingById: getMeetingByIdBase, getMeetingsByContactId: getMeetingsByContactIdBase, getMeetingsByAgentId: getMeetingsByAgentIdBase } = useMeetingUtils();
 
-  // Wrap CRUD operations to pass setMeetings
-  const addMeeting = (meetingData: Parameters<typeof addMeetingBase>[0]) => 
-    addMeetingBase(meetingData, setMeetings);
+  // Wrap CRUD operations to refresh data
+  const addMeeting = async (meetingData: Parameters<typeof addMeetingBase>[0]) => {
+    const result = await addMeetingBase(meetingData);
+    await fetchMeetings(); // Refresh meetings after adding
+    return result;
+  };
 
-  const updateMeeting = (id: string, meetingData: Parameters<typeof updateMeetingBase>[1]) => 
-    updateMeetingBase(id, meetingData, setMeetings);
+  const updateMeeting = async (id: string, meetingData: Parameters<typeof updateMeetingBase>[1]) => {
+    const result = await updateMeetingBase(id, meetingData);
+    await fetchMeetings(); // Refresh meetings after updating
+    return result;
+  };
 
-  const deleteMeeting = (id: string) => 
-    deleteMeetingBase(id, setMeetings);
+  const deleteMeeting = async (id: string) => {
+    const result = await deleteMeetingBase(id);
+    if (result) {
+      await fetchMeetings(); // Refresh meetings after deleting
+    }
+    return result;
+  };
 
   const refreshMeetings = async () => {
     await fetchMeetings();

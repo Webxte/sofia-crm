@@ -127,7 +127,7 @@ export const useMeetingCRUD = () => {
     }
   };
 
-  const deleteMeeting = async (id: string) => {
+  const deleteMeeting = async (id: string): Promise<boolean> => {
     setLoading(true);
     try {
       const { error } = await supabase
@@ -136,6 +136,7 @@ export const useMeetingCRUD = () => {
         .eq("id", id);
 
       if (error) throw error;
+      return true;
     } catch (error) {
       console.error("Error deleting meeting:", error);
       toast({
@@ -143,16 +144,30 @@ export const useMeetingCRUD = () => {
         description: "Failed to delete meeting",
         variant: "destructive",
       });
-      throw error;
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
+  const sendMeetingEmail = async (meetingId: string, emailData: any) => {
+    // Placeholder implementation for meeting email functionality
+    console.log("Send meeting email for:", meetingId, emailData);
+    toast({
+      title: "Info",
+      description: "Meeting email feature is not yet implemented",
+    });
+  };
+
+  // Alias for compatibility
+  const addMeeting = createMeeting;
+
   return {
     createMeeting,
+    addMeeting,
     updateMeeting,
     deleteMeeting,
+    sendMeetingEmail,
     loading
   };
 };

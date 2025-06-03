@@ -131,7 +131,7 @@ export const useContactCRUD = () => {
     }
   };
 
-  const deleteContact = async (id: string) => {
+  const deleteContact = async (id: string): Promise<boolean> => {
     setLoading(true);
     try {
       const { error } = await supabase
@@ -140,6 +140,7 @@ export const useContactCRUD = () => {
         .eq("id", id);
 
       if (error) throw error;
+      return true;
     } catch (error) {
       console.error("Error deleting contact:", error);
       toast({
@@ -147,14 +148,18 @@ export const useContactCRUD = () => {
         description: "Failed to delete contact",
         variant: "destructive",
       });
-      throw error;
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
+  // Alias for compatibility
+  const addContact = createContact;
+
   return {
     createContact,
+    addContact,
     updateContact,
     deleteContact,
     loading
