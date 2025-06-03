@@ -7,7 +7,6 @@ import { toast } from "@/hooks/use-toast";
 // Extend the User type to include the name property
 interface ExtendedUser extends User {
   name?: string;
-  organizationId?: string;
 }
 
 interface AuthContextType {
@@ -21,33 +20,25 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-// Create context with undefined as default value
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Initialize state with useState hook
   const [user, setUser] = React.useState<ExtendedUser | null>(null);
   const [session, setSession] = React.useState<Session | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   
-  // Helper function to extract user name from metadata
   const getUserWithName = React.useCallback((supabaseUser: User | null): ExtendedUser | null => {
     if (!supabaseUser) return null;
-    
-    // Get stored organization ID if available
-    const storedOrgId = localStorage.getItem('currentOrganizationId');
     
     return {
       ...supabaseUser,
       name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || '',
-      organizationId: storedOrgId || undefined
     };
   }, []);
 
   React.useEffect(() => {
     console.log("Setting up auth state listener");
     
-    // Set up the auth state listener first (this order is important)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed:", event);
@@ -55,24 +46,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("User with auth change:", extendedUser ? {
           id: extendedUser.id, 
           name: extendedUser.name,
-          organizationId: extendedUser.organizationId
         } : null);
         
-        // Update session and user state
         setSession(currentSession);
         setUser(extendedUser);
         setIsLoading(false);
       }
     );
 
-    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
       const extendedUser = getUserWithName(currentSession?.user ?? null);
       console.log("User from initial session:", extendedUser ? {
         id: extendedUser.id, 
         name: extendedUser.name,
-        organizationId: extendedUser.organizationId
       } : null);
       
       setSession(currentSession);
@@ -85,7 +72,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [getUserWithName]);
 
-  // Determine if user is admin from metadata
   const isAdmin = React.useMemo(() => !!user && user.user_metadata?.role === "admin", [user]);
   const isAuthenticated = React.useMemo(() => !!session, [session]);
 
@@ -132,14 +118,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logoutFn = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      // First clear state so the UI updates immediately
       setUser(null);
       setSession(null);
       
-      // Clear organization data
-      localStorage.removeItem('currentOrganizationId');
-      
-      // Then sign out from supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
@@ -148,8 +129,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Error during logout:", error);
     } finally {
       setIsLoading(false);
-      // Clear any cached data that might be causing issues
-      localStorage.removeItem('supabase.auth.token');
     }
   }, []);
 
