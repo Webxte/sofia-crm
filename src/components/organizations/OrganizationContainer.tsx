@@ -4,13 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Building, ArrowLeft } from "lucide-react";
+import { Organization } from "@/types";
 
 interface OrganizationContainerProps {
-  title: string;
+  title?: string;
   description?: string;
   children: ReactNode;
   error?: string | null;
   showHomeButton?: boolean;
+  organization?: Organization;
 }
 
 export const OrganizationContainer = ({ 
@@ -18,13 +20,16 @@ export const OrganizationContainer = ({
   description,
   children,
   error,
-  showHomeButton = false
+  showHomeButton = false,
+  organization
 }: OrganizationContainerProps) => {
   const navigate = useNavigate();
   
   const handleGoHome = () => {
     navigate('/', { replace: true });
   };
+
+  const displayTitle = title || organization?.name || "Organization";
   
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
@@ -32,7 +37,7 @@ export const OrganizationContainer = ({
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Building className="h-6 w-6 text-primary" />
-            <CardTitle className="text-2xl">{title}</CardTitle>
+            <CardTitle className="text-2xl">{displayTitle}</CardTitle>
           </div>
           {description && !error && <CardDescription>{description}</CardDescription>}
           {error && (

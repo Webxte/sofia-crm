@@ -1,9 +1,41 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Organization } from "../types";
+import { Organization } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+
+export interface OrganizationCoreProps {
+  organizations: Organization[];
+  setOrganizations: React.Dispatch<React.SetStateAction<Organization[]>>;
+  currentOrganization: Organization | null;
+  setCurrentOrganization: React.Dispatch<React.SetStateAction<Organization | null>>;
+  setMembers: React.Dispatch<React.SetStateAction<any[]>>;
+  setInvites: React.Dispatch<React.SetStateAction<any[]>>;
+  user: any;
+  toast: any;
+}
+
+export const useUpdateOrganizationState = (props: OrganizationCoreProps) => {
+  const { setOrganizations, setCurrentOrganization } = props;
+  
+  const updateOrganizationInState = useCallback((id: string, data: Partial<Organization>) => {
+    setOrganizations(prev => 
+      prev.map(org => org.id === id ? { ...org, ...data } : org)
+    );
+    setCurrentOrganization(prev => 
+      prev?.id === id ? { ...prev, ...data } : prev
+    );
+  }, [setOrganizations, setCurrentOrganization]);
+
+  const removeOrganizationFromState = useCallback((id: string) => {
+    setOrganizations(prev => prev.filter(org => org.id !== id));
+  }, [setOrganizations]);
+
+  return {
+    updateOrganizationInState,
+    removeOrganizationFromState
+  };
+};
 
 export const useOrganizationCore = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);

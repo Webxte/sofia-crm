@@ -178,52 +178,43 @@ const OrganizationLogin = () => {
 
   if (!organization) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Organization Not Found</h1>
-          <p className="text-muted-foreground">
-            The organization "{slug}" could not be found.
-          </p>
-        </div>
-      </div>
+      <OrganizationContainer 
+        title="Organization Not Found"
+        error={`The organization "${slug}" could not be found.`}
+        showHomeButton={true}
+      >
+        <div />
+      </OrganizationContainer>
     );
   }
 
   // If user is not authenticated, redirect to login
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
-          <p className="text-muted-foreground mb-4">
-            You need to be logged in to access this organization.
-          </p>
-          <button 
-            onClick={() => navigate("/login")}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
+      <OrganizationContainer 
+        title="Authentication Required"
+        description="You need to be logged in to access this organization."
+        showHomeButton={true}
+      >
+        <button 
+          onClick={() => navigate("/login")}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 w-full"
+        >
+          Go to Login
+        </button>
+      </OrganizationContainer>
     );
   }
 
   return (
-    <OrganizationContainer organization={organization}>
-      <div className="w-full max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold mb-2">Access {organization.name}</h1>
-          <p className="text-muted-foreground">
-            Enter the organization password to continue
-          </p>
-        </div>
-        
-        <LoginForm 
-          onSubmit={handlePasswordSubmit}
-          loading={passwordVerifying}
-        />
-      </div>
+    <OrganizationContainer 
+      organization={organization}
+      description="Enter the organization password to continue"
+    >
+      <LoginForm 
+        onSubmit={handlePasswordSubmit}
+        loading={passwordVerifying}
+      />
     </OrganizationContainer>
   );
 };
