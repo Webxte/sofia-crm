@@ -14,11 +14,20 @@ export const useContactCRUD = () => {
 
   const createContact = async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
     if (!user || !currentOrganization) {
-      throw new Error("User or organization not found");
+      const errorMsg = !user ? "User not found" : "No organization selected";
+      console.error("createContact error:", errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      throw new Error(errorMsg);
     }
 
     setLoading(true);
     try {
+      console.log("Creating contact for organization:", currentOrganization.id);
+      
       const newContact = {
         organization_id: currentOrganization.id,
         full_name: contactData.fullName,
@@ -34,15 +43,22 @@ export const useContactCRUD = () => {
         agent_name: user.name || user.email || "",
       };
 
+      console.log("Contact data being inserted:", newContact);
+
       const { data, error } = await supabase
         .from("contacts")
         .insert([newContact])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error creating contact:", error);
+        throw error;
+      }
 
-      return {
+      console.log("Contact created successfully:", data);
+
+      const createdContact: Contact = {
         id: data.id,
         organizationId: data.organization_id,
         fullName: data.full_name || "",
@@ -58,7 +74,14 @@ export const useContactCRUD = () => {
         agentName: data.agent_name || "",
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
-      } as Contact;
+      };
+
+      toast({
+        title: "Success",
+        description: "Contact created successfully",
+      });
+
+      return createdContact;
     } catch (error) {
       console.error("Error creating contact:", error);
       toast({
@@ -96,6 +119,7 @@ export const useContactCRUD = () => {
         .from("contacts")
         .update(updateData)
         .eq("id", id)
+        .eq("organization_id", currentOrganization.id)
         .select()
         .single();
 
@@ -132,12 +156,17 @@ export const useContactCRUD = () => {
   };
 
   const deleteContact = async (id: string): Promise<boolean> => {
+    if (!currentOrganization) {
+      throw new Error("No organization selected");
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase
         .from("contacts")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", currentOrganization.id);
 
       if (error) throw error;
       return true;

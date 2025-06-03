@@ -14,11 +14,20 @@ export const useMeetingCRUD = () => {
 
   const createMeeting = async (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">) => {
     if (!user || !currentOrganization) {
-      throw new Error("User or organization not found");
+      const errorMsg = !user ? "User not found" : "No organization selected";
+      console.error("createMeeting error:", errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      throw new Error(errorMsg);
     }
 
     setLoading(true);
     try {
+      console.log("Creating meeting for organization:", currentOrganization.id);
+      
       const newMeeting = {
         organization_id: currentOrganization.id,
         contact_id: meetingData.contactId,
@@ -33,15 +42,22 @@ export const useMeetingCRUD = () => {
         agent_name: user.name || user.email || "",
       };
 
+      console.log("Meeting data being inserted:", newMeeting);
+
       const { data, error } = await supabase
         .from("meetings")
         .insert([newMeeting])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error creating meeting:", error);
+        throw error;
+      }
 
-      return {
+      console.log("Meeting created successfully:", data);
+
+      const createdMeeting: Meeting = {
         id: data.id,
         organizationId: data.organization_id,
         contactId: data.contact_id,
@@ -56,7 +72,14 @@ export const useMeetingCRUD = () => {
         agentName: data.agent_name || "",
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
-      } as Meeting;
+      };
+
+      toast({
+        title: "Success",
+        description: "Meeting created successfully",
+      });
+
+      return createdMeeting;
     } catch (error) {
       console.error("Error creating meeting:", error);
       toast({
@@ -93,6 +116,7 @@ export const useMeetingCRUD = () => {
         .from("meetings")
         .update(updateData)
         .eq("id", id)
+        .eq("organization_id", currentOrganization.id)
         .select()
         .single();
 
@@ -128,12 +152,17 @@ export const useMeetingCRUD = () => {
   };
 
   const deleteMeeting = async (id: string): Promise<boolean> => {
+    if (!currentOrganization) {
+      throw new Error("No organization selected");
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase
         .from("meetings")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", currentOrganization.id);
 
       if (error) throw error;
       return true;

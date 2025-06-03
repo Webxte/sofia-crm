@@ -6,6 +6,7 @@ import { useContacts } from "@/context/ContactsContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { contactFormSchema, ContactFormValues, ContactFormProps } from "./types";
 import { Contact } from "@/types";
 
@@ -14,6 +15,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentOrganization } = useOrganizations();
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -64,11 +66,24 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         return;
       }
       
-      // Add agent information
-      const agentData = {
+      if (!currentOrganization) {
+        toast({
+          title: "Error",
+          description: "No organization selected",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Add agent and organization information
+      const contactData = {
+        ...values,
         agentId: user.id,
-        agentName: user.name || ''
+        agentName: user.name || '',
+        organizationId: currentOrganization.id
       };
+      
+      console.log("Contact form submission:", contactData);
       
       // Ensure source is set if not provided
       if (!values.source && user?.name) {
@@ -77,17 +92,18 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       
       if (isEditing && contact) {
         // Update existing contact
-        await updateContact(contact.id, { ...values, ...agentData });
+        console.log("Updating contact:", contact.id);
+        await updateContact(contact.id, contactData);
         toast({
           title: "Success",
           description: "Contact updated successfully!",
         });
       } else {
         // Create new contact with current timestamp
+        console.log("Creating new contact");
         const now = new Date();
         const newContact: Omit<Contact, "id"> = {
-          ...values,
-          ...agentData,
+          ...contactData,
           createdAt: now,
           updatedAt: now
         };
@@ -99,6 +115,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       }
       navigate("/contacts");
     } catch (error) {
+      console.error("Contact form error:", error);
       toast({
         title: "Error",
         description: isEditing ? "Failed to update contact." : "Failed to create contact.",

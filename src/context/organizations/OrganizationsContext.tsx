@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,50 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
+  // Ensure user is a member of organization
+  const ensureOrganizationMembership = async (orgId: string, userId: string): Promise<boolean> => {
+    try {
+      // Check if user is already a member
+      const { data: existingMembership, error: membershipError } = await supabase
+        .from('organization_members')
+        .select('id')
+        .eq('organization_id', orgId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (membershipError) {
+        console.error("Error checking membership:", membershipError);
+        return false;
+      }
+
+      if (existingMembership) {
+        console.log("User is already a member of organization:", orgId);
+        return true;
+      }
+
+      // If not a member, add them
+      console.log("Adding user to organization:", orgId);
+      const { error: addError } = await supabase
+        .from('organization_members')
+        .insert({
+          organization_id: orgId,
+          user_id: userId,
+          role: 'member'
+        });
+
+      if (addError) {
+        console.error("Error adding user to organization:", addError);
+        return false;
+      }
+
+      console.log("Successfully added user to organization:", orgId);
+      return true;
+    } catch (error) {
+      console.error("Error in ensureOrganizationMembership:", error);
+      return false;
+    }
+  };
+
   // Fetch organizations and ensure user membership
   const fetchOrganizations = async () => {
     if (!user?.id) {
@@ -80,47 +125,54 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     try {
       setIsLoadingOrganizations(true);
       console.log("Fetching organizations for user:", user.id);
+
+      // Try to get the default Belmorso organization
+      let belmorsoOrg = await getOrganizationBySlug('belmorso');
       
-      // Get Belmorso organization
-      const belmorso = await getOrganizationBySlug('belmorso');
-      
-      if (belmorso) {
-        console.log("Found Belmorso organization, ensuring user membership");
+      if (!belmorsoOrg) {
+        console.log("Belmorso organization not found, creating it");
         
-        // Check if user is already a member
-        const { data: existingMembership } = await supabase
-          .from('organization_members')
-          .select('id')
-          .eq('organization_id', belmorso.id)
-          .eq('user_id', user.id)
+        // Create the Belmorso organization if it doesn't exist
+        const { data: createdOrg, error: createError } = await supabase
+          .from('organizations')
+          .insert({
+            name: 'Belmorso',
+            slug: 'belmorso',
+          })
+          .select()
           .single();
-
-        if (!existingMembership) {
-          console.log("Adding user to Belmorso organization");
-          const { error: insertError } = await supabase
-            .from('organization_members')
-            .insert({
-              organization_id: belmorso.id,
-              user_id: user.id,
-              role: 'member'
-            });
-
-          if (insertError) {
-            console.error('Error adding user to organization:', insertError);
-          } else {
-            console.log('Successfully added user to Belmorso organization');
-          }
+        
+        if (createError) {
+          console.error("Error creating Belmorso organization:", createError);
         } else {
-          console.log('User is already a member of Belmorso organization');
+          belmorsoOrg = {
+            id: createdOrg.id,
+            name: createdOrg.name,
+            slug: createdOrg.slug,
+            logoUrl: createdOrg.logo_url,
+            primaryColor: createdOrg.primary_color,
+            secondaryColor: createdOrg.secondary_color,
+            createdAt: new Date(createdOrg.created_at),
+            updatedAt: new Date(createdOrg.updated_at),
+          };
+          console.log("Created Belmorso organization:", belmorsoOrg);
         }
+      }
 
-        const userOrganizations = [belmorso];
-        setOrganizations(userOrganizations);
-        setCurrentOrganization(belmorso);
-        localStorage.setItem('currentOrganizationId', belmorso.id);
-        setIsLoadingOrganizations(false);
-        setInitialLoadComplete(true);
-        return;
+      if (belmorsoOrg) {
+        // Ensure user is a member of the Belmorso organization
+        const membershipSuccess = await ensureOrganizationMembership(belmorsoOrg.id, user.id);
+        
+        if (membershipSuccess) {
+          // If successful, set Belmorso as the current organization
+          setOrganizations([belmorsoOrg]);
+          setCurrentOrganization(belmorsoOrg);
+          localStorage.setItem('currentOrganizationId', belmorsoOrg.id);
+          console.log("Set Belmorso as current organization");
+          setIsLoadingOrganizations(false);
+          setInitialLoadComplete(true);
+          return;
+        }
       }
 
       // Fallback: try to get organizations through membership
@@ -244,6 +296,11 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           const exists = prev.find(org => org.id === organizationId);
           return exists ? prev : [...prev, targetOrg!];
         });
+
+        // Ensure user is a member
+        if (user?.id) {
+          await ensureOrganizationMembership(targetOrg.id, user.id);
+        }
       }
 
       console.log("Switching to organization:", targetOrg.name);
@@ -275,6 +332,8 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
 
     try {
+      console.log("Creating new organization:", name, slug);
+      
       // First create the organization
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
@@ -295,13 +354,15 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         return null;
       }
 
+      console.log("Organization created:", orgData);
+
       // Then add the user as an admin member
       const { error: memberError } = await supabase
         .from('organization_members')
         .insert([{
           organization_id: orgData.id,
           user_id: user.id,
-          role: 'admin'
+          role: 'owner'
         }]);
 
       if (memberError) {
@@ -315,6 +376,8 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         });
         return null;
       }
+
+      console.log("User added to organization as owner");
 
       const newOrg: Organization = {
         id: orgData.id,

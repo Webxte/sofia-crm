@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   name: z
@@ -48,6 +49,7 @@ export function CreateOrganizationForm() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { trackEvent } = useAnalytics();
+  const { toast } = useToast();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,13 +62,33 @@ export function CreateOrganizationForm() {
   const onSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Creating organization:", values);
       
       const org = await createOrganization(values.name, values.slug);
       
       if (org) {
+        console.log("Organization created successfully:", org);
         trackEvent('organization_created', { organizationName: values.name });
-        navigate('/dashboard');
+        
+        toast({
+          title: "Success",
+          description: `Organization "${values.name}" created successfully!`,
+        });
+
+        // Navigate to dashboard with a small delay to ensure state updates
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 500);
+      } else {
+        console.error("Failed to create organization");
       }
+    } catch (error) {
+      console.error("Error in onSubmit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create organization. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

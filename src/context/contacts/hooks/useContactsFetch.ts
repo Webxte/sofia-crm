@@ -4,29 +4,35 @@ import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 export const useContactsFetch = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
+  const { currentOrganization } = useOrganizations();
 
   const fetchContacts = useCallback(async () => {
-    // Only fetch if user is authenticated
-    if (!isAuthenticated || !user) {
-      console.log("useContactsFetch: Not authenticated, skipping contacts fetch");
+    // Only fetch if user is authenticated and has an organization
+    if (!isAuthenticated || !user || !currentOrganization) {
+      console.log("useContactsFetch: Missing requirements", {
+        isAuthenticated,
+        hasUser: !!user,
+        hasOrganization: !!currentOrganization
+      });
       setContacts([]);
       return;
     }
 
     try {
       setLoading(true);
-      console.log("useContactsFetch: Fetching all contacts for authenticated user:", user.id);
+      console.log("useContactsFetch: Fetching contacts for organization:", currentOrganization.id);
       
-      // Simple query - get all contacts (RLS policies handle access control)
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
+        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -70,7 +76,7 @@ export const useContactsFetch = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, toast]);
+  }, [isAuthenticated, user, currentOrganization, toast]);
 
   return {
     contacts,

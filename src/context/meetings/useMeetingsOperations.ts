@@ -2,15 +2,28 @@
 import { useMeetingsFetch } from "./hooks/useMeetingsFetch";
 import { useMeetingCRUD } from "./hooks/useMeetingCRUD";
 import { useMeetingUtils } from "./hooks/useMeetingUtils";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 export const useMeetingsOperations = () => {
   const { meetings, setMeetings, loading, fetchMeetings } = useMeetingsFetch();
   const { addMeeting: addMeetingBase, updateMeeting: updateMeetingBase, deleteMeeting: deleteMeetingBase, sendMeetingEmail } = useMeetingCRUD();
   const { getMeetingById: getMeetingByIdBase, getMeetingsByContactId: getMeetingsByContactIdBase, getMeetingsByAgentId: getMeetingsByAgentIdBase } = useMeetingUtils();
+  const { currentOrganization } = useOrganizations();
 
   // Wrap CRUD operations to refresh data
   const addMeeting = async (meetingData: Parameters<typeof addMeetingBase>[0]) => {
-    const result = await addMeetingBase(meetingData);
+    if (!currentOrganization) {
+      console.error("Cannot add meeting: No organization selected");
+      throw new Error("No organization selected");
+    }
+    
+    // Ensure organization ID is set
+    const meetingWithOrg = {
+      ...meetingData,
+      organizationId: currentOrganization.id
+    };
+    
+    const result = await addMeetingBase(meetingWithOrg);
     await fetchMeetings(); // Refresh meetings after adding
     return result;
   };
