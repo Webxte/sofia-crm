@@ -7,9 +7,9 @@ import { SettingsContextType } from "./settings/types";
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
 
-  const settingsOperations = useSettingsOperations();
+  const settingsOperations = useSettingsOperations(isAuthenticated, isAdmin);
 
   return (
     <SettingsContext.Provider value={settingsOperations}>
