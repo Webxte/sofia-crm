@@ -8,6 +8,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { OrganizationContainer } from "@/components/organizations/OrganizationContainer";
 import { LoginForm } from "@/components/organizations/LoginForm";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
@@ -188,20 +189,28 @@ const OrganizationLogin = () => {
     );
   }
 
-  // If user is not authenticated, redirect to login
+  // If user is not authenticated, show login options
   if (!isAuthenticated) {
     return (
       <OrganizationContainer 
         title="Authentication Required"
         description="You need to be logged in to access this organization."
-        showHomeButton={true}
       >
-        <button 
-          onClick={() => navigate("/login")}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 w-full"
-        >
-          Go to Login
-        </button>
+        <div className="space-y-4">
+          <Button 
+            onClick={() => navigate("/login")}
+            className="w-full"
+          >
+            Go to Login
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="w-full"
+          >
+            Go Home
+          </Button>
+        </div>
       </OrganizationContainer>
     );
   }
