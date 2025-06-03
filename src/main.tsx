@@ -9,12 +9,16 @@ import App from './App';
 import { Toaster } from './components/ui/sonner';
 import './index.css';
 
-// Create the root with explicit typing and ensure we're using a properly existing element
+// Ensure we have a proper root element
 const rootElement = document.getElementById('root');
-if (!rootElement) throw new Error('Root element not found');
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
 
-// Create the root with explicit typing
-ReactDOM.createRoot(rootElement).render(
+// Create the root and render the app
+const root = ReactDOM.createRoot(rootElement);
+
+root.render(
   <React.StrictMode>
     <BrowserRouter>
       <HelmetProvider>
@@ -26,5 +30,5 @@ ReactDOM.createRoot(rootElement).render(
         </AuthProvider>
       </HelmetProvider>
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

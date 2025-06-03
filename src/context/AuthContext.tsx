@@ -24,14 +24,14 @@ interface AuthContextType {
 // Create context with undefined as default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state with useState hook
-  const [user, setUser] = useState<ExtendedUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  // Initialize state with useState hook - ensure React is properly imported
+  const [user, setUser] = React.useState<ExtendedUser | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   
   // Helper function to extract user name from metadata
-  const getUserWithName = (supabaseUser: User | null): ExtendedUser | null => {
+  const getUserWithName = React.useCallback((supabaseUser: User | null): ExtendedUser | null => {
     if (!supabaseUser) return null;
     
     // Get stored organization ID if available
@@ -42,9 +42,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || '',
       organizationId: storedOrgId || undefined
     };
-  };
+  }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     console.log("Setting up auth state listener");
     
     // Set up the auth state listener first (this order is important)
@@ -83,13 +83,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [getUserWithName]);
 
   // Determine if user is admin from metadata
-  const isAdmin = !!user && user.user_metadata?.role === "admin";
-  const isAuthenticated = !!session;
+  const isAdmin = React.useMemo(() => !!user && user.user_metadata?.role === "admin", [user]);
+  const isAuthenticated = React.useMemo(() => !!session, [session]);
 
-  const loginFn = async (email: string, password: string) => {
+  const loginFn = React.useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -103,9 +103,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const createUserFn = async (name: string, email: string, password: string, role: "admin" | "agent") => {
+  const createUserFn = React.useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
     setIsLoading(true);
     try {
       const { error, data } = await supabase.auth.signUp({
@@ -127,9 +127,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const logoutFn = async () => {
+  const logoutFn = React.useCallback(async () => {
     setIsLoading(true);
     try {
       // First clear state so the UI updates immediately
@@ -151,9 +151,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear any cached data that might be causing issues
       localStorage.removeItem('supabase.auth.token');
     }
-  };
+  }, []);
 
-  const contextValue: AuthContextType = {
+  const contextValue = React.useMemo<AuthContextType>(() => ({
     user,
     session,
     isAuthenticated,
@@ -162,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login: loginFn,
     createUser: createUserFn,
     logout: logoutFn
-  };
+  }), [user, session, isAuthenticated, isAdmin, isLoading, loginFn, createUserFn, logoutFn]);
 
   return (
     <AuthContext.Provider value={contextValue}>
