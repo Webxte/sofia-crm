@@ -159,7 +159,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         throw orgsError;
       }
 
-      // Format organizations with roles
+      // Format organizations with roles - fix the type casting here
       const userOrganizations: OrganizationWithRole[] = orgsData.map(org => {
         const membership = memberships.find((m: any) => m.organization_id === org.id);
         return {
@@ -171,7 +171,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           secondaryColor: org.secondary_color,
           createdAt: new Date(org.created_at),
           updatedAt: new Date(org.updated_at),
-          role: membership?.role || 'agent'
+          role: (membership?.role || 'agent') as "owner" | "admin" | "agent"
         };
       });
 
@@ -250,7 +250,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         if (membershipSuccess) {
           const belmorsoWithRole: OrganizationWithRole = {
             ...belmorsoOrg,
-            role: 'agent'
+            role: 'agent' as "owner" | "admin" | "agent"
           };
           
           setOrganizations([belmorsoWithRole]);
@@ -295,7 +295,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           secondaryColor: orgData.secondary_color,
           createdAt: new Date(orgData.created_at),
           updatedAt: new Date(orgData.updated_at),
-          role: 'agent'
+          role: 'agent' as "owner" | "admin" | "agent"
         };
         
         setOrganizations(prev => {
@@ -367,7 +367,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         updatedAt: new Date(orgData.updated_at),
       };
 
-      const newOrgWithRole: OrganizationWithRole = { ...newOrg, role: 'owner' };
+      const newOrgWithRole: OrganizationWithRole = { ...newOrg, role: 'owner' as "owner" | "admin" | "agent" };
       setOrganizations(prev => [...prev, newOrgWithRole]);
       setCurrentOrganization(newOrgWithRole);
       localStorage.setItem('currentOrganizationId', newOrg.id);
