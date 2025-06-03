@@ -53,7 +53,7 @@ export const useOrganizationSetup = (
         if (membershipSuccess) {
           const belmorsoWithRole: OrganizationWithRole = {
             ...belmorsoOrg,
-            role: 'agent' as "owner" | "admin" | "agent"
+            role: 'member' as "owner" | "admin" | "member" | "manager" | "guest"
           };
           
           setOrganizations([belmorsoWithRole]);

@@ -40,7 +40,7 @@ export const useOrganizationManagement = (
           secondaryColor: orgData.secondary_color,
           createdAt: new Date(orgData.created_at),
           updatedAt: new Date(orgData.updated_at),
-          role: 'agent' as "owner" | "admin" | "agent"
+          role: 'member' as "owner" | "admin" | "member" | "manager" | "guest"
         };
         
         setOrganizations(prev => {
@@ -107,7 +107,7 @@ export const useOrganizationManagement = (
         updatedAt: new Date(orgData.updated_at),
       };
 
-      const newOrgWithRole: OrganizationWithRole = { ...newOrg, role: 'owner' as "owner" | "admin" | "agent" };
+      const newOrgWithRole: OrganizationWithRole = { ...newOrg, role: 'owner' as "owner" | "admin" | "member" | "manager" | "guest" };
       setOrganizations(prev => [...prev, newOrgWithRole]);
       setCurrentOrganization(newOrgWithRole);
       localStorage.setItem('currentOrganizationId', newOrg.id);

@@ -84,7 +84,7 @@ export const useOrganizationData = () => {
           secondaryColor: org.secondary_color,
           createdAt: new Date(org.created_at),
           updatedAt: new Date(org.updated_at),
-          role: membership?.role as "owner" | "admin" | "agent"
+          role: membership?.role as "owner" | "admin" | "member" | "manager" | "guest"
         };
       });
 
