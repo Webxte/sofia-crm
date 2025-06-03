@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Organization, OrganizationMember } from "@/types";
 import { OrganizationWithRole, OrganizationsContextType } from "./types";
@@ -28,7 +29,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       if (error) {
         if (error.code === 'PGRST116') {
           console.log("Organization not found with slug:", slug);
-          return null; // Not found
+          return null;
         }
         console.error('Error fetching organization by slug:', error);
         return null;
@@ -53,17 +54,18 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
-  // Check if user is a member of organization
+  // Check if user is a member of organization using security definer function
   const checkMembership = async (organizationId: string): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select('id')
-        .eq('organization_id', organizationId)
-        .eq('user_id', user.id)
-        .single();
+      const { data, error } = await supabase.rpc(
+        'is_member_of_organization',
+        {
+          _user_id: user.id,
+          _organization_id: organizationId
+        }
+      );
 
       if (error) {
         console.error("Error checking membership:", error);
@@ -80,20 +82,10 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   // Ensure user is a member of organization
   const ensureOrganizationMembership = async (orgId: string, userId: string): Promise<boolean> => {
     try {
-      // Check if user is already a member
-      const { data: existingMembership, error: membershipError } = await supabase
-        .from('organization_members')
-        .select('id')
-        .eq('organization_id', orgId)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (membershipError) {
-        console.error("Error checking membership:", membershipError);
-        return false;
-      }
-
-      if (existingMembership) {
+      // Use RPC function to check membership to avoid RLS issues
+      const isMember = await checkMembership(orgId);
+      
+      if (isMember) {
         console.log("User is already a member of organization:", orgId);
         return true;
       }
@@ -121,7 +113,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
-  // Fetch organizations and ensure user membership
+  // Fetch organizations using the user's organization memberships
   const fetchOrganizations = async () => {
     if (!user?.id) {
       console.log("No user ID, clearing organization data");
@@ -136,116 +128,69 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       setIsLoadingOrganizations(true);
       console.log("Fetching organizations for user:", user.id);
 
-      // Try to get the default Belmorso organization
-      let belmorsoOrg = await getOrganizationBySlug('belmorso');
-      
-      if (!belmorsoOrg) {
-        console.log("Belmorso organization not found, creating it");
-        
-        // Create the Belmorso organization if it doesn't exist
-        const { data: createdOrg, error: createError } = await supabase
-          .from('organizations')
-          .insert({
-            name: 'Belmorso',
-            slug: 'belmorso',
-          })
-          .select()
-          .single();
-        
-        if (createError) {
-          console.error("Error creating Belmorso organization:", createError);
-        } else {
-          belmorsoOrg = {
-            id: createdOrg.id,
-            name: createdOrg.name,
-            slug: createdOrg.slug,
-            logoUrl: createdOrg.logo_url,
-            primaryColor: createdOrg.primary_color,
-            secondaryColor: createdOrg.secondary_color,
-            createdAt: new Date(createdOrg.created_at),
-            updatedAt: new Date(createdOrg.updated_at),
-          };
-          console.log("Created Belmorso organization:", belmorsoOrg);
-        }
-      }
-
-      if (belmorsoOrg) {
-        // Ensure user is a member of the Belmorso organization
-        const membershipSuccess = await ensureOrganizationMembership(belmorsoOrg.id, user.id);
-        
-        if (membershipSuccess) {
-          // If successful, set Belmorso as the current organization
-          setOrganizations([belmorsoOrg]);
-          setCurrentOrganization(belmorsoOrg);
-          localStorage.setItem('currentOrganizationId', belmorsoOrg.id);
-          console.log("Set Belmorso as current organization");
-          setIsLoadingOrganizations(false);
-          setInitialLoadComplete(true);
-          return;
-        }
-      }
-
-      // Fallback: try to get organizations through membership
-      const { data: memberships, error: membershipError } = await supabase
-        .from('organization_members')
-        .select(`
-          organization_id,
-          role,
-          organizations:organization_id (
-            id,
-            name,
-            slug,
-            logo_url,
-            primary_color,
-            secondary_color,
-            created_at,
-            updated_at
-          )
-        `)
-        .eq('user_id', user.id);
+      // Get user's organization memberships using security definer function
+      const { data: memberships, error: membershipError } = await supabase.rpc(
+        'get_user_organization_memberships',
+        { user_uuid: user.id }
+      );
 
       if (membershipError) {
         console.error('Error fetching organization memberships:', membershipError);
+        // Fallback: try to get/create belmorso organization
+        await handleBelmorsoFallback();
+        return;
       }
 
-      console.log("Raw memberships data:", memberships);
+      if (!memberships || memberships.length === 0) {
+        console.log("User has no organization memberships, setting up belmorso");
+        await handleBelmorsoFallback();
+        return;
+      }
 
-      const userOrganizations: Organization[] = (memberships || [])
-        .filter(membership => membership.organizations)
-        .map(membership => ({
-          id: membership.organizations.id,
-          name: membership.organizations.name,
-          slug: membership.organizations.slug,
-          logoUrl: membership.organizations.logo_url,
-          primaryColor: membership.organizations.primary_color,
-          secondaryColor: membership.organizations.secondary_color,
-          createdAt: new Date(membership.organizations.created_at),
-          updatedAt: new Date(membership.organizations.updated_at),
-        }));
+      // Get organizations details
+      const orgIds = memberships.map((m: any) => m.organization_id);
+      const { data: orgsData, error: orgsError } = await supabase
+        .from('organizations')
+        .select('*')
+        .in('id', orgIds);
+
+      if (orgsError) {
+        console.error('Error fetching organizations:', orgsError);
+        throw orgsError;
+      }
+
+      // Format organizations with roles
+      const userOrganizations: OrganizationWithRole[] = orgsData.map(org => {
+        const membership = memberships.find((m: any) => m.organization_id === org.id);
+        return {
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+          logoUrl: org.logo_url,
+          primaryColor: org.primary_color,
+          secondaryColor: org.secondary_color,
+          createdAt: new Date(org.created_at),
+          updatedAt: new Date(org.updated_at),
+          role: membership?.role || 'agent'
+        };
+      });
 
       console.log("Formatted user organizations:", userOrganizations);
       setOrganizations(userOrganizations);
 
-      // Set current organization from localStorage or first available
+      // Set current organization
       const storedOrgId = localStorage.getItem('currentOrganizationId');
       let selectedOrg = null;
 
       if (storedOrgId) {
         selectedOrg = userOrganizations.find(org => org.id === storedOrgId);
-        console.log("Found stored organization:", selectedOrg?.name || "none");
       }
 
-      // If no stored org or stored org not found, use first available
       if (!selectedOrg && userOrganizations.length > 0) {
         selectedOrg = userOrganizations[0];
-        localStorage.setItem('currentOrganizationId', selectedOrg.id);
-        console.log("Using first available organization:", selectedOrg.name);
-      }
-
-      if (selectedOrg) {
-        console.log("Setting current organization to:", selectedOrg.name);
-      } else {
-        console.log("No organization to set as current");
+        if (selectedOrg) {
+          localStorage.setItem('currentOrganizationId', selectedOrg.id);
+        }
       }
 
       setCurrentOrganization(selectedOrg);
@@ -263,15 +208,71 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
+  // Handle belmorso fallback
+  const handleBelmorsoFallback = async () => {
+    try {
+      let belmorsoOrg = await getOrganizationBySlug('belmorso');
+      
+      if (!belmorsoOrg) {
+        console.log("Belmorso organization not found, creating it");
+        
+        const { data: createdOrg, error: createError } = await supabase
+          .from('organizations')
+          .insert({
+            name: 'Belmorso',
+            slug: 'belmorso',
+          })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error("Error creating Belmorso organization:", createError);
+          setOrganizations([]);
+          setCurrentOrganization(null);
+          return;
+        }
+
+        belmorsoOrg = {
+          id: createdOrg.id,
+          name: createdOrg.name,
+          slug: createdOrg.slug,
+          logoUrl: createdOrg.logo_url,
+          primaryColor: createdOrg.primary_color,
+          secondaryColor: createdOrg.secondary_color,
+          createdAt: new Date(createdOrg.created_at),
+          updatedAt: new Date(createdOrg.updated_at),
+        };
+      }
+
+      if (belmorsoOrg && user?.id) {
+        const membershipSuccess = await ensureOrganizationMembership(belmorsoOrg.id, user.id);
+        
+        if (membershipSuccess) {
+          const belmorsoWithRole: OrganizationWithRole = {
+            ...belmorsoOrg,
+            role: 'agent'
+          };
+          
+          setOrganizations([belmorsoWithRole]);
+          setCurrentOrganization(belmorsoWithRole);
+          localStorage.setItem('currentOrganizationId', belmorsoOrg.id);
+          console.log("Set Belmorso as current organization");
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleBelmorsoFallback:", error);
+      setOrganizations([]);
+      setCurrentOrganization(null);
+    }
+  };
+
   // Switch to a different organization
   const switchOrganization = async (organizationId: string): Promise<boolean> => {
     try {
       console.log("Attempting to switch to organization ID:", organizationId);
       
-      // First, try to find in current organizations list
       let targetOrg = organizations.find(org => org.id === organizationId);
       
-      // If not found, try to fetch from database
       if (!targetOrg) {
         console.log("Organization not in current list, fetching from database");
         const { data: orgData, error } = await supabase
@@ -282,11 +283,6 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           
         if (error) {
           console.error("Error fetching organization:", error);
-          toast({
-            title: "Error",
-            description: "Organization not found or you don't have access to it.",
-            variant: "destructive",
-          });
           return false;
         }
         
@@ -299,15 +295,14 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
           secondaryColor: orgData.secondary_color,
           createdAt: new Date(orgData.created_at),
           updatedAt: new Date(orgData.updated_at),
+          role: 'agent'
         };
         
-        // Add to organizations list if not already there
         setOrganizations(prev => {
           const exists = prev.find(org => org.id === organizationId);
           return exists ? prev : [...prev, targetOrg!];
         });
 
-        // Ensure user is a member
         if (user?.id) {
           await ensureOrganizationMembership(targetOrg.id, user.id);
         }
@@ -317,15 +312,9 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       setCurrentOrganization(targetOrg);
       localStorage.setItem('currentOrganizationId', organizationId);
       
-      console.log("Organization switch completed successfully");
       return true;
     } catch (error) {
       console.error('Error switching organization:', error);
-      toast({
-        title: "Error", 
-        description: "Failed to switch organization.",
-        variant: "destructive",
-      });
       return false;
     }
   };
@@ -333,18 +322,12 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
   // Create a new organization
   const createOrganization = async (name: string, slug: string): Promise<Organization | null> => {
     if (!user?.id) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to create an organization.",
-        variant: "destructive",
-      });
       return null;
     }
 
     try {
       console.log("Creating new organization:", name, slug);
       
-      // First create the organization
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .insert([{
@@ -356,17 +339,9 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
       if (orgError) {
         console.error('Error creating organization:', orgError);
-        toast({
-          title: "Error",
-          description: "Failed to create organization. The slug may already be taken.",
-          variant: "destructive",
-        });
         return null;
       }
 
-      console.log("Organization created:", orgData);
-
-      // Then add the user as an admin member
       const { error: memberError } = await supabase
         .from('organization_members')
         .insert([{
@@ -377,17 +352,9 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
       if (memberError) {
         console.error('Error adding user to organization:', memberError);
-        // Try to clean up the organization if member creation failed
         await supabase.from('organizations').delete().eq('id', orgData.id);
-        toast({
-          title: "Error",
-          description: "Failed to set up organization membership.",
-          variant: "destructive",
-        });
         return null;
       }
-
-      console.log("User added to organization as owner");
 
       const newOrg: Organization = {
         id: orgData.id,
@@ -400,24 +367,14 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         updatedAt: new Date(orgData.updated_at),
       };
 
-      // Update local state
-      setOrganizations(prev => [...prev, newOrg]);
-      setCurrentOrganization(newOrg);
+      const newOrgWithRole: OrganizationWithRole = { ...newOrg, role: 'owner' };
+      setOrganizations(prev => [...prev, newOrgWithRole]);
+      setCurrentOrganization(newOrgWithRole);
       localStorage.setItem('currentOrganizationId', newOrg.id);
-
-      toast({
-        title: "Success",
-        description: `Organization "${name}" created successfully!`,
-      });
 
       return newOrg;
     } catch (error) {
       console.error('Error creating organization:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while creating the organization.",
-        variant: "destructive",
-      });
       return null;
     }
   };
@@ -432,15 +389,9 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
 
       if (error) {
         console.error('Error updating organization:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update organization.",
-          variant: "destructive",
-        });
         return false;
       }
 
-      // Update local state
       setOrganizations(prev => 
         prev.map(org => org.id === id ? { ...org, ...data } : org)
       );
@@ -449,33 +400,11 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         setCurrentOrganization(prev => prev ? { ...prev, ...data } : null);
       }
 
-      toast({
-        title: "Success",
-        description: "Organization updated successfully!",
-      });
-
       return true;
     } catch (error) {
       console.error('Error updating organization:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while updating the organization.",
-        variant: "destructive",
-      });
       return false;
     }
-  };
-
-  // Check if user can perform action (simplified for now)
-  const canUserPerformAction = (action: "delete" | "update" | "invite"): boolean => {
-    // For now, assume all authenticated users can perform actions
-    // This would typically check the user's role in the organization
-    return !!user;
-  };
-
-  // Refresh organizations
-  const refreshOrganizations = async () => {
-    await fetchOrganizations();
   };
 
   // Load organizations when user changes
@@ -484,7 +413,6 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       console.log("User authenticated, fetching organizations");
       fetchOrganizations();
     } else {
-      // User logged out, clear organization data
       console.log("User not authenticated, clearing organization data");
       setOrganizations([]);
       setCurrentOrganization(null);
@@ -499,23 +427,23 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       value={{
         organizations,
         currentOrganization,
-        members: [], // TODO: Implement members fetching
-        invites: [], // TODO: Implement invites fetching
+        members: [],
+        invites: [],
         loading: false,
         isLoadingOrganizations,
         initialLoadComplete,
         createOrganization,
         updateOrganization,
-        deleteOrganization: async () => false, // TODO: Implement
+        deleteOrganization: async () => false,
         switchOrganization,
-        inviteMember: async () => false, // TODO: Implement
-        removeMember: async () => false, // TODO: Implement
-        updateMemberRole: async () => false, // TODO: Implement
-        getUserRole: () => null, // TODO: Implement
-        canUserPerformAction,
+        inviteMember: async () => false,
+        removeMember: async () => false,
+        updateMemberRole: async () => false,
+        getUserRole: () => currentOrganization?.role || null,
+        canUserPerformAction: () => !!user,
         organization: currentOrganization,
         getOrganizationBySlug,
-        getOrganizationMembers: async () => {}, // TODO: Implement
+        getOrganizationMembers: async () => {},
         fetchOrganizations,
         checkMembership,
         setCurrentOrganization,

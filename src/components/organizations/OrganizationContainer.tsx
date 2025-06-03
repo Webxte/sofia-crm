@@ -1,69 +1,70 @@
 
-import React, { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Building, ArrowLeft } from "lucide-react";
+import React from "react";
 import { Organization } from "@/types";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Building } from "lucide-react";
 
 interface OrganizationContainerProps {
+  children: React.ReactNode;
   title?: string;
   description?: string;
-  children: ReactNode;
-  error?: string | null;
-  showHomeButton?: boolean;
+  error?: string;
   organization?: Organization;
+  showHomeButton?: boolean;
 }
 
 export const OrganizationContainer = ({ 
+  children, 
   title, 
-  description,
-  children,
-  error,
-  showHomeButton = false,
-  organization
+  description, 
+  error, 
+  organization,
+  showHomeButton = false 
 }: OrganizationContainerProps) => {
   const navigate = useNavigate();
-  
-  const handleGoHome = () => {
-    navigate('/', { replace: true });
-  };
 
-  const displayTitle = title || organization?.name || "Organization";
-  
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary/10">
             <Building className="h-6 w-6 text-primary" />
-            <CardTitle className="text-2xl">{displayTitle}</CardTitle>
           </div>
-          {description && !error && <CardDescription>{description}</CardDescription>}
+          
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            {title || (organization ? `Access ${organization.name}` : "Organization Access")}
+          </h2>
+          
+          {description && (
+            <p className="mt-2 text-sm text-gray-600">
+              {description}
+            </p>
+          )}
+          
           {error && (
-            <div className="mt-2 text-destructive">
-              <CardDescription className="text-destructive font-medium">{error}</CardDescription>
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
-        </CardHeader>
-        <CardContent>
+        </div>
+        
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {children}
           
           {showHomeButton && (
             <div className="mt-6">
               <Button 
                 variant="outline" 
-                onClick={handleGoHome}
+                onClick={() => navigate("/")}
                 className="w-full"
-                type="button"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
+                Go Home
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
