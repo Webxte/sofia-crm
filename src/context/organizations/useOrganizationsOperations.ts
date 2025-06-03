@@ -40,11 +40,7 @@ export const useOrganizationsOperations = () => {
     updateMemberRole,
     getUserRole,
     canUserPerformAction
-  } = useOrganizationMembers({ 
-    currentOrganization, 
-    user, 
-    toast 
-  });
+  } = useOrganizationMembers();
   
   const { 
     invites, 

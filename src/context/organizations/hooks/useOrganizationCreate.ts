@@ -2,9 +2,17 @@
 import { nanoid } from "nanoid";
 import { Organization, OrganizationMember } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { OrganizationCoreProps } from "./useOrganizationCore";
+import { User } from "@supabase/supabase-js";
 
-export const useOrganizationCreate = (props: OrganizationCoreProps) => {
+interface OrganizationCreateProps {
+  setOrganizations: React.Dispatch<React.SetStateAction<Organization[]>>;
+  setCurrentOrganization: React.Dispatch<React.SetStateAction<Organization | null>>;
+  setMembers: React.Dispatch<React.SetStateAction<OrganizationMember[]>>;
+  user: User | null;
+  toast: any;
+}
+
+export const useOrganizationCreate = (props: OrganizationCreateProps) => {
   const { 
     setOrganizations, 
     setCurrentOrganization, 

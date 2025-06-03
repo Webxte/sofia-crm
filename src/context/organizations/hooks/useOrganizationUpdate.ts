@@ -1,10 +1,23 @@
 
 import { Organization } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { OrganizationCoreProps, useUpdateOrganizationState } from "./useOrganizationCore";
+import { User } from "@supabase/supabase-js";
 
-export const useOrganizationUpdate = (props: OrganizationCoreProps) => {
+interface OrganizationUpdateProps {
+  organizations: Organization[];
+  setOrganizations: React.Dispatch<React.SetStateAction<Organization[]>>;
+  currentOrganization: Organization | null;
+  setCurrentOrganization: React.Dispatch<React.SetStateAction<Organization | null>>;
+  setMembers: React.Dispatch<React.SetStateAction<any[]>>;
+  setInvites: React.Dispatch<React.SetStateAction<any[]>>;
+  user: User | null;
+  toast: any;
+}
+
+export const useOrganizationUpdate = (props: OrganizationUpdateProps) => {
   const { 
+    organizations,
+    setOrganizations,
     currentOrganization,
     setCurrentOrganization, 
     setMembers, 
@@ -12,7 +25,19 @@ export const useOrganizationUpdate = (props: OrganizationCoreProps) => {
     toast 
   } = props;
   
-  const { updateOrganizationInState, removeOrganizationFromState } = useUpdateOrganizationState(props);
+  const updateOrganizationInState = (id: string, data: Partial<Organization>) => {
+    setOrganizations(prev => 
+      prev.map(org => org.id === id ? { ...org, ...data } : org)
+    );
+    
+    if (currentOrganization?.id === id) {
+      setCurrentOrganization(prev => prev ? { ...prev, ...data } : prev);
+    }
+  };
+
+  const removeOrganizationFromState = (id: string) => {
+    setOrganizations(prev => prev.filter(org => org.id !== id));
+  };
   
   // Update organization details
   const updateOrganization = async (id: string, data: Partial<Organization>): Promise<boolean> => {
@@ -66,7 +91,7 @@ export const useOrganizationUpdate = (props: OrganizationCoreProps) => {
       // If this was the current organization, set another one as current
       if (currentOrganization?.id === id) {
         removeOrganizationFromState(id);
-        const remainingOrgs = props.organizations.filter(org => org.id !== id);
+        const remainingOrgs = organizations.filter(org => org.id !== id);
         const nextOrg = remainingOrgs[0] || null;
         
         setCurrentOrganization(nextOrg);
