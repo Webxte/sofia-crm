@@ -24,6 +24,16 @@ export const OrganizationContainer = ({
 }: OrganizationContainerProps) => {
   const navigate = useNavigate();
 
+  const handleLoginClick = () => {
+    console.log("Navigating to login page");
+    navigate("/login");
+  };
+
+  const handleHomeClick = () => {
+    console.log("Navigating to home page");
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -52,11 +62,29 @@ export const OrganizationContainer = ({
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {children}
           
-          {showHomeButton && (
+          {title === "Authentication Required" && (
+            <div className="mt-6 space-y-3">
+              <Button 
+                onClick={handleLoginClick}
+                className="w-full"
+              >
+                Go to Login
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleHomeClick}
+                className="w-full"
+              >
+                Go Home
+              </Button>
+            </div>
+          )}
+          
+          {showHomeButton && title !== "Authentication Required" && (
             <div className="mt-6">
               <Button 
                 variant="outline" 
-                onClick={() => navigate("/")}
+                onClick={handleHomeClick}
                 className="w-full"
               >
                 Go Home

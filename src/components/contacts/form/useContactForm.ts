@@ -69,7 +69,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       if (!currentOrganization) {
         toast({
           title: "Error",
-          description: "No organization selected",
+          description: "No organization selected. Please select an organization first.",
           variant: "destructive",
         });
         return;
@@ -79,15 +79,19 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       const contactData = {
         ...values,
         agentId: user.id,
-        agentName: user.name || '',
+        agentName: user.name || user.email || '',
         organizationId: currentOrganization.id
       };
       
-      console.log("Contact form submission:", contactData);
+      console.log("Contact form submission:", {
+        ...contactData,
+        currentOrganization: currentOrganization.name,
+        userId: user.id
+      });
       
       // Ensure source is set if not provided
       if (!values.source && user?.name) {
-        values.source = user.name;
+        contactData.source = user.name;
       }
       
       if (isEditing && contact) {
@@ -100,14 +104,17 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         });
       } else {
         // Create new contact with current timestamp
-        console.log("Creating new contact");
+        console.log("Creating new contact with organization:", currentOrganization.id);
         const now = new Date();
         const newContact: Omit<Contact, "id"> = {
           ...contactData,
           createdAt: now,
           updatedAt: now
         };
-        await addContact(newContact);
+        
+        const result = await addContact(newContact);
+        console.log("Contact creation result:", result);
+        
         toast({
           title: "Success",
           description: "Contact created successfully!",
