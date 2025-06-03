@@ -30,7 +30,7 @@ import Reports from './pages/Reports';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import Layout from './components/layout/Layout';
+import SimpleLayout from './components/layout/SimpleLayout';
 import NotFound from './pages/NotFound';
 import Calendar from './pages/Calendar';
 import Index from './pages/Index';
@@ -46,7 +46,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Signup />} />
         
-        {/* Protected routes - wrapped in Layout */}
+        {/* Protected routes - wrapped in SimpleLayout */}
         <Route path="/" element={
           <ProtectedRoute>
             <SettingsProvider>
@@ -55,7 +55,7 @@ export default function App() {
                   <TasksProvider>
                     <ProductsProvider>
                       <OrdersProvider>
-                        <Layout />
+                        <SimpleLayout />
                       </OrdersProvider>
                     </ProductsProvider>
                   </TasksProvider>
