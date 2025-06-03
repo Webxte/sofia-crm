@@ -1,29 +1,15 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Organization, OrganizationMember } from "@/types";
+import { OrganizationWithRole, OrganizationsContextType } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-interface OrganizationsContextType {
-  organizations: Organization[];
-  currentOrganization: Organization | null;
-  isLoadingOrganizations: boolean;
-  initialLoadComplete: boolean;
-  switchOrganization: (organizationId: string) => Promise<boolean>;
-  refreshOrganizations: () => Promise<void>;
-  createOrganization: (name: string, slug: string) => Promise<Organization | null>;
-  updateOrganization: (id: string, data: Partial<Organization>) => Promise<boolean>;
-  getOrganizationBySlug: (slug: string) => Promise<Organization | null>;
-  fetchOrganizations: () => Promise<void>;
-  canUserPerformAction: (action: "delete" | "update" | "invite") => boolean;
-}
-
 const OrganizationsContext = createContext<OrganizationsContextType | undefined>(undefined);
 
 export const OrganizationsProvider = ({ children }: { children: ReactNode }) => {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+  const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([]);
+  const [currentOrganization, setCurrentOrganization] = useState<OrganizationWithRole | null>(null);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const { user, isAuthenticated } = useAuth();
@@ -67,6 +53,30 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
+  // Check if user is a member of organization
+  const checkMembership = async (organizationId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error("Error checking membership:", error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error("Error checking membership:", error);
+      return false;
+    }
+  };
+
   // Ensure user is a member of organization
   const ensureOrganizationMembership = async (orgId: string, userId: string): Promise<boolean> => {
     try {
@@ -95,7 +105,7 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
         .insert({
           organization_id: orgId,
           user_id: userId,
-          role: 'member'
+          role: 'agent'
         });
 
       if (addError) {
@@ -489,15 +499,26 @@ export const OrganizationsProvider = ({ children }: { children: ReactNode }) => 
       value={{
         organizations,
         currentOrganization,
+        members: [], // TODO: Implement members fetching
+        invites: [], // TODO: Implement invites fetching
+        loading: false,
         isLoadingOrganizations,
         initialLoadComplete,
-        switchOrganization,
-        refreshOrganizations,
         createOrganization,
         updateOrganization,
-        getOrganizationBySlug,
-        fetchOrganizations,
+        deleteOrganization: async () => false, // TODO: Implement
+        switchOrganization,
+        inviteMember: async () => false, // TODO: Implement
+        removeMember: async () => false, // TODO: Implement
+        updateMemberRole: async () => false, // TODO: Implement
+        getUserRole: () => null, // TODO: Implement
         canUserPerformAction,
+        organization: currentOrganization,
+        getOrganizationBySlug,
+        getOrganizationMembers: async () => {}, // TODO: Implement
+        fetchOrganizations,
+        checkMembership,
+        setCurrentOrganization,
       }}
     >
       {children}

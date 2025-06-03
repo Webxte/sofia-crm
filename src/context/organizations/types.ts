@@ -1,9 +1,14 @@
 
 import { Organization, OrganizationMember, OrganizationInvite } from "@/types";
 
+// Extended Organization type that includes role information
+export interface OrganizationWithRole extends Organization {
+  role?: OrganizationMember['role'];
+}
+
 export interface OrganizationsContextType {
-  organizations: Organization[];
-  currentOrganization: Organization | null;
+  organizations: OrganizationWithRole[];
+  currentOrganization: OrganizationWithRole | null;
   members: OrganizationMember[];
   invites: OrganizationInvite[];
   loading: boolean;
@@ -19,13 +24,13 @@ export interface OrganizationsContextType {
   getUserRole: () => OrganizationMember['role'] | null;
   canUserPerformAction: (action: "delete" | "update" | "invite") => boolean;
   
-  // Added missing properties and methods
-  organization: Organization | null;
+  // Missing properties and methods
+  organization: OrganizationWithRole | null;
   getOrganizationBySlug: (slug: string) => Promise<Organization | null>;
   getOrganizationMembers: (slug: string) => Promise<void>;
   fetchOrganizations: () => Promise<void>;
   checkMembership: (organizationId: string) => Promise<boolean>;
-  setCurrentOrganization: (organization: Organization | null) => void;
+  setCurrentOrganization: (organization: OrganizationWithRole | null) => void;
 }
 
 // Export the Organization type for use in other files

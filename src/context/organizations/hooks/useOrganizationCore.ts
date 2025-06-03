@@ -1,14 +1,16 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Organization } from "@/types";
+import { OrganizationWithRole } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
 export interface OrganizationCoreProps {
-  organizations: Organization[];
-  setOrganizations: React.Dispatch<React.SetStateAction<Organization[]>>;
-  currentOrganization: Organization | null;
-  setCurrentOrganization: React.Dispatch<React.SetStateAction<Organization | null>>;
+  organizations: OrganizationWithRole[];
+  setOrganizations: React.Dispatch<React.SetStateAction<OrganizationWithRole[]>>;
+  currentOrganization: OrganizationWithRole | null;
+  setCurrentOrganization: React.Dispatch<React.SetStateAction<OrganizationWithRole | null>>;
   setMembers: React.Dispatch<React.SetStateAction<any[]>>;
   setInvites: React.Dispatch<React.SetStateAction<any[]>>;
   user: any;
@@ -38,8 +40,8 @@ export const useUpdateOrganizationState = (props: OrganizationCoreProps) => {
 };
 
 export const useOrganizationCore = () => {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+  const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([]);
+  const [currentOrganization, setCurrentOrganization] = useState<OrganizationWithRole | null>(null);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const { user, isAuthenticated } = useAuth();
@@ -84,7 +86,7 @@ export const useOrganizationCore = () => {
 
       console.log("Raw organization memberships:", data);
 
-      const orgs: Organization[] = (data || [])
+      const orgs: OrganizationWithRole[] = (data || [])
         .filter(item => item.organizations)
         .map(item => ({
           id: item.organizations!.id,
@@ -191,8 +193,7 @@ export const useOrganizationCore = () => {
         primaryColor: data.primary_color,
         secondaryColor: data.secondary_color,
         createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-        role: "agent" // Default role when getting by slug
+        updatedAt: new Date(data.updated_at)
       };
     } catch (error) {
       console.error("Error in getOrganizationBySlug:", error);
@@ -247,7 +248,7 @@ export const useOrganizationCore = () => {
   useEffect(() => {
     if (organizations.length > 0 && !currentOrganization) {
       const storedOrgId = localStorage.getItem('currentOrganizationId');
-      let orgToSet: Organization | null = null;
+      let orgToSet: OrganizationWithRole | null = null;
 
       if (storedOrgId) {
         orgToSet = organizations.find(org => org.id === storedOrgId) || null;
