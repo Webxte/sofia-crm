@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useContext, createContext, useCallback, useMemo } from "react";
+import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
@@ -22,16 +22,16 @@ interface AuthContextType {
 }
 
 // Create context with undefined as default value
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Initialize state with useState hook - using imported hooks directly
-  const [user, setUser] = useState<ExtendedUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize state with useState hook - using React namespace
+  const [user, setUser] = React.useState<ExtendedUser | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   
   // Helper function to extract user name from metadata
-  const getUserWithName = useCallback((supabaseUser: User | null): ExtendedUser | null => {
+  const getUserWithName = React.useCallback((supabaseUser: User | null): ExtendedUser | null => {
     if (!supabaseUser) return null;
     
     // Get stored organization ID if available
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     console.log("Setting up auth state listener");
     
     // Set up the auth state listener first (this order is important)
@@ -86,10 +86,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [getUserWithName]);
 
   // Determine if user is admin from metadata
-  const isAdmin = useMemo(() => !!user && user.user_metadata?.role === "admin", [user]);
-  const isAuthenticated = useMemo(() => !!session, [session]);
+  const isAdmin = React.useMemo(() => !!user && user.user_metadata?.role === "admin", [user]);
+  const isAuthenticated = React.useMemo(() => !!session, [session]);
 
-  const loginFn = useCallback(async (email: string, password: string) => {
+  const loginFn = React.useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const createUserFn = useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
+  const createUserFn = React.useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
     setIsLoading(true);
     try {
       const { error, data } = await supabase.auth.signUp({
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const logoutFn = useCallback(async () => {
+  const logoutFn = React.useCallback(async () => {
     setIsLoading(true);
     try {
       // First clear state so the UI updates immediately
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const contextValue = useMemo<AuthContextType>(() => ({
+  const contextValue = React.useMemo<AuthContextType>(() => ({
     user,
     session,
     isAuthenticated,
@@ -172,7 +172,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
