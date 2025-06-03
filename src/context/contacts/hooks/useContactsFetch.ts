@@ -30,9 +30,12 @@ export const useContactsFetch = () => {
       setLoading(true);
       console.log("useContactsFetch: Fetching contacts for organization:", {
         organizationId: currentOrganization.id,
-        organizationName: currentOrganization.name
+        organizationName: currentOrganization.name,
+        userId: user.id
       });
       
+      // With RLS policies in place, we can query directly without organization_id filter
+      // The RLS policy will automatically filter by organization membership
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
@@ -41,13 +44,26 @@ export const useContactsFetch = () => {
 
       if (error) {
         console.error('useContactsFetch: Error fetching contacts:', error);
+        
+        // Check if it's an RLS policy error
+        if (error.code === 'PGRST116' || error.message.includes('row-level security')) {
+          console.error('useContactsFetch: RLS policy error - user may not be a member of organization');
+          toast({
+            title: "Access Denied", 
+            description: "You don't have permission to view contacts for this organization.",
+            variant: "destructive",
+          });
+          setContacts([]);
+          return;
+        }
+        
         throw error;
       }
 
       console.log("useContactsFetch: Raw contacts data from Supabase:", {
         count: data?.length || 0,
         organizationId: currentOrganization.id,
-        data: data
+        sample: data?.slice(0, 2).map(c => ({ id: c.id, name: c.full_name, org: c.organization_id }))
       });
 
       const formattedContacts: Contact[] = (data || []).map(contact => {

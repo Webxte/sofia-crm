@@ -25,13 +25,13 @@ export const OrganizationContainer = ({
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
-    console.log("Navigating to login page");
-    navigate("/login", { replace: true });
+    console.log("OrganizationContainer: Navigating to login page");
+    navigate("/login");
   };
 
   const handleHomeClick = () => {
-    console.log("Navigating to home page");
-    navigate("/", { replace: true });
+    console.log("OrganizationContainer: Navigating to home page");
+    navigate("/");
   };
 
   return (
@@ -62,12 +62,13 @@ export const OrganizationContainer = ({
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {children}
           
-          {/* Only show navigation buttons for Authentication Required case */}
+          {/* Show navigation buttons for Authentication Required case only */}
           {title === "Authentication Required" && (
             <div className="mt-6 space-y-3">
               <Button 
                 onClick={handleLoginClick}
                 className="w-full"
+                type="button"
               >
                 Go to Login
               </Button>
@@ -75,6 +76,7 @@ export const OrganizationContainer = ({
                 variant="outline"
                 onClick={handleHomeClick}
                 className="w-full"
+                type="button"
               >
                 Go Home
               </Button>
@@ -88,6 +90,7 @@ export const OrganizationContainer = ({
                 variant="outline" 
                 onClick={handleHomeClick}
                 className="w-full"
+                type="button"
               >
                 Go Home
               </Button>

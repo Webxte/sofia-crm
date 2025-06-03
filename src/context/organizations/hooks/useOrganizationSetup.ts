@@ -14,12 +14,12 @@ export const useOrganizationSetup = (
 
   const addUserToBelmorso = useCallback(async (userId: string) => {
     try {
-      console.log("Adding user to belmorso organization");
+      console.log("useOrganizationSetup: Adding user to belmorso organization");
       
       let belmorsoOrg = await getOrganizationBySlug('belmorso');
       
       if (!belmorsoOrg) {
-        console.log("Belmorso organization not found, creating it");
+        console.log("useOrganizationSetup: Belmorso organization not found, creating it");
         
         const { data: createdOrg, error: createError } = await supabase
           .from('organizations')
@@ -31,7 +31,7 @@ export const useOrganizationSetup = (
           .single();
         
         if (createError) {
-          console.error("Error creating Belmorso organization:", createError);
+          console.error("useOrganizationSetup: Error creating Belmorso organization:", createError);
           return;
         }
 
@@ -48,30 +48,37 @@ export const useOrganizationSetup = (
       }
 
       if (belmorsoOrg) {
+        console.log("useOrganizationSetup: Ensuring membership for belmorso");
         const membershipSuccess = await ensureOrganizationMembership(belmorsoOrg.id, userId);
         
         if (membershipSuccess) {
           const belmorsoWithRole: OrganizationWithRole = {
             ...belmorsoOrg,
-            role: 'member' as "owner" | "admin" | "member" | "manager" | "guest"
+            role: 'member' as const
           };
           
+          console.log("useOrganizationSetup: Setting belmorso as organizations and current org");
           setOrganizations([belmorsoWithRole]);
           setCurrentOrganization(belmorsoWithRole);
-          console.log("Set Belmorso as current organization");
+          
+          // Store in localStorage for persistence
+          localStorage.setItem('currentOrganizationId', belmorsoOrg.id);
         }
       }
     } catch (error) {
-      console.error("Error in addUserToBelmorso:", error);
+      console.error("useOrganizationSetup: Error in addUserToBelmorso:", error);
     }
   }, [getOrganizationBySlug, ensureOrganizationMembership, setOrganizations, setCurrentOrganization]);
 
   const initializeUserOrganizations = useCallback(async (userId: string) => {
     try {
+      console.log("useOrganizationSetup: Initializing organizations for user:", userId);
+      
       const userOrgs = await fetchUserOrganizations(userId);
+      console.log("useOrganizationSetup: Found user organizations:", userOrgs.length);
       
       if (userOrgs.length === 0) {
-        console.log("User has no organizations, attempting to add to belmorso");
+        console.log("useOrganizationSetup: User has no organizations, attempting to add to belmorso");
         await addUserToBelmorso(userId);
         return;
       }
@@ -84,17 +91,21 @@ export const useOrganizationSetup = (
 
       if (storedOrgId) {
         orgToSet = userOrgs.find(org => org.id === storedOrgId) || null;
+        console.log("useOrganizationSetup: Found stored organization:", orgToSet?.name);
       }
       
       if (!orgToSet && userOrgs.length > 0) {
         orgToSet = userOrgs[0];
+        console.log("useOrganizationSetup: Using first available organization:", orgToSet.name);
       }
 
       if (orgToSet) {
         setCurrentOrganization(orgToSet);
+        localStorage.setItem('currentOrganizationId', orgToSet.id);
+        console.log("useOrganizationSetup: Set current organization:", orgToSet.name);
       }
     } catch (error) {
-      console.error("Error in initializeUserOrganizations:", error);
+      console.error("useOrganizationSetup: Error in initializeUserOrganizations:", error);
     }
   }, [fetchUserOrganizations, addUserToBelmorso, setOrganizations, setCurrentOrganization]);
 

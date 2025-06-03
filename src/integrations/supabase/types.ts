@@ -685,6 +685,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_current_organization: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_organization_memberships: {
         Args: { user_uuid: string }
         Returns: {
@@ -718,6 +722,10 @@ export type Database = {
       }
       is_organization_owner: {
         Args: { user_uuid: string; org_id: string }
+        Returns: boolean
+      }
+      is_user_organization_member: {
+        Args: { user_uuid: string; org_uuid: string }
         Returns: boolean
       }
     }

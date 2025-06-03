@@ -22,7 +22,8 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
     hasUser: !!user,
     hasOrganization: !!currentOrganization,
     organizationId: currentOrganization?.id,
-    organizationName: currentOrganization?.name
+    organizationName: currentOrganization?.name,
+    userId: user?.id
   });
   
   const form = useForm<ContactFormValues>({
@@ -65,7 +66,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
 
   const onSubmit = async (values: ContactFormValues) => {
     try {
-      console.log("Contact form submission started", {
+      console.log("useContactForm: Contact form submission started", {
         isEditing,
         hasUser: !!user,
         userId: user?.id,
@@ -76,7 +77,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       });
 
       if (!user) {
-        console.error("No user found for contact form submission");
+        console.error("useContactForm: No user found for contact form submission");
         toast({
           title: "Error",
           description: "You must be logged in to add contacts",
@@ -86,7 +87,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       }
       
       if (!currentOrganization) {
-        console.error("No organization found for contact form submission");
+        console.error("useContactForm: No organization found for contact form submission");
         toast({
           title: "Error",
           description: "No organization selected. Please select an organization first.",
@@ -95,15 +96,19 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         return;
       }
       
-      // Add agent and organization information
+      // Add agent and organization information - ensure organization ID is set
       const contactData = {
         ...values,
         agentId: user.id,
         agentName: user.name || user.email || '',
-        organizationId: currentOrganization.id
+        organizationId: currentOrganization.id // This is critical for RLS policies
       };
       
-      console.log("Contact data prepared for submission:", contactData);
+      console.log("useContactForm: Contact data prepared for submission:", {
+        ...contactData,
+        organizationId: contactData.organizationId,
+        agentId: contactData.agentId
+      });
       
       // Ensure source is set if not provided
       if (!values.source && user?.name) {
@@ -112,9 +117,9 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       
       if (isEditing && contact) {
         // Update existing contact
-        console.log("Updating existing contact:", contact.id);
+        console.log("useContactForm: Updating existing contact:", contact.id);
         const result = await updateContact(contact.id, contactData);
-        console.log("Contact update result:", result);
+        console.log("useContactForm: Contact update result:", !!result);
         
         toast({
           title: "Success",
@@ -122,7 +127,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         });
       } else {
         // Create new contact with current timestamp
-        console.log("Creating new contact");
+        console.log("useContactForm: Creating new contact");
         const now = new Date();
         const newContact: Omit<Contact, "id"> = {
           ...contactData,
@@ -130,19 +135,24 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
           updatedAt: now
         };
         
-        console.log("Final contact data for creation:", newContact);
+        console.log("useContactForm: Final contact data for creation:", {
+          organizationId: newContact.organizationId,
+          agentId: newContact.agentId,
+          fullName: newContact.fullName,
+          email: newContact.email
+        });
         
         const result = await addContact(newContact);
-        console.log("Contact creation result:", result);
+        console.log("useContactForm: Contact creation result:", !!result);
         
         if (result) {
-          console.log("Contact created successfully with ID:", result.id);
+          console.log("useContactForm: Contact created successfully with ID:", result.id);
           toast({
             title: "Success",
             description: "Contact created successfully!",
           });
         } else {
-          console.error("Contact creation returned null result");
+          console.error("useContactForm: Contact creation returned null result");
           toast({
             title: "Warning",
             description: "Contact may not have been created properly. Please check the contacts list.",
@@ -152,16 +162,26 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       }
       
       // Navigate back to contacts page
-      console.log("Navigating to contacts page");
+      console.log("useContactForm: Navigating to contacts page");
       navigate("/contacts");
       
     } catch (error) {
-      console.error("Contact form submission error:", error);
-      toast({
-        title: "Error",
-        description: isEditing ? "Failed to update contact." : "Failed to create contact.",
-        variant: "destructive",
-      });
+      console.error("useContactForm: Contact form submission error:", error);
+      
+      // Check if it's an RLS policy error
+      if (error instanceof Error && (error.message.includes('row-level security') || error.message.includes('permission'))) {
+        toast({
+          title: "Permission Error",
+          description: "You don't have permission to perform this action. Please check your organization membership.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: isEditing ? "Failed to update contact." : "Failed to create contact.",
+          variant: "destructive",
+        });
+      }
     }
   };
   

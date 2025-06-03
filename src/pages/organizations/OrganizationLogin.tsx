@@ -24,40 +24,43 @@ const OrganizationLogin = () => {
   const [organization, setOrganization] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [passwordVerifying, setPasswordVerifying] = useState(false);
+  const [hasCheckedMembership, setHasCheckedMembership] = useState(false);
   
   const slug = searchParams.get("slug") || "belmorso";
 
   useEffect(() => {
     const loadOrganization = async () => {
-      console.log("Loading organization with slug:", slug);
+      console.log("OrganizationLogin: Loading organization with slug:", slug);
       setLoading(true);
       
       try {
         const org = await getOrganizationBySlug(slug);
-        console.log("Organization loaded:", org);
+        console.log("OrganizationLogin: Organization loaded:", org);
         setOrganization(org);
         
-        // If user is authenticated and we found the organization
-        if (isAuthenticated && user && org) {
-          console.log("User already authenticated and organization found, checking membership");
+        if (!org) {
+          console.log("OrganizationLogin: No organization found");
+          return;
+        }
+
+        // If user is authenticated and we found the organization, check membership
+        if (isAuthenticated && user && !hasCheckedMembership) {
+          console.log("OrganizationLogin: User authenticated, checking membership");
+          setHasCheckedMembership(true);
           
-          // Check if user is already a member
           const isMember = await checkMembership(org.id);
+          console.log("OrganizationLogin: Is member?", isMember);
           
           if (isMember) {
-            // User is already a member, set as current org and navigate
-            console.log("User is already a member, navigating to dashboard");
+            console.log("OrganizationLogin: User is member, setting current org and navigating");
             setCurrentOrganization(org);
-            setTimeout(() => {
-              navigate("/dashboard", { replace: true });
-            }, 500);
+            navigate("/dashboard", { replace: true });
           } else {
-            // User is not a member, they need to enter password
-            console.log("User is not a member of this organization");
+            console.log("OrganizationLogin: User is not a member, password required");
           }
         }
       } catch (error) {
-        console.error("Error loading organization:", error);
+        console.error("OrganizationLogin: Error loading organization:", error);
         toast({
           title: "Error",
           description: "Failed to load organization",
@@ -69,13 +72,16 @@ const OrganizationLogin = () => {
     };
 
     loadOrganization();
-  }, [slug, getOrganizationBySlug, isAuthenticated, user, checkMembership, setCurrentOrganization, navigate, toast]);
+  }, [slug, getOrganizationBySlug, isAuthenticated, user, hasCheckedMembership, checkMembership, setCurrentOrganization, navigate, toast]);
 
   const addUserToOrganization = async (organizationId: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error("OrganizationLogin: No user to add to organization");
+      return false;
+    }
 
     try {
-      console.log("Adding user to organization:", organizationId);
+      console.log("OrganizationLogin: Adding user to organization:", organizationId);
       
       const { error } = await supabase
         .from('organization_members')
@@ -86,42 +92,40 @@ const OrganizationLogin = () => {
         });
 
       if (error) {
-        console.error("Error adding user to organization:", error);
+        console.error("OrganizationLogin: Error adding user to organization:", error);
         toast({
           title: "Error",
           description: "Failed to join organization",
           variant: "destructive",
         });
-        return;
+        return false;
       }
 
-      console.log("Successfully added user to organization");
-      
-      // Set as current organization and navigate
-      if (organization) {
-        setCurrentOrganization({ ...organization, role: 'member' });
-        setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 500);
-      }
+      console.log("OrganizationLogin: Successfully added user to organization");
+      return true;
       
     } catch (error) {
-      console.error("Error in addUserToOrganization:", error);
+      console.error("OrganizationLogin: Error in addUserToOrganization:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+      return false;
     }
   };
 
   const handlePasswordSubmit = async (password: string) => {
-    if (!organization) return;
+    if (!organization || !user) {
+      console.error("OrganizationLogin: Missing organization or user for password submit");
+      return;
+    }
     
     setPasswordVerifying(true);
     
     try {
-      // Check password using Supabase function
+      console.log("OrganizationLogin: Verifying password for organization:", organization.id);
+      
       const { data: isValidPassword, error } = await supabase
         .rpc('check_organization_password', {
           org_id: organization.id,
@@ -129,7 +133,7 @@ const OrganizationLogin = () => {
         });
 
       if (error) {
-        console.error("Error checking password:", error);
+        console.error("OrganizationLogin: Error checking password:", error);
         toast({
           title: "Error",
           description: "Failed to verify password",
@@ -139,6 +143,7 @@ const OrganizationLogin = () => {
       }
 
       if (!isValidPassword) {
+        console.log("OrganizationLogin: Invalid password provided");
         toast({
           title: "Invalid Password",
           description: "The password you entered is incorrect.",
@@ -147,25 +152,30 @@ const OrganizationLogin = () => {
         return;
       }
 
-      console.log("Password verified successfully");
+      console.log("OrganizationLogin: Password verified successfully");
 
-      // Password is correct, add user to organization if not already a member
-      if (user) {
-        const isMember = await checkMembership(organization.id);
-        
-        if (!isMember) {
-          await addUserToOrganization(organization.id);
-        } else {
-          // User is already a member, just set as current org and navigate
-          setCurrentOrganization({ ...organization, role: 'member' });
-          setTimeout(() => {
-            navigate("/dashboard", { replace: true });
-          }, 500);
+      // Check if user is already a member
+      const isMember = await checkMembership(organization.id);
+      
+      if (!isMember) {
+        console.log("OrganizationLogin: Adding user to organization");
+        const success = await addUserToOrganization(organization.id);
+        if (!success) {
+          return;
         }
+      } else {
+        console.log("OrganizationLogin: User is already a member");
       }
+
+      // Set as current organization and navigate
+      const orgWithRole = { ...organization, role: 'member' as const };
+      setCurrentOrganization(orgWithRole);
+      
+      console.log("OrganizationLogin: Navigating to dashboard");
+      navigate("/dashboard", { replace: true });
       
     } catch (error) {
-      console.error("Error in password verification:", error);
+      console.error("OrganizationLogin: Error in password verification:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -196,7 +206,6 @@ const OrganizationLogin = () => {
     );
   }
 
-  // If user is not authenticated, show authentication required message
   if (!isAuthenticated) {
     return (
       <OrganizationContainer 
