@@ -150,13 +150,28 @@ export const useMeetingCRUD = () => {
     }
   };
 
-  const sendMeetingEmail = async (meetingId: string, emailData: any) => {
-    // Placeholder implementation for meeting email functionality
-    console.log("Send meeting email for:", meetingId, emailData);
-    toast({
-      title: "Info",
-      description: "Meeting email feature is not yet implemented",
-    });
+  const sendMeetingEmail = async (meetingId: string, emailData: any): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("send-meeting-email", {
+        body: emailData
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Meeting email sent successfully",
+      });
+      return true;
+    } catch (error) {
+      console.error("Error sending meeting email:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send meeting email",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   // Alias for compatibility
