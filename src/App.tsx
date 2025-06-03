@@ -2,7 +2,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
-import { OrganizationsProvider } from './context/organizations/OrganizationsContext';
 import { ContactsProvider } from './context/contacts/ContactsContext';
 import { MeetingsProvider } from './context/meetings';
 import { TasksProvider } from './context/tasks';
@@ -30,9 +29,6 @@ import Settings from './pages/Settings';
 import Reports from './pages/Reports';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
-import OrganizationSettings from './pages/organizations/OrganizationSettings';
-import NewOrganization from './pages/organizations/NewOrganization';
-import OrganizationLogin from './pages/organizations/OrganizationLogin';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import NotFound from './pages/NotFound';
@@ -42,61 +38,56 @@ import Index from './pages/Index';
 export default function App() {
   return (
     <ErrorBoundary>
-      <OrganizationsProvider>
-        <Routes>
-          {/* Root index route - decides where to navigate */}
-          <Route index element={<Index />} />
+      <Routes>
+        {/* Root index route - decides where to navigate */}
+        <Route index element={<Index />} />
 
-          {/* Auth routes - these don't need the other providers */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Signup />} />
-          <Route path="/organizations/new" element={<NewOrganization />} />
-          <Route path="/organizations/login" element={<OrganizationLogin />} />
-          
-          {/* Protected routes - these need all providers and are wrapped in Layout */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <SettingsProvider>
-                <ContactsProvider>
-                  <MeetingsProvider>
-                    <TasksProvider>
-                      <ProductsProvider>
-                        <OrdersProvider>
-                          <Layout />
-                        </OrdersProvider>
-                      </ProductsProvider>
-                    </TasksProvider>
-                  </MeetingsProvider>
-                </ContactsProvider>
-              </SettingsProvider>
-            </ProtectedRoute>
-          }>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/contacts/:id" element={<ContactDetails />} />
-            <Route path="/contacts/:id/edit" element={<EditContact />} />
-            <Route path="/contacts/new" element={<NewContact />} />
-            <Route path="/meetings" element={<Meetings />} />
-            <Route path="/meetings/:id" element={<MeetingDetails />} />
-            <Route path="/meetings/:id/edit" element={<EditMeeting />} />
-            <Route path="/meetings/new" element={<NewMeeting />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/tasks/:id" element={<TaskDetails />} />
-            <Route path="/tasks/:id/edit" element={<EditTask />} />
-            <Route path="/tasks/new" element={<NewTask />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/orders/:id" element={<OrderDetails />} />
-            <Route path="/orders/:id/edit" element={<EditOrder />} />
-            <Route path="/orders/new" element={<NewOrder />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<ProtectedRoute requireAdmin={true}><Settings /></ProtectedRoute>} />
-            <Route path="/organizations/settings" element={<OrganizationSettings />} />
-          </Route>
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </OrganizationsProvider>
+        {/* Auth routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Signup />} />
+        
+        {/* Protected routes - wrapped in Layout */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <SettingsProvider>
+              <ContactsProvider>
+                <MeetingsProvider>
+                  <TasksProvider>
+                    <ProductsProvider>
+                      <OrdersProvider>
+                        <Layout />
+                      </OrdersProvider>
+                    </ProductsProvider>
+                  </TasksProvider>
+                </MeetingsProvider>
+              </ContactsProvider>
+            </SettingsProvider>
+          </ProtectedRoute>
+        }>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/contacts" element={<Contacts />} />
+          <Route path="/contacts/:id" element={<ContactDetails />} />
+          <Route path="/contacts/:id/edit" element={<EditContact />} />
+          <Route path="/contacts/new" element={<NewContact />} />
+          <Route path="/meetings" element={<Meetings />} />
+          <Route path="/meetings/:id" element={<MeetingDetails />} />
+          <Route path="/meetings/:id/edit" element={<EditMeeting />} />
+          <Route path="/meetings/new" element={<NewMeeting />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/tasks/:id" element={<TaskDetails />} />
+          <Route path="/tasks/:id/edit" element={<EditTask />} />
+          <Route path="/tasks/new" element={<NewTask />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:id" element={<OrderDetails />} />
+          <Route path="/orders/:id/edit" element={<EditOrder />} />
+          <Route path="/orders/new" element={<NewOrder />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<ProtectedRoute requireAdmin={true}><Settings /></ProtectedRoute>} />
+        </Route>
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </ErrorBoundary>
   );
 }
