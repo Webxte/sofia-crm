@@ -37,7 +37,7 @@ export const useOrganizationMembers = () => {
         .insert({
           organization_id: organizationId,
           user_id: userId,
-          role: 'agent'
+          role: 'member'
         });
 
       if (addError) {
@@ -93,7 +93,7 @@ export const useOrganizationMembers = () => {
         id: member.id,
         organizationId: member.organization_id,
         userId: member.user_id,
-        role: member.role as "owner" | "admin" | "agent",
+        role: member.role as "owner" | "admin" | "member" | "manager" | "guest",
         createdAt: new Date(member.created_at),
         updatedAt: new Date(member.updated_at)
       }));
@@ -108,7 +108,7 @@ export const useOrganizationMembers = () => {
     await fetchOrganizationMembers(organizationId);
   }, [fetchOrganizationMembers]);
 
-  const inviteMember = useCallback(async (email: string, role: "owner" | "admin" | "agent"): Promise<boolean> => {
+  const inviteMember = useCallback(async (email: string, role: "owner" | "admin" | "member" | "manager" | "guest"): Promise<boolean> => {
     try {
       // Implementation for inviting members
       console.log("Inviting member:", email, "with role:", role);
@@ -132,7 +132,7 @@ export const useOrganizationMembers = () => {
     }
   }, []);
 
-  const updateMemberRole = useCallback(async (userId: string, role: "owner" | "admin" | "agent"): Promise<boolean> => {
+  const updateMemberRole = useCallback(async (userId: string, role: "owner" | "admin" | "member" | "manager" | "guest"): Promise<boolean> => {
     try {
       // Implementation for updating member role
       console.log("Updating member role:", userId, "to:", role);
@@ -144,7 +144,7 @@ export const useOrganizationMembers = () => {
     }
   }, []);
 
-  const getUserRole = useCallback((): "owner" | "admin" | "agent" | null => {
+  const getUserRole = useCallback((): "owner" | "admin" | "member" | "manager" | "guest" | null => {
     // Implementation for getting user role
     return null;
   }, []);
