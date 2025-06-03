@@ -1,145 +1,230 @@
 
-import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { OrganizationContainer } from "@/components/organizations/OrganizationContainer";
 import { LoginForm } from "@/components/organizations/LoginForm";
-import { useOrganizationLoader } from "@/hooks/useOrganizationLoader";
-import { useOrganizationAuth } from "@/hooks/useOrganizationAuth";
-import { toast } from "@/hooks/use-toast";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-const DEFAULT_ORG_SLUG = "belmorso";
+import { useToast } from "@/hooks/use-toast";
 
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
-  const slug = searchParams.get("slug") || DEFAULT_ORG_SLUG;
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-  const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const navigate = useNavigate();
-  
-  // Use our custom hooks for organization loading and authentication
   const { 
-    organization, 
-    isLoaded, 
-    error, 
-    setError 
-  } = useOrganizationLoader(slug);
+    getOrganizationBySlug, 
+    checkMembership, 
+    setCurrentOrganization,
+    currentOrganization 
+  } = useOrganizations();
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   
-  const { 
-    isSubmitting, 
-    error: authError, 
-    handleLogin, 
-    handleSuccessfulLogin,
-    attempts
-  } = useOrganizationAuth(organization?.id, organization?.slug);
+  const [organization, setOrganization] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [passwordVerifying, setPasswordVerifying] = useState(false);
+  
+  const slug = searchParams.get("slug") || "belmorso";
 
-  // Use the combined error from both hooks
-  const displayError = authError || error;
-  
-  // Effect to handle automatic redirect if already authenticated with an organization
   useEffect(() => {
-    // Prevent multiple redirect attempts
-    if (hasAttemptedRedirect) {
-      return;
-    }
-    
-    // Only run this effect when both auth and org data are loaded
-    if (authLoading || !isLoaded) {
-      return;
-    }
-
-    // If authenticated and organization exists, try auto-navigation
-    if (isAuthenticated && organization) {
-      setHasAttemptedRedirect(true);
-      console.log("User already authenticated and organization found, attempting to navigate to dashboard");
+    const loadOrganization = async () => {
+      console.log("Loading organization with slug:", slug);
+      setLoading(true);
       
-      // Navigate to dashboard with a small delay to ensure state is properly set
-      const timer = setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, organization, navigate, authLoading, isLoaded, hasAttemptedRedirect]);
-  
-  const handleSubmit = async (password: string) => {
-    if (!organization) {
-      toast({
-        title: "Error",
-        description: "Organization not found",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      console.log(`Submitting login for organization: ${organization.name}`);
-      const success = await handleLogin(password, organization.name);
-      
-      if (success) {
-        console.log("Login successful, navigating...");
-        // Set the redirect flag to prevent loops
-        setHasAttemptedRedirect(true);
-        // Navigate after a short delay to ensure state updates
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true });
-        }, 1000);
-      } else {
-        console.log("Login failed");
+      try {
+        const org = await getOrganizationBySlug(slug);
+        console.log("Organization loaded:", org);
+        setOrganization(org);
+        
+        // If user is authenticated and we found the organization
+        if (isAuthenticated && user && org) {
+          console.log("User already authenticated and organization found, attempting to navigate to dashboard");
+          
+          // Check if user is already a member
+          const isMember = await checkMembership(org.id);
+          
+          if (isMember) {
+            // User is already a member, set as current org and navigate
+            setCurrentOrganization(org);
+            navigate("/dashboard", { replace: true });
+          } else {
+            // User is not a member, add them to the organization
+            console.log("User is not a member of this organization, adding them");
+            await addUserToOrganization(org.id);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading organization:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load organization",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Login error:", err);
+    };
+
+    loadOrganization();
+  }, [slug, getOrganizationBySlug, isAuthenticated, user, checkMembership, setCurrentOrganization, navigate, toast]);
+
+  const addUserToOrganization = async (organizationId: string) => {
+    if (!user) return;
+
+    try {
+      console.log("Adding user to organization:", organizationId);
+      
+      const { error } = await supabase
+        .from('organization_members')
+        .insert({
+          user_id: user.id,
+          organization_id: organizationId,
+          role: 'agent'
+        });
+
+      if (error) {
+        console.error("Error adding user to organization:", error);
+        toast({
+          title: "Error",
+          description: "Failed to join organization",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Successfully added user to organization");
+      
+      // Set as current organization and navigate
+      if (organization) {
+        setCurrentOrganization(organization);
+        navigate("/dashboard", { replace: true });
+      }
+      
+    } catch (error) {
+      console.error("Error in addUserToOrganization:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
-  // Show loading state
-  if ((!isLoaded || authLoading) && !displayError) {
+  const handlePasswordSubmit = async (password: string) => {
+    if (!organization) return;
+    
+    setPasswordVerifying(true);
+    
+    try {
+      // Check password using Supabase function
+      const { data: isValidPassword, error } = await supabase
+        .rpc('check_organization_password', {
+          org_id: organization.id,
+          password: password
+        });
+
+      if (error) {
+        console.error("Error checking password:", error);
+        toast({
+          title: "Error",
+          description: "Failed to verify password",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!isValidPassword) {
+        toast({
+          title: "Invalid Password",
+          description: "The password you entered is incorrect.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Password is correct, add user to organization if not already a member
+      if (user) {
+        const isMember = await checkMembership(organization.id);
+        
+        if (!isMember) {
+          await addUserToOrganization(organization.id);
+        } else {
+          // User is already a member, just set as current org and navigate
+          setCurrentOrganization(organization);
+          navigate("/dashboard", { replace: true });
+        }
+      }
+      
+    } catch (error) {
+      console.error("Error in password verification:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setPasswordVerifying(false);
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner message="Loading organization..." />
       </div>
     );
   }
 
-  // If no org found or error without an organization
-  if (displayError && !organization) {
+  if (!organization) {
     return (
-      <OrganizationContainer
-        title="Organization Error"
-        error={displayError}
-        showHomeButton
-      >
-        <div>Please check the URL or contact support.</div>
-      </OrganizationContainer>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Organization Not Found</h1>
+          <p className="text-muted-foreground">
+            The organization "{slug}" could not be found.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+          <p className="text-muted-foreground mb-4">
+            You need to be logged in to access this organization.
+          </p>
+          <button 
+            onClick={() => navigate("/login")}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <Helmet>
-        <title>{organization?.name || "Organization"} Login | CRM</title>
-      </Helmet>
-      
-      <OrganizationContainer
-        title={organization?.name || "Organization"}
-        description="Enter the organization password to continue"
-        error={displayError}
-      >
-        <LoginForm
-          organization={organization}
-          isSubmitting={isSubmitting}
-          onSubmit={handleSubmit}
-          error={displayError}
+    <OrganizationContainer organization={organization}>
+      <div className="w-full max-w-md mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold mb-2">Access {organization.name}</h1>
+          <p className="text-muted-foreground">
+            Enter the organization password to continue
+          </p>
+        </div>
+        
+        <LoginForm 
+          onSubmit={handlePasswordSubmit}
+          loading={passwordVerifying}
         />
-      </OrganizationContainer>
-    </>
+      </div>
+    </OrganizationContainer>
   );
 };
 
