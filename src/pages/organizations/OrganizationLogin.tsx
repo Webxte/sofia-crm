@@ -8,7 +8,6 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { OrganizationContainer } from "@/components/organizations/OrganizationContainer";
 import { LoginForm } from "@/components/organizations/LoginForm";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 
 const OrganizationLogin = () => {
   const [searchParams] = useSearchParams();
@@ -40,19 +39,21 @@ const OrganizationLogin = () => {
         
         // If user is authenticated and we found the organization
         if (isAuthenticated && user && org) {
-          console.log("User already authenticated and organization found, attempting to navigate to dashboard");
+          console.log("User already authenticated and organization found, checking membership");
           
           // Check if user is already a member
           const isMember = await checkMembership(org.id);
           
           if (isMember) {
             // User is already a member, set as current org and navigate
+            console.log("User is already a member, navigating to dashboard");
             setCurrentOrganization(org);
-            navigate("/dashboard", { replace: true });
+            setTimeout(() => {
+              navigate("/dashboard", { replace: true });
+            }, 500);
           } else {
-            // User is not a member, add them to the organization
-            console.log("User is not a member of this organization, adding them");
-            await addUserToOrganization(org.id);
+            // User is not a member, they need to enter password
+            console.log("User is not a member of this organization");
           }
         }
       } catch (error) {
@@ -81,7 +82,7 @@ const OrganizationLogin = () => {
         .insert({
           user_id: user.id,
           organization_id: organizationId,
-          role: 'agent'
+          role: 'member'
         });
 
       if (error) {
@@ -98,8 +99,10 @@ const OrganizationLogin = () => {
       
       // Set as current organization and navigate
       if (organization) {
-        setCurrentOrganization(organization);
-        navigate("/dashboard", { replace: true });
+        setCurrentOrganization({ ...organization, role: 'member' });
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 500);
       }
       
     } catch (error) {
@@ -144,6 +147,8 @@ const OrganizationLogin = () => {
         return;
       }
 
+      console.log("Password verified successfully");
+
       // Password is correct, add user to organization if not already a member
       if (user) {
         const isMember = await checkMembership(organization.id);
@@ -152,8 +157,10 @@ const OrganizationLogin = () => {
           await addUserToOrganization(organization.id);
         } else {
           // User is already a member, just set as current org and navigate
-          setCurrentOrganization(organization);
-          navigate("/dashboard", { replace: true });
+          setCurrentOrganization({ ...organization, role: 'member' });
+          setTimeout(() => {
+            navigate("/dashboard", { replace: true });
+          }, 500);
         }
       }
       
@@ -189,28 +196,14 @@ const OrganizationLogin = () => {
     );
   }
 
-  // If user is not authenticated, show login options
+  // If user is not authenticated, show authentication required message
   if (!isAuthenticated) {
     return (
       <OrganizationContainer 
         title="Authentication Required"
         description="You need to be logged in to access this organization."
       >
-        <div className="space-y-4">
-          <Button 
-            onClick={() => navigate("/login")}
-            className="w-full"
-          >
-            Go to Login
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => navigate("/")}
-            className="w-full"
-          >
-            Go Home
-          </Button>
-        </div>
+        <div />
       </OrganizationContainer>
     );
   }

@@ -19,7 +19,8 @@ export const useContactsFetch = () => {
       console.log("useContactsFetch: Missing requirements", {
         isAuthenticated,
         hasUser: !!user,
-        hasOrganization: !!currentOrganization
+        hasOrganization: !!currentOrganization,
+        organizationId: currentOrganization?.id
       });
       setContacts([]);
       return;
@@ -27,7 +28,10 @@ export const useContactsFetch = () => {
 
     try {
       setLoading(true);
-      console.log("useContactsFetch: Fetching contacts for organization:", currentOrganization.id);
+      console.log("useContactsFetch: Fetching contacts for organization:", {
+        organizationId: currentOrganization.id,
+        organizationName: currentOrganization.name
+      });
       
       const { data, error } = await supabase
         .from('contacts')
@@ -40,7 +44,11 @@ export const useContactsFetch = () => {
         throw error;
       }
 
-      console.log("useContactsFetch: Raw contacts data from Supabase:", data);
+      console.log("useContactsFetch: Raw contacts data from Supabase:", {
+        count: data?.length || 0,
+        organizationId: currentOrganization.id,
+        data: data
+      });
 
       const formattedContacts: Contact[] = (data || []).map(contact => {
         const formatted = {
@@ -63,7 +71,7 @@ export const useContactsFetch = () => {
         return formatted;
       });
 
-      console.log(`useContactsFetch: Successfully formatted ${formattedContacts.length} contacts`);
+      console.log(`useContactsFetch: Successfully formatted ${formattedContacts.length} contacts for organization ${currentOrganization.name}`);
       setContacts(formattedContacts);
     } catch (error) {
       console.error('useContactsFetch: Error in fetchContacts:', error);

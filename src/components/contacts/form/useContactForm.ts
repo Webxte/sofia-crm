@@ -17,6 +17,14 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
   const { user } = useAuth();
   const { currentOrganization } = useOrganizations();
   
+  console.log("useContactForm: Initializing with", {
+    isEditing,
+    hasUser: !!user,
+    hasOrganization: !!currentOrganization,
+    organizationId: currentOrganization?.id,
+    organizationName: currentOrganization?.name
+  });
+  
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -57,7 +65,18 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
 
   const onSubmit = async (values: ContactFormValues) => {
     try {
+      console.log("Contact form submission started", {
+        isEditing,
+        hasUser: !!user,
+        userId: user?.id,
+        hasOrganization: !!currentOrganization,
+        organizationId: currentOrganization?.id,
+        organizationName: currentOrganization?.name,
+        formValues: values
+      });
+
       if (!user) {
+        console.error("No user found for contact form submission");
         toast({
           title: "Error",
           description: "You must be logged in to add contacts",
@@ -67,6 +86,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       }
       
       if (!currentOrganization) {
+        console.error("No organization found for contact form submission");
         toast({
           title: "Error",
           description: "No organization selected. Please select an organization first.",
@@ -83,11 +103,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         organizationId: currentOrganization.id
       };
       
-      console.log("Contact form submission:", {
-        ...contactData,
-        currentOrganization: currentOrganization.name,
-        userId: user.id
-      });
+      console.log("Contact data prepared for submission:", contactData);
       
       // Ensure source is set if not provided
       if (!values.source && user?.name) {
@@ -96,15 +112,17 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       
       if (isEditing && contact) {
         // Update existing contact
-        console.log("Updating contact:", contact.id);
-        await updateContact(contact.id, contactData);
+        console.log("Updating existing contact:", contact.id);
+        const result = await updateContact(contact.id, contactData);
+        console.log("Contact update result:", result);
+        
         toast({
           title: "Success",
           description: "Contact updated successfully!",
         });
       } else {
         // Create new contact with current timestamp
-        console.log("Creating new contact with organization:", currentOrganization.id);
+        console.log("Creating new contact");
         const now = new Date();
         const newContact: Omit<Contact, "id"> = {
           ...contactData,
@@ -112,17 +130,33 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
           updatedAt: now
         };
         
+        console.log("Final contact data for creation:", newContact);
+        
         const result = await addContact(newContact);
         console.log("Contact creation result:", result);
         
-        toast({
-          title: "Success",
-          description: "Contact created successfully!",
-        });
+        if (result) {
+          console.log("Contact created successfully with ID:", result.id);
+          toast({
+            title: "Success",
+            description: "Contact created successfully!",
+          });
+        } else {
+          console.error("Contact creation returned null result");
+          toast({
+            title: "Warning",
+            description: "Contact may not have been created properly. Please check the contacts list.",
+            variant: "destructive",
+          });
+        }
       }
+      
+      // Navigate back to contacts page
+      console.log("Navigating to contacts page");
       navigate("/contacts");
+      
     } catch (error) {
-      console.error("Contact form error:", error);
+      console.error("Contact form submission error:", error);
       toast({
         title: "Error",
         description: isEditing ? "Failed to update contact." : "Failed to create contact.",
