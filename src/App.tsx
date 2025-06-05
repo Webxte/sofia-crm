@@ -7,7 +7,7 @@ import { MeetingsProvider } from './context/meetings';
 import { TasksProvider } from './context/tasks';
 import { ProductsProvider } from './context/products/ProductsContext';
 import { OrdersProvider } from './context/OrdersContext';
-import { SettingsProvider } from './context/SettingsContext';
+import { SettingsProvider } from './context/settings';
 import Dashboard from './pages/Dashboard';
 import Contacts from './pages/Contacts';
 import ContactDetails from './pages/ContactDetails';

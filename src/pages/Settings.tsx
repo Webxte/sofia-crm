@@ -11,7 +11,7 @@ import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
 import UnifiedEmailSettings from "@/components/settings/UnifiedEmailSettings";
 import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
-import { Settings as SettingsType } from "@/types";
+import type { Settings as SettingsType } from "@/types";
 
 const Settings = () => {
   const { settings, updateSettings, refreshSettings } = useSettings();
@@ -44,7 +44,6 @@ const Settings = () => {
   // Convert context settings to component-expected format
   const componentSettings: SettingsType = {
     id: settings.id,
-    userId: settings.userId,
     organization_id: "", // Add required field with default
     company_name: settings.companyName,
     companyName: settings.companyName,
