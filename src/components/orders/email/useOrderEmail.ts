@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
-import { useSettings } from "@/context/SettingsContext";
+import { useSettings } from "@/context/settings";
 import { useToast } from "@/hooks/use-toast";
 import { EmailFormValues } from "./emailSchema";
 import { generateDefaultEmailContent, generateDefaultEmailSubject } from "./emailUtils";

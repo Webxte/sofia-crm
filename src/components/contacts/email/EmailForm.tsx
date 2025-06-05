@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Contact } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { Loader2, Plus, Send, X } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSettings } from "@/context/SettingsContext";
+import { useSettings } from "@/context/settings";
 
 // Schema definition
 export const emailFormSchema = z.object({
