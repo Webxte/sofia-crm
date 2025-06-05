@@ -11,7 +11,7 @@ import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
 import UnifiedEmailSettings from "@/components/settings/UnifiedEmailSettings";
 import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
-import { Settings as SettingsType } from "@/types";
+import { Settings } from "@/context/settings/types";
 
 const Settings = () => {
   const { settings, updateSettings, refreshSettings } = useSettings();
@@ -22,7 +22,7 @@ const Settings = () => {
     refreshSettings();
   }, []);
   
-  const handleUpdateSettings = async (formData: Partial<SettingsType>) => {
+  const handleUpdateSettings = async (formData: Partial<Settings>) => {
     console.log("Updating settings with form data:", formData);
     await updateSettings(formData);
   };
