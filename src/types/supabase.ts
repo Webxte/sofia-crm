@@ -15,8 +15,6 @@ export type TaskRow = TablesRow<"tasks">;
 export type OrderRow = TablesRow<"orders">;
 export type OrderItemRow = TablesRow<"order_items">;
 export type ProductRow = TablesRow<"products">;
-export type OrganizationRow = TablesRow<"organizations">;
-export type OrganizationMemberRow = TablesRow<"organization_members">;
 export type SettingsRow = TablesRow<"settings">;
 export type AnalyticsEventRow = TablesRow<"analytics_events">;
 
@@ -27,8 +25,6 @@ export type TaskInsert = TablesInsert<"tasks">;
 export type OrderInsert = TablesInsert<"orders">;
 export type OrderItemInsert = TablesInsert<"order_items">;
 export type ProductInsert = TablesInsert<"products">;
-export type OrganizationInsert = TablesInsert<"organizations">;
-export type OrganizationMemberInsert = TablesInsert<"organization_members">;
 export type SettingsInsert = TablesInsert<"settings">;
 export type AnalyticsEventInsert = TablesInsert<"analytics_events">;
 
@@ -39,33 +35,11 @@ export type TaskUpdate = TablesUpdate<"tasks">;
 export type OrderUpdate = TablesUpdate<"orders">;
 export type OrderItemUpdate = TablesUpdate<"order_items">;
 export type ProductUpdate = TablesUpdate<"products">;
-export type OrganizationUpdate = TablesUpdate<"organizations">;
-export type OrganizationMemberUpdate = TablesUpdate<"organization_members">;
 export type SettingsUpdate = TablesUpdate<"settings">;
 export type AnalyticsEventUpdate = TablesUpdate<"analytics_events">;
 
 // Database function types
 export interface DatabaseFunctions {
-  is_organization_member: {
-    Args: { org_id: string; user_id: string };
-    Returns: boolean;
-  };
-  get_user_organization_role: {
-    Args: { org_id: string; user_id: string };
-    Returns: string;
-  };
-  check_user_organization_role: {
-    Args: { _user_id: string; _organization_id: string; _roles: string[] };
-    Returns: boolean;
-  };
-  is_org_admin: {
-    Args: { _user_id: string; _organization_id: string };
-    Returns: boolean;
-  };
-  is_member_of_organization: {
-    Args: { _user_id: string; _organization_id: string };
-    Returns: boolean;
-  };
   get_current_user_role: {
     Args: Record<PropertyKey, never>;
     Returns: string;

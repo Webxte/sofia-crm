@@ -32,7 +32,7 @@ export const useMeetingsOperations = () => {
     return result;
   };
 
-  const sendMeetingEmail = async (meetingId: string, emailData: any) => {
+  const sendMeetingEmail = async (meetingId: string, emailData: any): Promise<void> => {
     // Placeholder implementation
     console.log("Send meeting email:", meetingId, emailData);
   };

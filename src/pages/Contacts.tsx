@@ -17,12 +17,10 @@ import { BulkEmailDialog } from "@/components/contacts/BulkEmailDialog";
 import { useContactSorting } from "@/hooks/use-contact-sorting";
 import { useContactFilters, groupContactsByFirstLetter } from "@/utils/contactUtils";
 import { ContactSortingMenu } from "@/components/contacts/ContactSortingMenu";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 const Contacts = () => {
   const navigate = useNavigate();
   const { contacts, refreshContacts, loading } = useContacts();
-  const { currentOrganization } = useOrganizations();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
@@ -51,11 +49,10 @@ const Contacts = () => {
   // Add debug console log to help diagnose issues
   useEffect(() => {
     console.log("Contacts page mounted");
-    console.log("Current organization:", currentOrganization);
     console.log("Contacts:", contacts);
     console.log("User:", user);
     console.log("Loading state:", loading);
-  }, [contacts, currentOrganization, user, loading]);
+  }, [contacts, user, loading]);
 
   // Update view mode when screen size changes
   useEffect(() => {

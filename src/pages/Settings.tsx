@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { useSettings } from "@/context/SettingsContext";
+import { useSettings } from "@/context/settings";
 import { useProducts } from "@/context/products/ProductsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
 import UnifiedEmailSettings from "@/components/settings/UnifiedEmailSettings";
 import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
+import { Settings as SettingsType } from "@/types";
 
 const Settings = () => {
   const { settings, updateSettings, refreshSettings } = useSettings();
@@ -21,7 +22,7 @@ const Settings = () => {
     refreshSettings();
   }, []);
   
-  const handleUpdateSettings = async (formData: Partial<typeof settings>) => {
+  const handleUpdateSettings = async (formData: Partial<SettingsType>) => {
     console.log("Updating settings with form data:", formData);
     await updateSettings(formData);
   };

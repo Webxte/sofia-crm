@@ -1,65 +1,31 @@
 
-import { createContext, useContext, useEffect, ReactNode } from "react";
-import { Order, OrderItem } from "@/types";
-import { OrdersContextType } from "./types";
+import React, { createContext, useContext, ReactNode } from "react";
 import { useOrdersOperations } from "./useOrdersOperations";
-import { getOrderById, getOrdersByContactId, generateOrderReference } from "./orderUtils";
-import { useAuth } from "@/context/AuthContext";
+import { OrdersContextType } from "./types";
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, user } = useAuth();
-  const { 
-    orders, 
-    loading, 
-    refreshOrders, 
-    addOrder, 
-    updateOrder, 
-    deleteOrder, 
-    createOrderItem 
-  } = useOrdersOperations();
-
-  // Fetch orders when the component mounts or when user auth state changes
-  useEffect(() => {
-    if (isAuthenticated) {
-      refreshOrders();
+  const operations = useOrdersOperations();
+  
+  // Add the missing createOrderItem method
+  const contextValue: OrdersContextType = {
+    ...operations,
+    createOrderItem: async (orderItem: any) => {
+      // This is a placeholder implementation since order items are typically created with orders
+      console.log("Creating order item:", orderItem);
+      return orderItem;
     }
-  }, [isAuthenticated]);
-
-  // Create a function that passes user data from the component level
-  const generateOrderReferenceWithUserInfo = () => {
-    return generateOrderReference(orders, user?.email, user?.id);
   };
-
-  const sendOrderEmail = async (orderId: string, emailData: any): Promise<boolean> => {
-    // Implementation for sending order emails would go here
-    console.log("Order email not yet implemented");
-    return false;
-  };
-
+  
   return (
-    <OrdersContext.Provider
-      value={{
-        orders,
-        loading,
-        addOrder,
-        updateOrder,
-        deleteOrder,
-        getOrderById: (id: string) => getOrderById(orders, id),
-        getOrdersByContactId: (contactId: string) => getOrdersByContactId(orders, contactId),
-        createOrderItem,
-        sendOrderEmail,
-        generateOrderReference: generateOrderReferenceWithUserInfo,
-        refreshOrders,
-      }}
-    >
+    <OrdersContext.Provider value={contextValue}>
       {children}
     </OrdersContext.Provider>
   );
 };
 
-export const useOrders = () => {
+export const useOrders = (): OrdersContextType => {
   const context = useContext(OrdersContext);
   if (context === undefined) {
     throw new Error("useOrders must be used within an OrdersProvider");

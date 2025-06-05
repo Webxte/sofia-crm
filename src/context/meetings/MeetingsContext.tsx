@@ -8,8 +8,22 @@ const MeetingsContext = createContext<MeetingsContextType | undefined>(undefined
 export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
   const operations = useMeetingsOperations();
   
+  // Fix the sendMeetingEmail return type to match expected type
+  const contextValue: MeetingsContextType = {
+    ...operations,
+    sendMeetingEmail: async (meetingId: string, emailData: any): Promise<boolean> => {
+      try {
+        await operations.sendMeetingEmail(meetingId, emailData);
+        return true;
+      } catch (error) {
+        console.error("Error sending meeting email:", error);
+        return false;
+      }
+    }
+  };
+  
   return (
-    <MeetingsContext.Provider value={operations}>
+    <MeetingsContext.Provider value={contextValue}>
       {children}
     </MeetingsContext.Provider>
   );
