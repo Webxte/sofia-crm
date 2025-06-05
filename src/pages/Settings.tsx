@@ -27,6 +27,20 @@ const Settings = () => {
     await updateSettings(formData);
   };
   
+  // If settings is null, show a loading state or default settings
+  if (!settings) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground mt-1">
+            Loading settings...
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <div>
