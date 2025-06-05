@@ -1,156 +1,54 @@
 
-import { Order, OrderItem } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Order, OrderItem } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 export const useOrderCRUD = () => {
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentOrganization } = useOrganizations();
 
-  const addOrder = async (
-    orderData: Omit<Order, "id" | "createdAt" | "updatedAt">,
-    setOrders: React.Dispatch<React.SetStateAction<Order[]>>
-  ): Promise<Order | null> => {
-    if (!currentOrganization) {
-      toast({
-        title: "Error",
-        description: "No organization selected",
-        variant: "destructive",
-      });
-      return null;
-    }
-
+  const createOrder = async (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => {
     try {
-      // Create the order first
-      const newOrder = {
-        contact_id: orderData.contactId,
-        date: orderData.date,
-        status: orderData.status,
-        notes: orderData.notes,
-        total: orderData.total,
-        vat_total: orderData.vatTotal,
-        terms_and_conditions: orderData.termsAndConditions,
-        reference: orderData.reference,
-        agent_id: orderData.agentId || user?.id,
-        agent_name: orderData.agentName || user?.user_metadata?.name || 'Unknown',
-        organization_id: currentOrganization.id,
-      };
+      setLoading(true);
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
 
+      // Create the order
       const { data: orderResult, error: orderError } = await supabase
-        .from('orders')
-        .insert([newOrder])
+        .from("orders")
+        .insert({
+          contact_id: orderData.contactId,
+          agent_id: orderData.agentId,
+          agent_name: orderData.agentName,
+          date: orderData.date,
+          status: orderData.status,
+          total: orderData.total,
+          vat_total: orderData.vatTotal,
+          notes: orderData.notes,
+          terms_and_conditions: orderData.termsAndConditions,
+          reference: orderData.reference,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error("Error creating order:", orderError);
+        throw orderError;
+      }
+
+      console.log("Order created successfully:", orderResult);
 
       // Create order items
-      const orderItemsToInsert = orderData.items.map(item => ({
-        order_id: orderResult.id,
-        product_id: item.productId,
-        code: item.code,
-        description: item.description,
-        price: item.price,
-        quantity: item.quantity,
-        vat: item.vat,
-        subtotal: item.subtotal,
-      }));
-
-      const { data: itemsResult, error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItemsToInsert)
-        .select();
-
-      if (itemsError) throw itemsError;
-
-      const formattedOrder: Order = {
-        id: orderResult.id,
-        organizationId: orderResult.organization_id,
-        contactId: orderResult.contact_id,
-        date: orderResult.date,
-        status: orderResult.status as "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled",
-        notes: orderResult.notes || '',
-        items: (itemsResult || []).map(item => ({
-          id: item.id,
-          productId: item.product_id,
-          code: item.code,
-          description: item.description,
-          price: item.price,
-          quantity: item.quantity,
-          vat: item.vat || 0,
-          subtotal: item.subtotal,
-          product: undefined
-        })),
-        total: orderResult.total,
-        vatTotal: orderResult.vat_total || 0,
-        termsAndConditions: orderResult.terms_and_conditions || '',
-        reference: orderResult.reference || '',
-        agentId: orderResult.agent_id || '',
-        agentName: orderResult.agent_name || '',
-        createdAt: new Date(orderResult.created_at),
-        updatedAt: new Date(orderResult.updated_at),
-      };
-
-      setOrders(prev => [formattedOrder, ...prev]);
-      
-      toast({
-        title: "Success",
-        description: "Order added successfully",
-      });
-
-      return formattedOrder;
-    } catch (error) {
-      console.error('Error adding order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add order",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-
-  const updateOrder = async (
-    id: string, 
-    orderData: Partial<Order>,
-    setOrders: React.Dispatch<React.SetStateAction<Order[]>>,
-    fetchOrders: () => Promise<void>
-  ): Promise<Order | null> => {
-    try {
-      // Update the order
-      const updateData = {
-        contact_id: orderData.contactId,
-        date: orderData.date,
-        status: orderData.status,
-        notes: orderData.notes,
-        total: orderData.total,
-        vat_total: orderData.vatTotal,
-        terms_and_conditions: orderData.termsAndConditions,
-        reference: orderData.reference,
-        agent_id: orderData.agentId,
-        agent_name: orderData.agentName,
-      };
-
-      const { data: orderResult, error: orderError } = await supabase
-        .from('orders')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Update order items if provided
-      if (orderData.items) {
-        // Delete existing items
-        await supabase.from('order_items').delete().eq('order_id', id);
-
-        // Insert new items
-        const orderItemsToInsert = orderData.items.map(item => ({
-          order_id: id,
+      if (orderData.items && orderData.items.length > 0) {
+        const orderItems = orderData.items.map(item => ({
+          order_id: orderResult.id,
           product_id: item.productId,
           code: item.code,
           description: item.description,
@@ -158,82 +56,187 @@ export const useOrderCRUD = () => {
           quantity: item.quantity,
           vat: item.vat,
           subtotal: item.subtotal,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }));
 
-        const { data: itemsResult, error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItemsToInsert)
-          .select();
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error("Error creating order items:", itemsError);
+          throw itemsError;
+        }
 
-        const formattedOrder: Order = {
-          id: orderResult.id,
-          organizationId: orderResult.organization_id,
-          contactId: orderResult.contact_id,
-          date: orderResult.date,
-          status: orderResult.status as "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled",
-          notes: orderResult.notes || '',
-          items: (itemsResult || []).map(item => ({
-            id: item.id,
-            productId: item.product_id,
+        console.log("Order items created successfully");
+      }
+
+      // Transform the result to match our Order interface
+      const transformedOrder: Order = {
+        id: orderResult.id,
+        contactId: orderResult.contact_id,
+        agentId: orderResult.agent_id,
+        agentName: orderResult.agent_name,
+        date: orderResult.date,
+        status: orderResult.status as Order["status"],
+        items: orderData.items,
+        total: orderResult.total,
+        vatTotal: orderResult.vat_total,
+        notes: orderResult.notes,
+        termsAndConditions: orderResult.terms_and_conditions,
+        reference: orderResult.reference,
+        createdAt: new Date(orderResult.created_at),
+        updatedAt: new Date(orderResult.updated_at),
+      };
+
+      toast({
+        title: "Success",
+        description: "Order created successfully",
+      });
+
+      return transformedOrder;
+    } catch (error) {
+      console.error("Error in createOrder:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create order",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateOrder = async (orderId: string, orderData: Partial<Order>) => {
+    try {
+      setLoading(true);
+
+      // Update the order
+      const { data: orderResult, error: orderError } = await supabase
+        .from("orders")
+        .update({
+          contact_id: orderData.contactId,
+          agent_id: orderData.agentId,
+          agent_name: orderData.agentName,
+          date: orderData.date,
+          status: orderData.status,
+          total: orderData.total,
+          vat_total: orderData.vatTotal,
+          notes: orderData.notes,
+          terms_and_conditions: orderData.termsAndConditions,
+          reference: orderData.reference,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId)
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error("Error updating order:", orderError);
+        throw orderError;
+      }
+
+      console.log("Order updated successfully:", orderResult);
+
+      // Update order items if provided
+      if (orderData.items) {
+        // Delete existing items
+        await supabase
+          .from("order_items")
+          .delete()
+          .eq("order_id", orderId);
+
+        // Insert new items
+        if (orderData.items.length > 0) {
+          const orderItems = orderData.items.map(item => ({
+            order_id: orderId,
+            product_id: item.productId,
             code: item.code,
             description: item.description,
             price: item.price,
             quantity: item.quantity,
-            vat: item.vat || 0,
+            vat: item.vat,
             subtotal: item.subtotal,
-            product: undefined
-          })),
-          total: orderResult.total,
-          vatTotal: orderResult.vat_total || 0,
-          termsAndConditions: orderResult.terms_and_conditions || '',
-          reference: orderResult.reference || '',
-          agentId: orderResult.agent_id || '',
-          agentName: orderResult.agent_name || '',
-          createdAt: new Date(orderResult.created_at),
-          updatedAt: new Date(orderResult.updated_at),
-        };
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
 
-        setOrders(prev => prev.map(order => 
-          order.id === id ? formattedOrder : order
-        ));
+          const { error: itemsError } = await supabase
+            .from("order_items")
+            .insert(orderItems);
 
-        return formattedOrder;
+          if (itemsError) {
+            console.error("Error updating order items:", itemsError);
+            throw itemsError;
+          }
+        }
       }
 
-      // If no items update, just refresh the order data
-      await fetchOrders();
-      return null;
+      // Transform the result to match our Order interface
+      const transformedOrder: Order = {
+        id: orderResult.id,
+        contactId: orderResult.contact_id,
+        agentId: orderResult.agent_id,
+        agentName: orderResult.agent_name,
+        date: orderResult.date,
+        status: orderResult.status as Order["status"],
+        items: orderData.items || [],
+        total: orderResult.total,
+        vatTotal: orderResult.vat_total,
+        notes: orderResult.notes,
+        termsAndConditions: orderResult.terms_and_conditions,
+        reference: orderResult.reference,
+        createdAt: new Date(orderResult.created_at),
+        updatedAt: new Date(orderResult.updated_at),
+      };
+
+      toast({
+        title: "Success",
+        description: "Order updated successfully",
+      });
+
+      return transformedOrder;
     } catch (error) {
-      console.error('Error updating order:', error);
+      console.error("Error in updateOrder:", error);
       toast({
         title: "Error",
         description: "Failed to update order",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deleteOrder = async (
-    id: string,
-    setOrders: React.Dispatch<React.SetStateAction<Order[]>>
-  ): Promise<boolean> => {
+  const deleteOrder = async (orderId: string) => {
     try {
-      // Delete order items first
-      await supabase.from('order_items').delete().eq('order_id', id);
-      
-      // Then delete the order
-      const { error } = await supabase
-        .from('orders')
+      setLoading(true);
+
+      // Delete order items first (due to foreign key constraint)
+      const { error: itemsError } = await supabase
+        .from("order_items")
         .delete()
-        .eq('id', id);
+        .eq("order_id", orderId);
 
-      if (error) throw error;
+      if (itemsError) {
+        console.error("Error deleting order items:", itemsError);
+        throw itemsError;
+      }
 
-      setOrders(prev => prev.filter(order => order.id !== id));
-      
+      // Delete the order
+      const { error: orderError } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", orderId);
+
+      if (orderError) {
+        console.error("Error deleting order:", orderError);
+        throw orderError;
+      }
+
       toast({
         title: "Success",
         description: "Order deleted successfully",
@@ -241,56 +244,22 @@ export const useOrderCRUD = () => {
 
       return true;
     } catch (error) {
-      console.error('Error deleting order:', error);
+      console.error("Error in deleteOrder:", error);
       toast({
         title: "Error",
         description: "Failed to delete order",
         variant: "destructive",
       });
-      return false;
-    }
-  };
-
-  const createOrderItem = async (orderItem: Omit<OrderItem, "id">): Promise<OrderItem | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('order_items')
-        .insert([{
-          order_id: orderItem.productId, // This seems wrong, should be order_id
-          product_id: orderItem.productId,
-          code: orderItem.code,
-          description: orderItem.description,
-          price: orderItem.price,
-          quantity: orderItem.quantity,
-          vat: orderItem.vat,
-          subtotal: orderItem.subtotal,
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return {
-        id: data.id,
-        productId: data.product_id,
-        code: data.code,
-        description: data.description,
-        price: data.price,
-        quantity: data.quantity,
-        vat: data.vat || 0,
-        subtotal: data.subtotal,
-        product: undefined
-      };
-    } catch (error) {
-      console.error('Error creating order item:', error);
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
-    addOrder,
+    createOrder,
     updateOrder,
     deleteOrder,
-    createOrderItem,
+    loading,
   };
 };

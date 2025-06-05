@@ -1,44 +1,44 @@
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Contact } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { formatDistanceToNow } from "date-fns";
 
 interface ContactMetadataProps {
   contact: Contact;
 }
 
 export const ContactMetadata = ({ contact }: ContactMetadataProps) => {
-  const { organizations } = useOrganizations();
-  
-  // Find the organization name if organization_id exists
-  const organizationName = contact.organizationId 
-    ? organizations.find(org => org.id === contact.organizationId)?.name || 'Unknown Organization'
-    : 'No Organization';
-  
   return (
     <Card>
-      <CardContent className="p-6">
-        <h3 className="font-medium mb-4">Contact Details</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Created</span>
-            <span>{new Date(contact.createdAt).toLocaleDateString()}</span>
+      <CardHeader>
+        <CardTitle>Contact Information</CardTitle>
+        <CardDescription>Additional details about this contact</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-2">
+          <div className="text-sm">
+            <span className="font-medium">Agent:</span> {contact.agentName}
           </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Last Updated</span>
-            <span>{new Date(contact.updatedAt).toLocaleDateString()}</span>
+          <div className="text-sm">
+            <span className="font-medium">Source:</span> {contact.source}
           </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Organization</span>
-            <span>{organizationName}</span>
+          <div className="text-sm">
+            <span className="font-medium">Created:</span> {" "}
+            {formatDistanceToNow(new Date(contact.createdAt), { addSuffix: true })}
           </div>
-          {contact.agentName && (
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Assigned To</span>
-              <span>{contact.agentName}</span>
-            </div>
-          )}
+          <div className="text-sm">
+            <span className="font-medium">Last Updated:</span> {" "}
+            {formatDistanceToNow(new Date(contact.updatedAt), { addSuffix: true })}
+          </div>
         </div>
+        
+        {contact.notes && (
+          <div>
+            <h4 className="font-medium mb-2">Notes</h4>
+            <p className="text-sm text-muted-foreground">{contact.notes}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

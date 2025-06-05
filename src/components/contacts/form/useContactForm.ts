@@ -6,7 +6,6 @@ import { useContacts } from "@/context/ContactsContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { contactFormSchema, ContactFormValues, ContactFormProps } from "./types";
 import { Contact } from "@/types";
 
@@ -15,14 +14,10 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentOrganization } = useOrganizations();
   
   console.log("useContactForm: Initializing with", {
     isEditing,
     hasUser: !!user,
-    hasOrganization: !!currentOrganization,
-    organizationId: currentOrganization?.id,
-    organizationName: currentOrganization?.name,
     userId: user?.id
   });
   
@@ -70,9 +65,6 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         isEditing,
         hasUser: !!user,
         userId: user?.id,
-        hasOrganization: !!currentOrganization,
-        organizationId: currentOrganization?.id,
-        organizationName: currentOrganization?.name,
         formValues: values
       });
 
@@ -86,27 +78,14 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         return;
       }
       
-      if (!currentOrganization) {
-        console.error("useContactForm: No organization found for contact form submission");
-        toast({
-          title: "Error",
-          description: "No organization selected. Please select an organization first.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Add agent and organization information - ensure organization ID is set
+      // Add agent information
       const contactData = {
         ...values,
         agentId: user.id,
         agentName: user.name || user.email || '',
-        organizationId: currentOrganization.id // This is critical for RLS policies
       };
       
       console.log("useContactForm: Contact data prepared for submission:", {
-        ...contactData,
-        organizationId: contactData.organizationId,
         agentId: contactData.agentId
       });
       
@@ -136,7 +115,6 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         };
         
         console.log("useContactForm: Final contact data for creation:", {
-          organizationId: newContact.organizationId,
           agentId: newContact.agentId,
           fullName: newContact.fullName,
           email: newContact.email
@@ -172,7 +150,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       if (error instanceof Error && (error.message.includes('row-level security') || error.message.includes('permission'))) {
         toast({
           title: "Permission Error",
-          description: "You don't have permission to perform this action. Please check your organization membership.",
+          description: "You don't have permission to perform this action.",
           variant: "destructive",
         });
       } else {

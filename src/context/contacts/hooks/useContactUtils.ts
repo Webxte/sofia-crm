@@ -1,141 +1,156 @@
 
-import { useCallback } from "react";
-import { Contact } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { supabase } from "@/integrations/supabase/client";
 import Papa from "papaparse";
+import { Contact } from "@/types";
 
 export const useContactUtils = () => {
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { currentOrganization } = useOrganizations();
 
-  const sendContactEmail = async (contactId: string, emailData: any): Promise<boolean> => {
-    // Implementation for sending contact emails would go here
-    console.log("Contact email not yet implemented");
-    return false;
+  const sendContactEmail = async (contactId: string, subject: string, message: string) => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          contactId,
+          subject,
+          message
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email Sent",
+        description: "Contact email sent successfully",
+      });
+
+      return data;
+    } catch (error) {
+      console.error("Error sending contact email:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send email",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const bulkUpdateContacts = async (
-    contactIds: string[], 
+    contactIds: string[],
     updateData: Partial<Contact>,
-    refreshContacts: () => Promise<void>
-  ): Promise<boolean> => {
+    refreshCallback?: () => Promise<void>
+  ) => {
     try {
+      setLoading(true);
+      
       const { error } = await supabase
         .from('contacts')
         .update({
-          agent_id: updateData.agentId,
-          agent_name: updateData.agentName,
-          source: updateData.source,
+          ...updateData,
+          updated_at: new Date().toISOString()
         })
         .in('id', contactIds);
 
       if (error) throw error;
 
-      // Refresh contacts to get updated data
-      await refreshContacts();
-      
       toast({
         title: "Success",
         description: `Updated ${contactIds.length} contacts`,
       });
 
-      return true;
+      if (refreshCallback) {
+        await refreshCallback();
+      }
     } catch (error) {
-      console.error('Error bulk updating contacts:', error);
+      console.error("Error bulk updating contacts:", error);
       toast({
         title: "Error",
         description: "Failed to update contacts",
         variant: "destructive",
       });
-      return false;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const importContactsFromCsv = useCallback(async (
-    file: File,
-    refreshContacts: () => Promise<void>
-  ) => {
-    if (!currentOrganization) {
-      toast({
-        title: "Error",
-        description: "No organization selected",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const importContactsFromCsv = async (file: File, refreshCallback?: () => Promise<void>) => {
     try {
-      console.log("Starting CSV import for file:", file.name);
+      setLoading(true);
       
       Papa.parse(file, {
         header: true,
-        skipEmptyLines: true,
         complete: async (results) => {
           try {
-            console.log("CSV parsed successfully, rows:", results.data.length);
-            
-            const contactsToInsert = (results.data as any[]).map(row => ({
-              full_name: row.full_name || row.name || '',
-              company: row.company || '',
-              email: row.email || '',
-              phone: row.phone || '',
-              mobile: row.mobile || '',
-              position: row.position || '',
-              address: row.address || '',
-              source: row.source || file.name.replace('.csv', ''),
-              notes: row.notes || '',
-              agent_id: user?.id,
-              agent_name: user?.user_metadata?.name || 'Unknown',
-              organization_id: currentOrganization.id,
-            }));
+            const contacts = results.data.map((row: any) => ({
+              full_name: row['Full Name'] || row['Name'] || '',
+              company: row['Company'] || '',
+              email: row['Email'] || '',
+              phone: row['Phone'] || '',
+              mobile: row['Mobile'] || '',
+              position: row['Position'] || '',
+              address: row['Address'] || '',
+              source: row['Source'] || 'CSV Import',
+              notes: row['Notes'] || '',
+            })).filter(contact => contact.full_name || contact.email);
 
             const { error } = await supabase
               .from('contacts')
-              .insert(contactsToInsert);
+              .insert(contacts);
 
             if (error) throw error;
 
-            await refreshContacts();
-            
             toast({
               title: "Import Successful",
-              description: `Imported ${contactsToInsert.length} contacts from CSV.`,
+              description: `Imported ${contacts.length} contacts`,
             });
+
+            if (refreshCallback) {
+              await refreshCallback();
+            }
           } catch (error) {
-            console.error("Error processing CSV data:", error);
+            console.error("Error importing contacts:", error);
             toast({
-              title: "Import Error",
-              description: "Failed to process CSV data. Please check the format.",
+              title: "Import Failed",
+              description: "Failed to import contacts from CSV",
               variant: "destructive",
             });
+          } finally {
+            setLoading(false);
           }
         },
         error: (error) => {
           console.error("CSV parsing error:", error);
           toast({
-            title: "CSV Error",
-            description: "Failed to parse CSV file. Please check the format.",
+            title: "Parse Error",
+            description: "Failed to parse CSV file",
             variant: "destructive",
           });
+          setLoading(false);
         }
       });
     } catch (error) {
-      console.error("Error importing contacts:", error);
+      console.error("Error reading CSV file:", error);
       toast({
-        title: "Import Error",
-        description: "Failed to import contacts. Please try again.",
+        title: "File Error",
+        description: "Failed to read CSV file",
         variant: "destructive",
       });
+      setLoading(false);
     }
-  }, [currentOrganization, user, toast]);
+  };
 
   return {
     sendContactEmail,
     bulkUpdateContacts,
     importContactsFromCsv,
+    loading,
   };
 };

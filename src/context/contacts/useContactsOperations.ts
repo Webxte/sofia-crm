@@ -2,29 +2,16 @@
 import { useContactsFetch } from "./hooks/useContactsFetch";
 import { useContactCRUD } from "./hooks/useContactCRUD";
 import { useContactUtils } from "./hooks/useContactUtils";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 export const useContactsOperations = () => {
   const { contacts, setContacts, loading, fetchContacts } = useContactsFetch();
   const { addContact: addContactBase, updateContact: updateContactBase, deleteContact: deleteContactBase } = useContactCRUD();
   const { sendContactEmail, bulkUpdateContacts: bulkUpdateContactsBase, importContactsFromCsv: importContactsFromCsvBase } = useContactUtils();
-  const { currentOrganization } = useOrganizations();
 
   // Wrap CRUD operations to pass setContacts
   const addContact = async (contactData: Parameters<typeof addContactBase>[0]) => {
-    if (!currentOrganization) {
-      console.error("Cannot add contact: No organization selected");
-      throw new Error("No organization selected");
-    }
-    
-    // Ensure organization ID is set
-    const contactWithOrg = {
-      ...contactData,
-      organizationId: currentOrganization.id
-    };
-    
-    console.log("Adding contact with organization:", contactWithOrg);
-    const result = await addContactBase(contactWithOrg);
+    console.log("Adding contact:", contactData);
+    const result = await addContactBase(contactData);
     await fetchContacts(); // Refresh contacts after adding
     return result;
   };

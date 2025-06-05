@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   BarChart3,
   Settings,
-  Building2
 } from "lucide-react";
 import {
   Sidebar,
@@ -22,7 +21,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 const navigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -36,16 +34,12 @@ const navigationItems = [
 
 const adminItems = [
   { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Organization", url: "/organizations/settings", icon: Building2 },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
   const { isAdmin } = useAuth();
-  const { currentOrganization } = useOrganizations();
   const currentPath = location.pathname;
-
-  const isActive = (path: string) => currentPath === path;
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
@@ -55,11 +49,11 @@ export function AppSidebar() {
       <SidebarTrigger className="m-2 self-end" />
 
       <SidebarContent>
-        {/* Organization Info */}
+        {/* App Info */}
         <div className="p-4 border-b">
           <div className="text-sm">
-            <p className="font-medium truncate">{currentOrganization?.name}</p>
-            <p className="text-muted-foreground text-xs">CRM System</p>
+            <p className="font-medium">CRM System</p>
+            <p className="text-muted-foreground text-xs">Personal CRM</p>
           </div>
         </div>
 
