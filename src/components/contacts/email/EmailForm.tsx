@@ -35,7 +35,7 @@ export const EmailForm = ({ contact, onSubmit, isSending }: EmailFormProps) => {
   
   // Create message with placeholders replaced
   const getDefaultMessage = () => {
-    const defaultTemplate = settings.default_contact_email_message || settings.defaultContactEmailMessage || 
+    const defaultTemplate = settings.defaultContactEmailMessage || 
       `Dear [Name],
 
 Thank you for your time during our recent meeting. As discussed, I've attached the links to our product catalog and price list.
@@ -51,9 +51,9 @@ Best regards,
     // Replace placeholders with actual values
     return defaultTemplate
       .replace(/\[Name\]/g, contact.fullName || "valued customer")
-      .replace(/\[Company Name\]/g, settings.company_name || settings.companyName || "The Team")
-      .replace(/\[Catalog URL\]/g, settings.catalog_url || settings.catalogUrl || "[Catalog URL]")
-      .replace(/\[Price List URL\]/g, settings.price_list_url || settings.priceListUrl || "[Price List URL]");
+      .replace(/\[Company Name\]/g, settings.companyName || "The Team")
+      .replace(/\[Catalog URL\]/g, settings.catalogUrl || "[Catalog URL]")
+      .replace(/\[Price List URL\]/g, settings.priceListUrl || "[Price List URL]");
   };
   
   const form = useForm<EmailFormValues>({
@@ -85,7 +85,7 @@ Best regards,
     if (!selectedCustomLink) return;
     
     const index = parseInt(selectedCustomLink, 10);
-    const customLinks = settings.custom_links || settings.customLinks || [];
+    const customLinks = settings.customLinks || [];
     
     if (index >= 0 && index < customLinks.length) {
       const link = customLinks[index];
@@ -101,7 +101,7 @@ Best regards,
   };
   
   // Filter out empty custom links
-  const availableCustomLinks = ((settings.custom_links || settings.customLinks) || [])
+  const availableCustomLinks = (settings.customLinks || [])
     .map((link, index) => ({ ...link, index }))
     .filter(link => link.url && (link.description || link.name));
   

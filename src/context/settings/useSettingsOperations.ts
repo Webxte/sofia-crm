@@ -51,6 +51,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
           emailSenderName: data.email_sender_name || '',
           termsEnabled: data.terms_enabled || false,
           defaultVatRate: data.default_vat_rate || 0,
+          bulkEmailTemplate: data.bulk_email_template || '',
           createdAt: new Date(data.created_at),
           updatedAt: new Date(data.updated_at),
         };
@@ -95,6 +96,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
         email_sender_name: updatedSettings.emailSenderName,
         terms_enabled: updatedSettings.termsEnabled,
         default_vat_rate: updatedSettings.defaultVatRate,
+        bulk_email_template: updatedSettings.bulkEmailTemplate,
         updated_at: new Date().toISOString(),
       };
 
@@ -138,6 +140,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
         emailSenderName: data.email_sender_name || '',
         termsEnabled: data.terms_enabled || false,
         defaultVatRate: data.default_vat_rate || 0,
+        bulkEmailTemplate: data.bulk_email_template || '',
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };

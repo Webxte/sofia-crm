@@ -108,40 +108,7 @@ export interface Settings {
   emailSenderName: string;
   termsEnabled: boolean;
   defaultVatRate: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Organization types (no longer used but kept for compatibility)
-export interface Organization {
-  id: string;
-  name: string;
-  slug: string;
-  logoUrl?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface OrganizationMember {
-  id: string;
-  organizationId: string;
-  userId: string;
-  role: "owner" | "admin" | "member" | "manager" | "guest";
-  name?: string;
-  email?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface OrganizationInvite {
-  id: string;
-  organizationId: string;
-  email: string;
-  role: "owner" | "admin" | "member" | "manager" | "guest";
-  token: string;
-  expiresAt: Date;
+  bulkEmailTemplate?: string;
   createdAt: Date;
   updatedAt: Date;
 }
