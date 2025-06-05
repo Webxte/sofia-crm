@@ -11,7 +11,7 @@ import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import UserManagement from "@/components/settings/UserManagement";
 import UnifiedEmailSettings from "@/components/settings/UnifiedEmailSettings";
 import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
-import { Settings } from "@/context/settings/types";
+import { Settings as SettingsType } from "@/types";
 
 const Settings = () => {
   const { settings, updateSettings, refreshSettings } = useSettings();
@@ -22,7 +22,7 @@ const Settings = () => {
     refreshSettings();
   }, []);
   
-  const handleUpdateSettings = async (formData: Partial<Settings>) => {
+  const handleUpdateSettings = async (formData: Partial<SettingsType>) => {
     console.log("Updating settings with form data:", formData);
     await updateSettings(formData);
   };
@@ -40,6 +40,32 @@ const Settings = () => {
       </div>
     );
   }
+  
+  // Convert context settings to component-expected format
+  const componentSettings: SettingsType = {
+    id: settings.id,
+    userId: settings.userId,
+    organization_id: "", // Add required field with default
+    company_name: settings.companyName,
+    companyName: settings.companyName,
+    companyEmail: settings.companyEmail,
+    companyPhone: settings.companyPhone,
+    companyAddress: settings.companyAddress,
+    defaultEmailSubject: settings.defaultEmailSubject,
+    defaultEmailMessage: settings.defaultEmailMessage,
+    defaultContactEmailMessage: settings.defaultContactEmailMessage,
+    defaultTermsAndConditions: settings.defaultTermsAndConditions,
+    customLinks: settings.customLinks,
+    catalogUrl: settings.catalogUrl,
+    priceListUrl: settings.priceListUrl,
+    emailFooter: settings.emailFooter,
+    emailSenderName: settings.emailSenderName,
+    termsEnabled: settings.termsEnabled,
+    defaultVatRate: settings.defaultVatRate,
+    bulkEmailTemplate: settings.bulkEmailTemplate,
+    createdAt: settings.createdAt,
+    updatedAt: settings.updatedAt,
+  };
   
   return (
     <div className="space-y-6">
@@ -62,7 +88,7 @@ const Settings = () => {
         
         <TabsContent value="company">
           <CompanySettings 
-            initialSettings={settings} 
+            initialSettings={componentSettings} 
             onSubmit={handleUpdateSettings} 
           />
         </TabsContent>
@@ -78,21 +104,21 @@ const Settings = () => {
         
         <TabsContent value="terms">
           <TermsSettings 
-            initialSettings={settings} 
+            initialSettings={componentSettings} 
             onSubmit={handleUpdateSettings} 
           />
         </TabsContent>
         
         <TabsContent value="email">
           <UnifiedEmailSettings
-            initialSettings={settings}
+            initialSettings={componentSettings}
             onSubmit={handleUpdateSettings}
           />
         </TabsContent>
         
         <TabsContent value="custom-links">
           <CustomLinksSettings
-            initialSettings={settings}
+            initialSettings={componentSettings}
             onSubmit={handleUpdateSettings}
           />
         </TabsContent>
