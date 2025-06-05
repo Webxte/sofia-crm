@@ -6,7 +6,7 @@ import { useMeetingUtils } from "./hooks/useMeetingUtils";
 export const useMeetingsOperations = () => {
   const { meetings, loading, fetchMeetings } = useMeetingsFetch();
   const { createMeeting, addMeeting, updateMeeting, deleteMeeting, loading: loadingCRUD } = useMeetingCRUD();
-  const { sendMeetingEmail } = useMeetingUtils();
+  const { getMeetingById, getMeetingsByContactId, getMeetingsByAgentId } = useMeetingUtils();
 
   const refreshMeetings = async () => {
     await fetchMeetings();
@@ -32,16 +32,9 @@ export const useMeetingsOperations = () => {
     return result;
   };
 
-  const getMeetingById = (id: string) => {
-    return meetings.find(meeting => meeting.id === id);
-  };
-
-  const getMeetingsByContactId = (contactId: string) => {
-    return meetings.filter(meeting => meeting.contactId === contactId);
-  };
-
-  const getMeetingsByAgentId = (agentId: string) => {
-    return meetings.filter(meeting => meeting.agentId === agentId);
+  const sendMeetingEmail = async (meetingId: string, emailData: any) => {
+    // Placeholder implementation
+    console.log("Send meeting email:", meetingId, emailData);
   };
 
   return {
@@ -52,9 +45,9 @@ export const useMeetingsOperations = () => {
     deleteMeeting: deleteMeetingWithRefresh,
     refreshMeetings,
     fetchMeetings,
-    getMeetingById,
-    getMeetingsByContactId,
-    getMeetingsByAgentId,
+    getMeetingById: (id: string) => getMeetingById(meetings, id),
+    getMeetingsByContactId: (contactId: string) => getMeetingsByContactId(meetings, contactId),
+    getMeetingsByAgentId: (agentId: string) => getMeetingsByAgentId(meetings, agentId),
     sendMeetingEmail,
   };
 };

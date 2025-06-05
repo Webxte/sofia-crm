@@ -38,7 +38,6 @@ export const useTasksFetch = () => {
 
       const formattedTasks: Task[] = (data || []).map(task => ({
         id: task.id,
-        organizationId: task.organization_id,
         title: task.title,
         description: task.description || '',
         status: task.status as "active" | "completed",

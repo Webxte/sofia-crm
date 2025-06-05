@@ -198,8 +198,23 @@ export const useProductsOperations = () => {
     }
   }, [toast]);
 
+  const getProductById = useCallback((id: string) => {
+    return products.find(product => product.id === id);
+  }, [products]);
+
+  const getProductByCode = useCallback((code: string) => {
+    return products.find(product => product.code === code);
+  }, [products]);
+
+  const searchProducts = useCallback((query: string) => {
+    const lowercaseQuery = query.toLowerCase();
+    return products.filter(product => 
+      product.code.toLowerCase().includes(lowercaseQuery) ||
+      product.description.toLowerCase().includes(lowercaseQuery)
+    );
+  }, [products]);
+
   const importProductsFromFile = useCallback(async (file: File) => {
-    // Implementation for CSV import would go here
     console.log("Import products from file:", file.name);
     toast({
       title: "Info",
@@ -207,13 +222,35 @@ export const useProductsOperations = () => {
     });
   }, [toast]);
 
+  const importProductsFromCsv = useCallback(async (file: File) => {
+    await importProductsFromFile(file);
+  }, [importProductsFromFile]);
+
+  const importProducts = useCallback(async (csvData: string) => {
+    console.log("Import products from CSV data:", csvData);
+    toast({
+      title: "Info",
+      description: "CSV import functionality not implemented yet",
+    });
+  }, [toast]);
+
+  const refreshProducts = useCallback(async () => {
+    await fetchProducts();
+  }, [fetchProducts]);
+
   return {
     products,
     loading,
-    fetchProducts,
     addProduct,
     updateProduct,
     deleteProduct,
+    getProductById,
+    getProductByCode,
+    searchProducts,
+    refreshProducts,
+    importProductsFromCsv,
     importProductsFromFile,
+    importProducts,
+    fetchProducts,
   };
 };

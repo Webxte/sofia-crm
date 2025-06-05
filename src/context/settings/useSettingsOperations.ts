@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings } from "@/types";
+import { Settings } from "./types";
 import { User } from "@supabase/supabase-js";
 
 export const useSettingsOperations = (isAuthenticated: boolean, user: User | null) => {
