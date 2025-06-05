@@ -25,6 +25,7 @@ export const useContactsFetch = () => {
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
+        .eq('agent_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -36,7 +37,6 @@ export const useContactsFetch = () => {
 
       const formattedContacts: Contact[] = (data || []).map(contact => ({
         id: contact.id,
-        organizationId: contact.organization_id || '',
         fullName: contact.full_name || '',
         company: contact.company || '',
         email: contact.email || '',

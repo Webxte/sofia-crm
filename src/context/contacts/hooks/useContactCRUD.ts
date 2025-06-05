@@ -3,18 +3,16 @@ import { useState } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useToast } from "@/hooks/use-toast";
 
 export const useContactCRUD = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { currentOrganization } = useOrganizations();
   const { toast } = useToast();
 
   const createContact = async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
-    if (!user || !currentOrganization) {
-      const errorMsg = !user ? "User not found" : "No organization selected";
+    if (!user) {
+      const errorMsg = "User not found";
       console.error("createContact error:", errorMsg);
       toast({
         title: "Error",
@@ -26,10 +24,9 @@ export const useContactCRUD = () => {
 
     setLoading(true);
     try {
-      console.log("Creating contact for organization:", currentOrganization.id);
+      console.log("Creating contact for user:", user.id);
       
       const newContact = {
-        organization_id: currentOrganization.id,
         full_name: contactData.fullName,
         company: contactData.company,
         email: contactData.email,
@@ -60,7 +57,6 @@ export const useContactCRUD = () => {
 
       const createdContact: Contact = {
         id: data.id,
-        organizationId: data.organization_id,
         fullName: data.full_name || "",
         company: data.company || "",
         email: data.email || "",
@@ -96,8 +92,8 @@ export const useContactCRUD = () => {
   };
 
   const updateContact = async (id: string, contactData: Partial<Contact>) => {
-    if (!user || !currentOrganization) {
-      throw new Error("User or organization not found");
+    if (!user) {
+      throw new Error("User not found");
     }
 
     setLoading(true);
@@ -119,7 +115,7 @@ export const useContactCRUD = () => {
         .from("contacts")
         .update(updateData)
         .eq("id", id)
-        .eq("organization_id", currentOrganization.id)
+        .eq("agent_id", user.id)
         .select()
         .single();
 
@@ -127,7 +123,6 @@ export const useContactCRUD = () => {
 
       return {
         id: data.id,
-        organizationId: data.organization_id,
         fullName: data.full_name || "",
         company: data.company || "",
         email: data.email || "",
@@ -156,8 +151,8 @@ export const useContactCRUD = () => {
   };
 
   const deleteContact = async (id: string): Promise<boolean> => {
-    if (!currentOrganization) {
-      throw new Error("No organization selected");
+    if (!user) {
+      throw new Error("User not found");
     }
 
     setLoading(true);
@@ -166,7 +161,7 @@ export const useContactCRUD = () => {
         .from("contacts")
         .delete()
         .eq("id", id)
-        .eq("organization_id", currentOrganization.id);
+        .eq("agent_id", user.id);
 
       if (error) throw error;
       return true;

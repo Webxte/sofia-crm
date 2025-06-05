@@ -3,31 +3,31 @@ import { useState, useCallback } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
+import { useAuth } from "@/context/AuthContext";
 import { useProducts } from "@/context/products/ProductsContext";
 
 export const useOrdersFetch = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { currentOrganization } = useOrganizations();
+  const { user } = useAuth();
   const { getProductById } = useProducts();
 
   const fetchOrders = useCallback(async () => {
-    if (!currentOrganization) {
-      console.log("useOrdersFetch: No current organization, skipping orders fetch");
+    if (!user) {
+      console.log("useOrdersFetch: No user, skipping orders fetch");
       return;
     }
 
     try {
       setLoading(true);
-      console.log("useOrdersFetch: Fetching orders for organization:", currentOrganization.id, currentOrganization.name);
+      console.log("useOrdersFetch: Fetching orders for user:", user.id);
       
-      // First get all orders for the organization
+      // First get all orders for the user
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
+        .eq('agent_id', user.id)
         .order('created_at', { ascending: false });
       
       if (ordersError) {
@@ -95,7 +95,7 @@ export const useOrdersFetch = () => {
         };
       });
       
-      console.log(`useOrdersFetch: Formatted ${formattedOrders.length} orders for organization ${currentOrganization.name}`);
+      console.log(`useOrdersFetch: Formatted ${formattedOrders.length} orders for user ${user.id}`);
       setOrders(formattedOrders);
     } catch (err) {
       console.error('useOrdersFetch: Unexpected error fetching orders:', err);
@@ -108,7 +108,7 @@ export const useOrdersFetch = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization, getProductById, toast]);
+  }, [user, getProductById, toast]);
 
   return {
     orders,

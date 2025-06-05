@@ -83,7 +83,7 @@ export default function App() {
           <Route path="/orders/:id/edit" element={<EditOrder />} />
           <Route path="/orders/new" element={<NewOrder />} />
           <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<ProtectedRoute requireAdmin={true}><Settings /></ProtectedRoute>} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
         
         <Route path="*" element={<NotFound />} />

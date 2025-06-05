@@ -25,6 +25,7 @@ export const useMeetingsFetch = () => {
       const { data, error } = await supabase
         .from('meetings')
         .select('*')
+        .eq('agent_id', user.id)
         .order('date', { ascending: false });
 
       if (error) {
@@ -36,7 +37,6 @@ export const useMeetingsFetch = () => {
 
       const formattedMeetings: Meeting[] = (data || []).map(meeting => ({
         id: meeting.id,
-        organizationId: meeting.organization_id || '',
         contactId: meeting.contact_id,
         contactName: meeting.contact_name || '',
         type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",

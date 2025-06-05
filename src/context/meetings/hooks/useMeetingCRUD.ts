@@ -3,18 +3,16 @@ import { useState } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 import { useToast } from "@/hooks/use-toast";
 
 export const useMeetingCRUD = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { currentOrganization } = useOrganizations();
   const { toast } = useToast();
 
   const createMeeting = async (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">) => {
-    if (!user || !currentOrganization) {
-      const errorMsg = !user ? "User not found" : "No organization selected";
+    if (!user) {
+      const errorMsg = "User not found";
       console.error("createMeeting error:", errorMsg);
       toast({
         title: "Error",
@@ -26,10 +24,9 @@ export const useMeetingCRUD = () => {
 
     setLoading(true);
     try {
-      console.log("Creating meeting for organization:", currentOrganization.id);
+      console.log("Creating meeting for user:", user.id);
       
       const newMeeting = {
-        organization_id: currentOrganization.id,
         contact_id: meetingData.contactId,
         contact_name: meetingData.contactName,
         type: meetingData.type,
@@ -59,7 +56,6 @@ export const useMeetingCRUD = () => {
 
       const createdMeeting: Meeting = {
         id: data.id,
-        organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || "",
         type: data.type as "meeting" | "phone" | "email" | "online" | "other",
@@ -94,8 +90,8 @@ export const useMeetingCRUD = () => {
   };
 
   const updateMeeting = async (id: string, meetingData: Partial<Meeting>) => {
-    if (!user || !currentOrganization) {
-      throw new Error("User or organization not found");
+    if (!user) {
+      throw new Error("User not found");
     }
 
     setLoading(true);
@@ -116,7 +112,7 @@ export const useMeetingCRUD = () => {
         .from("meetings")
         .update(updateData)
         .eq("id", id)
-        .eq("organization_id", currentOrganization.id)
+        .eq("agent_id", user.id)
         .select()
         .single();
 
@@ -124,7 +120,6 @@ export const useMeetingCRUD = () => {
 
       return {
         id: data.id,
-        organizationId: data.organization_id,
         contactId: data.contact_id,
         contactName: data.contact_name || "",
         type: data.type as "meeting" | "phone" | "email" | "online" | "other",
@@ -152,8 +147,8 @@ export const useMeetingCRUD = () => {
   };
 
   const deleteMeeting = async (id: string): Promise<boolean> => {
-    if (!currentOrganization) {
-      throw new Error("No organization selected");
+    if (!user) {
+      throw new Error("User not found");
     }
 
     setLoading(true);
@@ -162,7 +157,7 @@ export const useMeetingCRUD = () => {
         .from("meetings")
         .delete()
         .eq("id", id)
-        .eq("organization_id", currentOrganization.id);
+        .eq("agent_id", user.id);
 
       if (error) throw error;
       return true;
@@ -179,31 +174,6 @@ export const useMeetingCRUD = () => {
     }
   };
 
-  const sendMeetingEmail = async (meetingId: string, emailData: any): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.functions.invoke("send-meeting-email", {
-        body: emailData
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Meeting email sent successfully",
-      });
-      return true;
-    } catch (error) {
-      console.error("Error sending meeting email:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send meeting email",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
-  // Alias for compatibility
   const addMeeting = createMeeting;
 
   return {
@@ -211,7 +181,6 @@ export const useMeetingCRUD = () => {
     addMeeting,
     updateMeeting,
     deleteMeeting,
-    sendMeetingEmail,
     loading
   };
 };
