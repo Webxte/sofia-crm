@@ -101,14 +101,21 @@ export interface Settings {
   defaultEmailMessage: string;
   defaultContactEmailMessage: string;
   defaultTermsAndConditions: string;
-  customLinks: any[];
+  customLinks: CustomLink[];
   catalogUrl: string;
   priceListUrl: string;
   emailFooter: string;
   emailSenderName: string;
   termsEnabled: boolean;
   defaultVatRate: number;
-  bulkEmailTemplate?: string;
+  bulkEmailTemplate: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CustomLink {
+  id?: string;
+  name?: string;
+  description?: string;
+  url: string;
 }

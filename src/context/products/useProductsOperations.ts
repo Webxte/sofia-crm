@@ -1,66 +1,64 @@
-import { useState, useCallback } from "react";
-import { Product } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
-import { useToast } from "@/hooks/use-toast";
-import Papa from "papaparse";
-import { ProductsContextType } from "./types";
 
-export const useProductsOperations = (): ProductsContextType => {
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Product } from "@/types";
+
+export const useProductsOperations = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-  const { currentOrganization } = useOrganizations();
   const { toast } = useToast();
 
-  const refreshProducts = useCallback(async () => {
-    if (!currentOrganization) return;
-    
-    setLoading(true);
+  const fetchProducts = useCallback(async () => {
     try {
+      setLoading(true);
+      console.log("Fetching products...");
+      
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .eq("organization_id", currentOrganization.id)
-        .order("code");
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching products:", error);
+        throw error;
+      }
 
-      const transformedProducts: Product[] = data.map(item => ({
-        id: item.id,
-        organizationId: item.organization_id,
-        code: item.code,
-        description: item.description,
-        price: Number(item.price),
-        cost: Number(item.cost),
-        vat: item.vat ? Number(item.vat) : undefined,
-        caseQuantity: item.case_quantity || undefined,
-        firstOrderCommission: item.first_order_commission ? Number(item.first_order_commission) : undefined,
-        nextOrdersCommission: item.next_orders_commission ? Number(item.next_orders_commission) : undefined,
-        createdAt: new Date(item.created_at),
-        updatedAt: new Date(item.updated_at),
+      const formattedProducts: Product[] = (data || []).map((product) => ({
+        id: product.id,
+        code: product.code,
+        description: product.description,
+        price: product.price,
+        cost: product.cost,
+        vat: product.vat,
+        caseQuantity: product.case_quantity,
+        firstOrderCommission: product.first_order_commission,
+        nextOrdersCommission: product.next_orders_commission,
+        createdAt: new Date(product.created_at),
+        updatedAt: new Date(product.updated_at),
       }));
 
-      setProducts(transformedProducts);
+      setProducts(formattedProducts);
+      console.log(`Fetched ${formattedProducts.length} products`);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error in fetchProducts:", error);
       toast({
         title: "Error",
-        description: "Failed to load products",
+        description: "Failed to load products. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization, toast]);
+  }, [toast]);
 
-  const addProduct = useCallback(async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">): Promise<Product | null> => {
-    if (!currentOrganization) return null;
-
+  const addProduct = useCallback(async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from("products")
         .insert([{
-          organization_id: currentOrganization.id,
           code: productData.code,
           description: productData.description,
           price: productData.price,
@@ -77,20 +75,20 @@ export const useProductsOperations = (): ProductsContextType => {
 
       const newProduct: Product = {
         id: data.id,
-        organizationId: data.organization_id,
         code: data.code,
         description: data.description,
-        price: Number(data.price),
-        cost: Number(data.cost),
-        vat: data.vat ? Number(data.vat) : undefined,
-        caseQuantity: data.case_quantity || undefined,
-        firstOrderCommission: data.first_order_commission ? Number(data.first_order_commission) : undefined,
-        nextOrdersCommission: data.next_orders_commission ? Number(data.next_orders_commission) : undefined,
+        price: data.price,
+        cost: data.cost,
+        vat: data.vat,
+        caseQuantity: data.case_quantity,
+        firstOrderCommission: data.first_order_commission,
+        nextOrdersCommission: data.next_orders_commission,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
 
-      setProducts(prev => [...prev, newProduct]);
+      setProducts(prev => [newProduct, ...prev]);
+      
       toast({
         title: "Success",
         description: "Product added successfully",
@@ -104,12 +102,16 @@ export const useProductsOperations = (): ProductsContextType => {
         description: "Failed to add product",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
-  }, [currentOrganization, toast]);
+  }, [toast]);
 
-  const updateProduct = useCallback(async (id: string, productData: Partial<Product>): Promise<Product | null> => {
+  const updateProduct = useCallback(async (id: string, productData: Partial<Product>) => {
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from("products")
         .update({
@@ -121,6 +123,7 @@ export const useProductsOperations = (): ProductsContextType => {
           case_quantity: productData.caseQuantity,
           first_order_commission: productData.firstOrderCommission,
           next_orders_commission: productData.nextOrdersCommission,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", id)
         .select()
@@ -130,20 +133,20 @@ export const useProductsOperations = (): ProductsContextType => {
 
       const updatedProduct: Product = {
         id: data.id,
-        organizationId: data.organization_id,
         code: data.code,
         description: data.description,
-        price: Number(data.price),
-        cost: Number(data.cost),
-        vat: data.vat ? Number(data.vat) : undefined,
-        caseQuantity: data.case_quantity || undefined,
-        firstOrderCommission: data.first_order_commission ? Number(data.first_order_commission) : undefined,
-        nextOrdersCommission: data.next_orders_commission ? Number(data.next_orders_commission) : undefined,
+        price: data.price,
+        cost: data.cost,
+        vat: data.vat,
+        caseQuantity: data.case_quantity,
+        firstOrderCommission: data.first_order_commission,
+        nextOrdersCommission: data.next_orders_commission,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
 
       setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
+      
       toast({
         title: "Success",
         description: "Product updated successfully",
@@ -157,12 +160,16 @@ export const useProductsOperations = (): ProductsContextType => {
         description: "Failed to update product",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   }, [toast]);
 
-  const deleteProduct = useCallback(async (id: string): Promise<boolean> => {
+  const deleteProduct = useCallback(async (id: string) => {
     try {
+      setLoading(true);
+      
       const { error } = await supabase
         .from("products")
         .delete()
@@ -171,6 +178,7 @@ export const useProductsOperations = (): ProductsContextType => {
       if (error) throw error;
 
       setProducts(prev => prev.filter(p => p.id !== id));
+      
       toast({
         title: "Success",
         description: "Product deleted successfully",
@@ -185,137 +193,27 @@ export const useProductsOperations = (): ProductsContextType => {
         variant: "destructive",
       });
       return false;
+    } finally {
+      setLoading(false);
     }
   }, [toast]);
 
-  const getProductById = useCallback((id: string): Product | undefined => {
-    return products.find(p => p.id === id);
-  }, [products]);
-
-  const getProductByCode = useCallback((code: string): Product | undefined => {
-    return products.find(p => p.code === code);
-  }, [products]);
-
-  const searchProducts = useCallback((query: string): Product[] => {
-    if (!query.trim()) return products;
-    
-    const lowercaseQuery = query.toLowerCase();
-    return products.filter(product =>
-      product.code.toLowerCase().includes(lowercaseQuery) ||
-      product.description.toLowerCase().includes(lowercaseQuery)
-    );
-  }, [products]);
-
-  const importProductsFromCsv = useCallback(async (file: File): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        complete: async (results) => {
-          try {
-            await importProducts(Papa.unparse(results.data));
-            resolve();
-          } catch (error) {
-            reject(error);
-          }
-        },
-        error: (error) => {
-          reject(error);
-        }
-      });
+  const importProductsFromFile = useCallback(async (file: File) => {
+    // Implementation for CSV import would go here
+    console.log("Import products from file:", file.name);
+    toast({
+      title: "Info",
+      description: "Product import functionality not implemented yet",
     });
-  }, []);
-
-  const importProductsFromFile = useCallback(async (file: File): Promise<void> => {
-    return importProductsFromCsv(file);
-  }, [importProductsFromCsv]);
-
-  const importProducts = useCallback(async (csvData: string): Promise<void> => {
-    if (!currentOrganization) {
-      throw new Error("No organization selected");
-    }
-
-    try {
-      const lines = csvData.trim().split("\n");
-      const headers = lines[0].split(",").map(h => h.trim());
-      
-      // Validate headers
-      const requiredHeaders = ["code", "description", "price", "cost"];
-      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-      
-      if (missingHeaders.length > 0) {
-        throw new Error(`Missing required headers: ${missingHeaders.join(", ")}`);
-      }
-
-      const productsToInsert = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",").map(v => v.trim());
-        const productObj: any = {};
-        
-        headers.forEach((header, index) => {
-          productObj[header] = values[index] || "";
-        });
-
-        // Validate required fields
-        if (!productObj.code || !productObj.description || !productObj.price || !productObj.cost) {
-          console.warn(`Skipping row ${i + 1}: Missing required fields`);
-          continue;
-        }
-
-        productsToInsert.push({
-          organization_id: currentOrganization.id,
-          code: productObj.code,
-          description: productObj.description,
-          price: parseFloat(productObj.price) || 0,
-          cost: parseFloat(productObj.cost) || 0,
-          vat: productObj.vat ? parseFloat(productObj.vat) : null,
-          case_quantity: productObj.case_quantity ? parseInt(productObj.case_quantity) : null,
-          first_order_commission: productObj.first_order_commission ? parseFloat(productObj.first_order_commission) : null,
-          next_orders_commission: productObj.next_orders_commission ? parseFloat(productObj.next_orders_commission) : null,
-        });
-      }
-
-      if (productsToInsert.length === 0) {
-        throw new Error("No valid products found in CSV data");
-      }
-
-      const { data, error } = await supabase
-        .from("products")
-        .insert(productsToInsert)
-        .select();
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Imported ${data.length} products successfully`,
-      });
-
-      // Refresh the products list
-      await refreshProducts();
-    } catch (error) {
-      console.error("Error importing products:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to import products",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [currentOrganization, toast, refreshProducts]);
+  }, [toast]);
 
   return {
     products,
     loading,
+    fetchProducts,
     addProduct,
     updateProduct,
     deleteProduct,
-    getProductById,
-    getProductByCode,
-    searchProducts,
-    refreshProducts,
-    importProductsFromCsv,
     importProductsFromFile,
-    importProducts,
   };
 };

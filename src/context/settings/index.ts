@@ -1,4 +1,4 @@
 
-// Ensure correct imports
-export { SettingsProvider, useSettings } from './SettingsContext';
-export { DEFAULT_SETTINGS } from './useSettingsOperations';
+export { SettingsProvider, useSettings } from "./SettingsContext";
+export type { SettingsContextType } from "./types";
+export { useSettingsOperations } from "./useSettingsOperations";

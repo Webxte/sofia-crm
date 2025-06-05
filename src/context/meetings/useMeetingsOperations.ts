@@ -5,7 +5,8 @@ import { useMeetingUtils } from "./hooks/useMeetingUtils";
 
 export const useMeetingsOperations = () => {
   const { meetings, loading, fetchMeetings } = useMeetingsFetch();
-  const { createMeeting, addMeeting, updateMeeting, deleteMeeting, loadingCRUD } = useMeetingCRUD();
+  const { createMeeting, addMeeting, updateMeeting, deleteMeeting, loading: loadingCRUD } = useMeetingCRUD();
+  const { sendMeetingEmail } = useMeetingUtils();
 
   const refreshMeetings = async () => {
     await fetchMeetings();
@@ -31,6 +32,18 @@ export const useMeetingsOperations = () => {
     return result;
   };
 
+  const getMeetingById = (id: string) => {
+    return meetings.find(meeting => meeting.id === id);
+  };
+
+  const getMeetingsByContactId = (contactId: string) => {
+    return meetings.filter(meeting => meeting.contactId === contactId);
+  };
+
+  const getMeetingsByAgentId = (agentId: string) => {
+    return meetings.filter(meeting => meeting.agentId === agentId);
+  };
+
   return {
     meetings,
     loading: loading || loadingCRUD,
@@ -39,5 +52,9 @@ export const useMeetingsOperations = () => {
     deleteMeeting: deleteMeetingWithRefresh,
     refreshMeetings,
     fetchMeetings,
+    getMeetingById,
+    getMeetingsByContactId,
+    getMeetingsByAgentId,
+    sendMeetingEmail,
   };
 };

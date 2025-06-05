@@ -44,14 +44,14 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
           defaultEmailMessage: data.default_email_message || '',
           defaultContactEmailMessage: data.default_contact_email_message || '',
           defaultTermsAndConditions: data.default_terms_and_conditions || '',
-          customLinks: data.custom_links || [],
+          customLinks: (data.custom_links as any) || [],
           catalogUrl: data.catalog_url || '',
           priceListUrl: data.price_list_url || '',
           emailFooter: data.email_footer || '',
           emailSenderName: data.email_sender_name || '',
           termsEnabled: data.terms_enabled || false,
           defaultVatRate: data.default_vat_rate || 0,
-          bulkEmailTemplate: data.bulk_email_template || '',
+          bulkEmailTemplate: '', // Not stored in DB yet, use default
           createdAt: new Date(data.created_at),
           updatedAt: new Date(data.updated_at),
         };
@@ -89,14 +89,13 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
         default_email_message: updatedSettings.defaultEmailMessage,
         default_contact_email_message: updatedSettings.defaultContactEmailMessage,
         default_terms_and_conditions: updatedSettings.defaultTermsAndConditions,
-        custom_links: updatedSettings.customLinks,
+        custom_links: updatedSettings.customLinks as any,
         catalog_url: updatedSettings.catalogUrl,
         price_list_url: updatedSettings.priceListUrl,
         email_footer: updatedSettings.emailFooter,
         email_sender_name: updatedSettings.emailSenderName,
         terms_enabled: updatedSettings.termsEnabled,
         default_vat_rate: updatedSettings.defaultVatRate,
-        bulk_email_template: updatedSettings.bulkEmailTemplate,
         updated_at: new Date().toISOString(),
       };
 
@@ -115,7 +114,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
         // Create new settings
         ({ data, error } = await supabase
           .from("settings")
-          .insert([updateData])
+          .insert(updateData)
           .select()
           .single());
       }
@@ -133,14 +132,14 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
         defaultEmailMessage: data.default_email_message || '',
         defaultContactEmailMessage: data.default_contact_email_message || '',
         defaultTermsAndConditions: data.default_terms_and_conditions || '',
-        customLinks: data.custom_links || [],
+        customLinks: (data.custom_links as any) || [],
         catalogUrl: data.catalog_url || '',
         priceListUrl: data.price_list_url || '',
         emailFooter: data.email_footer || '',
         emailSenderName: data.email_sender_name || '',
         termsEnabled: data.terms_enabled || false,
         defaultVatRate: data.default_vat_rate || 0,
-        bulkEmailTemplate: data.bulk_email_template || '',
+        bulkEmailTemplate: updatedSettings.bulkEmailTemplate || '',
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -166,6 +165,10 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
     }
   }, [user, settings, toast]);
 
+  const refreshSettings = useCallback(async () => {
+    await fetchSettings();
+  }, [fetchSettings]);
+
   // Load settings when user changes
   useEffect(() => {
     fetchSettings();
@@ -175,6 +178,6 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: User | nul
     settings,
     loading,
     updateSettings,
-    fetchSettings,
+    refreshSettings,
   };
 };

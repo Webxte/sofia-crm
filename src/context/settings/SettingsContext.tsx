@@ -3,35 +3,22 @@ import { createContext, useContext, useEffect, ReactNode } from "react";
 import { SettingsContextType } from "./types";
 import { useSettingsOperations } from "./useSettingsOperations";
 import { useAuth } from "../AuthContext";
-import { Settings } from "@/types";
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, isAdmin } = useAuth();
-  const { 
-    settings, 
-    loading, 
-    refreshSettings, 
-    updateSettings 
-  } = useSettingsOperations(isAuthenticated, isAdmin);
+  const { isAuthenticated, user } = useAuth();
+  const settingsOperations = useSettingsOperations(isAuthenticated, user);
 
   useEffect(() => {
     console.log("SettingsProvider: Authentication state changed", { isAuthenticated });
     if (isAuthenticated) {
-      refreshSettings();
+      settingsOperations.refreshSettings();
     }
-  }, [isAuthenticated, refreshSettings]);
+  }, [isAuthenticated, settingsOperations.refreshSettings]);
 
   return (
-    <SettingsContext.Provider
-      value={{
-        settings,
-        loading,
-        updateSettings,
-        refreshSettings,
-      }}
-    >
+    <SettingsContext.Provider value={settingsOperations}>
       {children}
     </SettingsContext.Provider>
   );

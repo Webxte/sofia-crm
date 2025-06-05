@@ -1,163 +1,137 @@
 
-import { Task } from "@/types";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Task } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { useOrganizations } from "@/context/organizations/OrganizationsContext";
 
 export const useTaskCRUD = () => {
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentOrganization } = useOrganizations();
 
-  const addTask = async (
-    taskData: Omit<Task, "id" | "createdAt" | "updatedAt">,
-    setTasks: React.Dispatch<React.SetStateAction<Task[]>>
-  ): Promise<Task | null> => {
-    if (!currentOrganization) {
-      toast({
-        title: "Error",
-        description: "No organization selected",
-        variant: "destructive",
-      });
-      return null;
-    }
-
+  const addTask = async (taskData: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    setLoading(true);
     try {
-      const newTask = {
-        title: taskData.title,
-        description: taskData.description,
-        status: taskData.status,
-        priority: taskData.priority,
-        due_date: taskData.dueDate || null,
-        due_time: taskData.dueTime,
-        contact_id: taskData.contactId,
-        agent_id: taskData.agentId || user?.id,
-        agent_name: taskData.agentName || user?.user_metadata?.name || 'Unknown',
-        organization_id: currentOrganization.id,
-      };
-
       const { data, error } = await supabase
-        .from('tasks')
-        .insert([newTask])
+        .from("tasks")
+        .insert([{
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          status: taskData.status,
+          due_date: taskData.dueDate,
+          due_time: taskData.dueTime,
+          contact_id: taskData.contactId,
+          agent_id: user.id,
+          agent_name: user.user_metadata?.name || user.email,
+        }])
         .select()
         .single();
 
       if (error) throw error;
 
-      const formattedTask: Task = {
+      const newTask: Task = {
         id: data.id,
-        organizationId: data.organization_id,
         title: data.title,
-        description: data.description || '',
-        status: data.status as "active" | "completed",
-        priority: data.priority as "low" | "medium" | "high",
-        dueDate: data.due_date || undefined,
-        dueTime: data.due_time || undefined,
-        contactId: data.contact_id || '',
-        agentId: data.agent_id || '',
-        agentName: data.agent_name || '',
+        description: data.description,
+        priority: data.priority as Task["priority"],
+        status: data.status as Task["status"],
+        dueDate: data.due_date,
+        dueTime: data.due_time,
+        contactId: data.contact_id,
+        agentId: data.agent_id,
+        agentName: data.agent_name,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
 
-      setTasks(prev => [formattedTask, ...prev]);
-      
       toast({
         title: "Success",
-        description: "Task added successfully",
+        description: "Task created successfully",
       });
 
-      return formattedTask;
+      return newTask;
     } catch (error) {
-      console.error('Error adding task:', error);
+      console.error("Error adding task:", error);
       toast({
         title: "Error",
-        description: "Failed to add task",
+        description: "Failed to create task",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateTask = async (
-    id: string, 
-    taskData: Partial<Task>,
-    setTasks: React.Dispatch<React.SetStateAction<Task[]>>
-  ): Promise<Task | null> => {
+  const updateTask = async (id: string, taskData: Partial<Task>) => {
+    setLoading(true);
     try {
-      const updateData = {
-        title: taskData.title,
-        description: taskData.description,
-        status: taskData.status,
-        priority: taskData.priority,
-        due_date: taskData.dueDate || null,
-        due_time: taskData.dueTime,
-        contact_id: taskData.contactId,
-        agent_id: taskData.agentId,
-        agent_name: taskData.agentName,
-      };
-
       const { data, error } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', id)
+        .from("tasks")
+        .update({
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          status: taskData.status,
+          due_date: taskData.dueDate,
+          due_time: taskData.dueTime,
+          contact_id: taskData.contactId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
         .select()
         .single();
 
       if (error) throw error;
 
-      const formattedTask: Task = {
+      const updatedTask: Task = {
         id: data.id,
-        organizationId: data.organization_id,
         title: data.title,
-        description: data.description || '',
-        status: data.status as "active" | "completed",
-        priority: data.priority as "low" | "medium" | "high",
-        dueDate: data.due_date || undefined,
-        dueTime: data.due_time || undefined,
-        contactId: data.contact_id || '',
-        agentId: data.agent_id || '',
-        agentName: data.agent_name || '',
+        description: data.description,
+        priority: data.priority as Task["priority"],
+        status: data.status as Task["status"],
+        dueDate: data.due_date,
+        dueTime: data.due_time,
+        contactId: data.contact_id,
+        agentId: data.agent_id,
+        agentName: data.agent_name,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
-
-      setTasks(prev => prev.map(task => 
-        task.id === id ? formattedTask : task
-      ));
 
       toast({
         title: "Success",
         description: "Task updated successfully",
       });
 
-      return formattedTask;
+      return updatedTask;
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error("Error updating task:", error);
       toast({
         title: "Error",
         description: "Failed to update task",
         variant: "destructive",
       });
-      return null;
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deleteTask = async (
-    id: string,
-    setTasks: React.Dispatch<React.SetStateAction<Task[]>>
-  ): Promise<boolean> => {
+  const deleteTask = async (id: string) => {
+    setLoading(true);
     try {
       const { error } = await supabase
-        .from('tasks')
+        .from("tasks")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
-      setTasks(prev => prev.filter(task => task.id !== id));
-      
       toast({
         title: "Success",
         description: "Task deleted successfully",
@@ -165,26 +139,22 @@ export const useTaskCRUD = () => {
 
       return true;
     } catch (error) {
-      console.error('Error deleting task:', error);
+      console.error("Error deleting task:", error);
       toast({
         title: "Error",
         description: "Failed to delete task",
         variant: "destructive",
       });
       return false;
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const sendTaskEmail = async (taskId: string, emailData: any): Promise<boolean> => {
-    // Implementation for sending task emails would go here
-    console.log("Task email not yet implemented");
-    return false;
   };
 
   return {
     addTask,
     updateTask,
     deleteTask,
-    sendTaskEmail,
+    loading,
   };
 };
