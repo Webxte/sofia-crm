@@ -1,180 +1,182 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, isAfter } from 'date-fns';
-import { DayPicker } from 'react-day-picker';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { useTasks } from "@/context/TasksContext";
-import { useMeetings } from "@/context/meetings";
-import { Task, Meeting } from "@/types";
+import React, { useState, useMemo } from 'react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useMeetings } from '@/context/meetings';
+import { useContacts } from '@/context/ContactsContext';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Helmet } from 'react-helmet-async';
 
-const CalendarPage = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const { tasks } = useTasks();
+const Calendar = () => {
+  const [currentDate, setCurrentDate] = useState(new Date());
   const { meetings } = useMeetings();
+  const { getContactById } = useContacts();
+  const navigate = useNavigate();
+
+  console.log("Calendar: Total meetings:", meetings.length);
+
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
   
-  // Function to get tasks for the selected date
-  const getTasksForDate = (date: Date): Task[] => {
-    return tasks.filter(task => {
-      if (!task.dueDate) return false;
-      return isSameDay(new Date(task.dueDate), date);
-    });
-  };
-  
-  // Function to get meetings for the selected date
-  const getMeetingsForDate = (date: Date): Meeting[] => {
-    return meetings.filter(meeting => isSameDay(new Date(meeting.date), date));
-  };
-  
-  // Get tasks and meetings for the selected date
-  const tasksForSelectedDate = getTasksForDate(selectedDate || new Date());
-  const meetingsForSelectedDate = getMeetingsForDate(selectedDate || new Date());
-  
-  // Generate an array of dates for the current month
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  
-  // Function to check if a date has any tasks or meetings
-  const hasEvents = (date: Date): boolean => {
-    return tasks.some(task => task.dueDate && isSameDay(new Date(task.dueDate), date)) ||
-           meetings.some(meeting => isSameDay(new Date(meeting.date), date));
-  };
-  
-  // Function to render the day cell with events indicator
-  const renderDay = (date: Date) => {
-    const hasTask = tasks.some(task => task.dueDate && isSameDay(new Date(task.dueDate), date));
-    const hasMeeting = meetings.some(meeting => isSameDay(new Date(meeting.date), date));
+  const calendarDays = eachDayOfInterval({
+    start: calendarStart,
+    end: calendarEnd
+  });
+
+  // Group meetings by date
+  const meetingsByDate = useMemo(() => {
+    const grouped: Record<string, typeof meetings> = {};
     
-    return (
-      <div className="relative">
-        {hasTask && (
-          <div
-            className="absolute top-1 left-1 w-2 h-2 rounded-full bg-blue-500"
-            title="Task due"
-          />
-        )}
-        {hasMeeting && (
-          <div
-            className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500"
-            title="Meeting scheduled"
-          />
-        )}
-        <span>{format(date, 'd')}</span>
-      </div>
-    );
+    meetings.forEach(meeting => {
+      const dateKey = format(new Date(meeting.date), 'yyyy-MM-dd');
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(meeting);
+    });
+    
+    console.log("Calendar: Meetings grouped by date:", grouped);
+    return grouped;
+  }, [meetings]);
+
+  const handlePreviousMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
-  
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const handleAddMeeting = () => {
+    navigate('/meetings/new');
+  };
+
+  const handleMeetingClick = (meetingId: string) => {
+    navigate(`/meetings/${meetingId}`);
+  };
+
+  const getMeetingTypeColor = (type: string) => {
+    switch (type) {
+      case 'meeting':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'phone':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'email':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+      case 'online':
+        return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Calendar</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Calendar Card */}
+    <>
+      <Helmet>
+        <title>Calendar | CRM</title>
+      </Helmet>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
+            <p className="text-muted-foreground">View your meetings and schedule</p>
+          </div>
+          <Button onClick={handleAddMeeting}>
+            <Plus className="mr-2 h-4 w-4" /> Add Meeting
+          </Button>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle>Select a Date</CardTitle>
-            <CardDescription>View tasks and meetings for the selected date.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full pl-3 text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  {selectedDate ? (
-                    format(selectedDate, "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl">
+                {format(currentDate, 'MMMM yyyy')}
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handlePreviousMonth}>
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          </CardContent>
-        </Card>
-        
-        {/* Events List Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {selectedDate ? format(selectedDate, "PPP") : "Select a Date"}
-            </CardTitle>
-            <CardDescription>
-              Tasks and meetings scheduled for the selected date.
-            </CardDescription>
+                <Button variant="outline" size="sm" onClick={handleNextMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {selectedDate ? (
-              <>
-                {/* Tasks List */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Tasks</h3>
-                  {tasksForSelectedDate.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {tasksForSelectedDate.map((task) => (
-                        <li key={task.id}>
-                          {task.title}
-                          {task.contactName && (
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              (Contact: {task.contactName})
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-muted-foreground">No tasks for this date.</p>
-                  )}
+          <CardContent>
+            <div className="grid grid-cols-7 gap-1 mb-4">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
+                  {day}
                 </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map(day => {
+                const dateKey = format(day, 'yyyy-MM-dd');
+                const dayMeetings = meetingsByDate[dateKey] || [];
+                const isCurrentMonth = isSameMonth(day, currentDate);
+                const isToday = isSameDay(day, new Date());
                 
-                {/* Meetings List */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Meetings</h3>
-                  {meetingsForSelectedDate.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {meetingsForSelectedDate.map((meeting) => (
-                        <li key={meeting.id}>
-                          {meeting.type} at {meeting.time}
-                          {meeting.contactName && (
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              (Contact: {meeting.contactName})
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-muted-foreground">No meetings for this date.</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground">Please select a date to view events.</p>
-            )}
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={cn(
+                      "min-h-[100px] p-2 border border-border rounded-md",
+                      !isCurrentMonth && "bg-muted/50 text-muted-foreground",
+                      isToday && "bg-primary/10 border-primary"
+                    )}
+                  >
+                    <div className={cn(
+                      "text-sm font-medium mb-1",
+                      isToday && "text-primary font-bold"
+                    )}>
+                      {format(day, 'd')}
+                    </div>
+                    
+                    <div className="space-y-1">
+                      {dayMeetings.slice(0, 3).map(meeting => {
+                        const contact = getContactById(meeting.contactId);
+                        const displayName = contact?.company || contact?.fullName || 'Unknown Contact';
+                        
+                        return (
+                          <Badge
+                            key={meeting.id}
+                            variant="outline"
+                            className={cn(
+                              "text-xs p-1 cursor-pointer truncate block",
+                              getMeetingTypeColor(meeting.type)
+                            )}
+                            onClick={() => handleMeetingClick(meeting.id)}
+                          >
+                            <div className="truncate">
+                              {displayName} - {meeting.time}
+                            </div>
+                          </Badge>
+                        );
+                      })}
+                      
+                      {dayMeetings.length > 3 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{dayMeetings.length - 3} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </>
   );
 };
 
-export default CalendarPage;
+export default Calendar;

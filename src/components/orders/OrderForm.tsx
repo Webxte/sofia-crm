@@ -94,13 +94,22 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Safe access to settings with fallbacks
+  const safeSettings = settings || {
+    defaultTermsAndConditions: '',
+    defaultVatRate: 21,
+    companyName: '',
+    companyPhone: '',
+    companyEmail: ''
+  };
+
   const defaultValues: Partial<OrderFormValues> = {
     contactId: contactId || order?.contactId || "",
     date: order?.date ? new Date(order.date) : new Date(),
     notes: order?.notes || "",
     status: order?.status || "draft",
     reference: order?.reference || "",
-    termsAndConditions: order?.termsAndConditions || settings.defaultTermsAndConditions,
+    termsAndConditions: order?.termsAndConditions || safeSettings.defaultTermsAndConditions || "",
   };
 
   const form = useForm<OrderFormValues>({
@@ -123,11 +132,11 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
           ...prev,
           description: product.description,
           price: product.price,
-          vat: product.vat || settings.defaultVatRate
+          vat: product.vat || safeSettings.defaultVatRate || 21
         }));
       }
     }
-  }, [newItem.code, getProductByCode, settings.defaultVatRate]);
+  }, [newItem.code, getProductByCode, safeSettings.defaultVatRate]);
 
   useEffect(() => {
     if (form.watch("contactId")) {
@@ -150,7 +159,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         description: productToAdd.description,
         price: productToAdd.price,
         quantity: productToAdd.caseQuantity || 1,
-        vat: productToAdd.vat || settings.defaultVatRate,
+        vat: productToAdd.vat || safeSettings.defaultVatRate || 21,
         subtotal: productToAdd.price * (productToAdd.caseQuantity || 1),
         product: productToAdd as any
       };
@@ -198,7 +207,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       description: "",
       price: 0,
       quantity: 1,
-      vat: settings.defaultVatRate
+      vat: safeSettings.defaultVatRate || 21
     });
   };
 
@@ -210,7 +219,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       description: product.description,
       price: product.price,
       quantity: quantity,
-      vat: product.vat || settings.defaultVatRate,
+      vat: product.vat || safeSettings.defaultVatRate || 21,
       subtotal: product.price * quantity,
       product: product as any
     };
@@ -276,9 +285,9 @@ Total: €${calculateTotal().toFixed(2)}
 ${form.getValues("termsAndConditions") || ""}
 
 Thank you for your business.
-${settings.companyName}
-${settings.companyPhone}
-${settings.companyEmail}`;
+${safeSettings.companyName || ""}
+${safeSettings.companyPhone || ""}
+${safeSettings.companyEmail || ""}`;
   };
 
   const handleEmailDialogOpen = () => {

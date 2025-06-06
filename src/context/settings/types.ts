@@ -1,9 +1,6 @@
 
-import { CustomLink } from "@/types";
-
-export interface Settings {
+export interface SettingsData {
   id: string;
-  userId: string;
   companyName: string;
   companyEmail: string;
   companyPhone: string;
@@ -12,7 +9,7 @@ export interface Settings {
   defaultEmailMessage: string;
   defaultContactEmailMessage: string;
   defaultTermsAndConditions: string;
-  customLinks: CustomLink[];
+  customLinks: any[];
   catalogUrl: string;
   priceListUrl: string;
   emailFooter: string;
@@ -25,8 +22,8 @@ export interface Settings {
 }
 
 export interface SettingsContextType {
-  settings: Settings | null;
+  settings: SettingsData | null;
   loading: boolean;
-  updateSettings: (settings: Partial<Settings>) => Promise<Settings>;
-  refreshSettings: () => Promise<void>;
+  updateSettings: (settings: Partial<SettingsData>) => Promise<void>;
+  refreshSettings: () => void;
 }
