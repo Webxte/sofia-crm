@@ -6,8 +6,22 @@ import { generateOrderReference } from "./orderUtils";
 
 export const useOrdersOperations = () => {
   const { orders, setOrders, loading, fetchOrders } = useOrdersFetch();
-  const { createOrder, updateOrder, deleteOrder, loading: crudLoading } = useOrderCRUD();
-  const { addOrder } = useOrderCreate(fetchOrders);
+  const { createOrder, updateOrder: crudUpdateOrder, deleteOrder: crudDeleteOrder, loading: crudLoading } = useOrderCRUD();
+  const { addOrder: createOrderHook } = useOrderCreate(fetchOrders);
+
+  const addOrder = async (orderData: any) => {
+    await createOrderHook(orderData);
+  };
+
+  const updateOrder = async (id: string, orderData: any) => {
+    await crudUpdateOrder(id, orderData);
+    await fetchOrders(); // Refresh orders after update
+  };
+
+  const deleteOrder = async (id: string) => {
+    await crudDeleteOrder(id);
+    await fetchOrders(); // Refresh orders after delete
+  };
 
   const refreshOrders = async () => {
     await fetchOrders();
