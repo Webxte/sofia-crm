@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,22 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: any): Sett
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const parseCustomLinks = (rawLinks: any): any[] => {
+    try {
+      if (typeof rawLinks === 'string') {
+        return JSON.parse(rawLinks);
+      } else if (Array.isArray(rawLinks)) {
+        return rawLinks;
+      } else if (rawLinks && typeof rawLinks === 'object') {
+        return Array.isArray(rawLinks) ? rawLinks : [];
+      }
+      return [];
+    } catch (e) {
+      console.error("Failed to parse custom_links:", e);
+      return [];
+    }
+  };
 
   const fetchSettings = useCallback(async () => {
     if (!isAuthenticated || !user) {
@@ -62,7 +77,7 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: any): Sett
         defaultEmailMessage: data.default_email_message || '',
         defaultContactEmailMessage: data.default_contact_email_message || '',
         defaultTermsAndConditions: data.default_terms_and_conditions || '',
-        customLinks: data.custom_links || [],
+        customLinks: parseCustomLinks(data.custom_links),
         catalogUrl: data.catalog_url || '',
         priceListUrl: data.price_list_url || '',
         emailFooter: data.email_footer || 'This is an automated message from your CRM system.',
