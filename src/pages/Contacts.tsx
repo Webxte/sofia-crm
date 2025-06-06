@@ -20,7 +20,7 @@ import { ContactSortingMenu } from "@/components/contacts/ContactSortingMenu";
 
 const Contacts = () => {
   const navigate = useNavigate();
-  const { contacts, refreshContacts, loading } = useContacts();
+  const { contacts, refreshContacts, loading, showAllContacts, setShowAllContacts } = useContacts();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
@@ -28,7 +28,6 @@ const Contacts = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
-  const [showAllContacts, setShowAllContacts] = useState(false);
   const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
   
   const { sortField, sortDirection, handleSortChange, toggleSortDirection } = useContactSorting();
@@ -52,7 +51,8 @@ const Contacts = () => {
     console.log("Contacts:", contacts);
     console.log("User:", user);
     console.log("Loading state:", loading);
-  }, [contacts, user, loading]);
+    console.log("Show all contacts:", showAllContacts);
+  }, [contacts, user, loading, showAllContacts]);
 
   // Update view mode when screen size changes
   useEffect(() => {
@@ -68,14 +68,14 @@ const Contacts = () => {
   
   const filteredContacts = React.useMemo(() => {
     return useContactFilters(contacts, {
-      showAllContacts,
+      showAllContacts: true, // Always show filtered contacts since we're handling the toggle at fetch level
       userId: user?.id,
       searchQuery,
       selectedSource,
       sortField,
       sortDirection
     });
-  }, [contacts, showAllContacts, user?.id, searchQuery, selectedSource, sortField, sortDirection]);
+  }, [contacts, user?.id, searchQuery, selectedSource, sortField, sortDirection]);
 
   // Group contacts for grid view
   const { groupedContacts, sortedGroups } = React.useMemo(() => {

@@ -12,33 +12,33 @@ export const useContactsOperations = () => {
   const addContact = async (contactData: Parameters<typeof addContactBase>[0]) => {
     console.log("Adding contact:", contactData);
     const result = await addContactBase(contactData);
-    await fetchContacts(); // Refresh contacts after adding
+    await fetchContacts(false); // Refresh with current filter state
     return result;
   };
 
   const updateContact = async (id: string, contactData: Parameters<typeof updateContactBase>[1]) => {
     const result = await updateContactBase(id, contactData);
-    await fetchContacts(); // Refresh contacts after updating
+    await fetchContacts(false); // Refresh with current filter state
     return result;
   };
 
   const deleteContact = async (id: string) => {
     const result = await deleteContactBase(id);
     if (result) {
-      await fetchContacts(); // Refresh contacts after deleting
+      await fetchContacts(false); // Refresh with current filter state
     }
     return result;
   };
 
-  const refreshContacts = async () => {
-    await fetchContacts();
+  const refreshContacts = async (showAll: boolean = false) => {
+    await fetchContacts(showAll);
   };
 
   const bulkUpdateContacts = (contactIds: string[], updateData: Parameters<typeof bulkUpdateContactsBase>[1]) =>
-    bulkUpdateContactsBase(contactIds, updateData, refreshContacts);
+    bulkUpdateContactsBase(contactIds, updateData, () => refreshContacts(false));
 
   const importContactsFromCsv = (file: File) =>
-    importContactsFromCsvBase(file, refreshContacts);
+    importContactsFromCsvBase(file, () => refreshContacts(false));
 
   return {
     contacts,

@@ -23,11 +23,11 @@ export const useOrdersFetch = () => {
       setLoading(true);
       console.log("useOrdersFetch: Fetching orders for user:", user.id);
       
-      // First get all orders for the user
+      // The RLS policies will automatically filter based on user role
+      // Admins will see all orders, agents will see their own
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
-        .eq('agent_id', user.id)
         .order('created_at', { ascending: false });
       
       if (ordersError) {
@@ -37,7 +37,7 @@ export const useOrdersFetch = () => {
 
       console.log("useOrdersFetch: Raw orders data from Supabase:", ordersData);
       
-      // Then get all order items
+      // Then get all order items for the orders we can see
       const { data: itemsData, error: itemsError } = await supabase
         .from('order_items')
         .select('*');

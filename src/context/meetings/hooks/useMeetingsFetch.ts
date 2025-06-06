@@ -22,10 +22,11 @@ export const useMeetingsFetch = () => {
       setLoading(true);
       console.log("useMeetingsFetch: Fetching meetings for user:", user.id);
       
+      // The RLS policies will automatically filter based on user role
+      // Admins will see all meetings, agents will see their own
       const { data, error } = await supabase
         .from('meetings')
         .select('*')
-        .eq('agent_id', user.id)
         .order('date', { ascending: false });
 
       if (error) {

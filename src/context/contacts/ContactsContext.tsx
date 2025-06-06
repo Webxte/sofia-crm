@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 interface ContactsContextType {
   contacts: Contact[];
   loading: boolean;
+  showAllContacts: boolean;
+  setShowAllContacts: (show: boolean) => void;
   getContactById: (id: string) => Contact | undefined;
   getContactsByAgentId: (agentId: string) => Contact[];
   getContactsBySource: (source: string) => Contact[];
@@ -30,28 +32,30 @@ const ContactsContext = createContext<ContactsContextType | undefined>(undefined
 export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
+  const [showAllContacts, setShowAllContacts] = useState(false);
   const { 
     contacts, 
     loading, 
     fetchContacts, 
-    refreshContacts, 
+    refreshContacts: refreshContactsBase, 
     addContact, 
     updateContact, 
     deleteContact,
     importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when authentication is ready
+  // Fetch contacts when authentication is ready or showAll toggle changes
   useEffect(() => {
     console.log("ContactsContext: Checking authentication state", {
       isAuthenticated,
       user: user?.id,
-      loading
+      loading,
+      showAllContacts
     });
 
     if (isAuthenticated && user && !loading) {
-      console.log("ContactsContext: User authenticated, fetching contacts");
-      fetchContacts().catch(err => {
+      console.log("ContactsContext: User authenticated, fetching contacts with showAll:", showAllContacts);
+      fetchContacts(showAllContacts).catch(err => {
         console.error("Error during contacts fetch:", err);
         toast({
           title: "Error",
@@ -62,7 +66,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     } else {
       console.log("ContactsContext: Waiting for authentication or already loading");
     }
-  }, [isAuthenticated, user?.id, fetchContacts, loading, toast]);
+  }, [isAuthenticated, user?.id, fetchContacts, loading, toast, showAllContacts]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {
@@ -75,11 +79,32 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshContacts = async () => {
+    try {
+      console.log("ContactsContext: Manual refresh requested with showAll:", showAllContacts);
+      await refreshContactsBase(showAllContacts);
+    } catch (err) {
+      console.error("Error refreshing contacts:", err);
+      toast({
+        title: "Error",
+        description: "Failed to refresh contacts. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShowAllContactsChange = (show: boolean) => {
+    console.log("ContactsContext: Toggle showAllContacts to:", show);
+    setShowAllContacts(show);
+  };
+
   return (
     <ContactsContext.Provider
       value={{
         contacts,
         loading,
+        showAllContacts,
+        setShowAllContacts: handleShowAllContactsChange,
         getContactById: getContactByIdSafe,
         getContactsByAgentId: (agentId: string) => getContactsByAgentId(contacts, agentId),
         getContactsBySource: (source: string) => getContactsBySource(contacts, source),
@@ -87,19 +112,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         addContact,
         updateContact,
         deleteContact,
-        refreshContacts: async () => { 
-          try {
-            console.log("ContactsContext: Manual refresh requested");
-            await fetchContacts(); 
-          } catch (err) {
-            console.error("Error refreshing contacts:", err);
-            toast({
-              title: "Error",
-              description: "Failed to refresh contacts. Please try again.",
-              variant: "destructive",
-            });
-          }
-        },
+        refreshContacts,
         importContactsFromCsv,
       }}
     >

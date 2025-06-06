@@ -11,7 +11,7 @@ export const useContactsFetch = () => {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
-  const fetchContacts = useCallback(async () => {
+  const fetchContacts = useCallback(async (showAll: boolean = false) => {
     if (!isAuthenticated || !user) {
       console.log("useContactsFetch: User not authenticated");
       setContacts([]);
@@ -20,13 +20,21 @@ export const useContactsFetch = () => {
 
     try {
       setLoading(true);
-      console.log("useContactsFetch: Fetching contacts for user:", user.id);
+      console.log("useContactsFetch: Fetching contacts for user:", user.id, "showAll:", showAll);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('contacts')
         .select('*')
-        .eq('agent_id', user.id)
         .order('created_at', { ascending: false });
+
+      // If showAll is false, only fetch user's own contacts
+      if (!showAll) {
+        query = query.eq('agent_id', user.id);
+      }
+      // If showAll is true, the RLS policies will handle what the user can see
+      // (admins see all, agents see all when allowed by toggle)
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('useContactsFetch: Error fetching contacts:', error);
