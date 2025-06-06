@@ -9,7 +9,7 @@ export const useContactsFetch = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
 
   const fetchContacts = useCallback(async (showAll: boolean = false) => {
     if (!isAuthenticated || !user) {
@@ -20,19 +20,19 @@ export const useContactsFetch = () => {
 
     try {
       setLoading(true);
-      console.log("useContactsFetch: Fetching contacts for user:", user.id, "showAll:", showAll);
+      console.log("useContactsFetch: Fetching contacts for user:", user.id, "showAll:", showAll, "isAdmin:", isAdmin);
       
+      // Simple query - let RLS handle the filtering
       let query = supabase
         .from('contacts')
         .select('*')
         .order('created_at', { ascending: false });
 
-      // If showAll is false, only fetch user's own contacts
-      if (!showAll) {
+      // For agents: if showAll is false, explicitly filter by agent_id
+      // If showAll is true or user is admin, let RLS policies handle it
+      if (!isAdmin && !showAll) {
         query = query.eq('agent_id', user.id);
       }
-      // If showAll is true, the RLS policies will handle what the user can see
-      // (admins see all, agents see all when allowed by toggle)
 
       const { data, error } = await query;
 
@@ -73,7 +73,7 @@ export const useContactsFetch = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, toast]);
+  }, [isAuthenticated, user, isAdmin, toast]);
 
   return {
     contacts,

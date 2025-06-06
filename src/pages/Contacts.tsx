@@ -21,7 +21,7 @@ import { ContactSortingMenu } from "@/components/contacts/ContactSortingMenu";
 const Contacts = () => {
   const navigate = useNavigate();
   const { contacts, refreshContacts, loading, showAllContacts, setShowAllContacts } = useContacts();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [showImporter, setShowImporter] = useState(false);
@@ -47,12 +47,16 @@ const Contacts = () => {
 
   // Add debug console log to help diagnose issues
   useEffect(() => {
-    console.log("Contacts page mounted");
-    console.log("Contacts:", contacts);
-    console.log("User:", user);
-    console.log("Loading state:", loading);
-    console.log("Show all contacts:", showAllContacts);
-  }, [contacts, user, loading, showAllContacts]);
+    console.log("Contacts page state:", {
+      contactsCount: contacts.length,
+      user: user?.id,
+      isAdmin,
+      loading,
+      showAllContacts,
+      searchQuery,
+      selectedSource
+    });
+  }, [contacts, user, isAdmin, loading, showAllContacts, searchQuery, selectedSource]);
 
   // Update view mode when screen size changes
   useEffect(() => {
@@ -60,10 +64,15 @@ const Contacts = () => {
   }, [isMobile]);
   
   const handleRefresh = async () => {
-    console.log("Refreshing contacts...");
+    console.log("Manual refresh requested");
     setIsRefreshing(true);
-    await refreshContacts();
-    setIsRefreshing(false);
+    try {
+      await refreshContacts();
+    } catch (error) {
+      console.error("Error during manual refresh:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
   
   const filteredContacts = React.useMemo(() => {

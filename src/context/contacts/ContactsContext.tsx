@@ -30,9 +30,10 @@ interface ContactsContextType {
 const ContactsContext = createContext<ContactsContextType | undefined>(undefined);
 
 export const ContactsProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const { toast } = useToast();
   const [showAllContacts, setShowAllContacts] = useState(false);
+  const [hasInitialFetch, setHasInitialFetch] = useState(false);
   const { 
     contacts, 
     loading, 
@@ -44,29 +45,44 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     importContactsFromCsv,
   } = useContactsOperations();
 
-  // Fetch contacts when authentication is ready or showAll toggle changes
+  // Initial fetch when authentication is ready
   useEffect(() => {
-    console.log("ContactsContext: Checking authentication state", {
+    console.log("ContactsContext: Checking initial fetch condition", {
       isAuthenticated,
       user: user?.id,
       loading,
-      showAllContacts
+      hasInitialFetch
     });
 
-    if (isAuthenticated && user && !loading) {
-      console.log("ContactsContext: User authenticated, fetching contacts with showAll:", showAllContacts);
-      fetchContacts(showAllContacts).catch(err => {
-        console.error("Error during contacts fetch:", err);
+    if (isAuthenticated && user && !loading && !hasInitialFetch) {
+      console.log("ContactsContext: Performing initial fetch");
+      fetchContacts(isAdmin || showAllContacts).then(() => {
+        setHasInitialFetch(true);
+      }).catch(err => {
+        console.error("Error during initial contacts fetch:", err);
         toast({
           title: "Error",
           description: "Failed to load contacts. Please try refreshing the page.",
           variant: "destructive",
         });
       });
-    } else {
-      console.log("ContactsContext: Waiting for authentication or already loading");
     }
-  }, [isAuthenticated, user?.id, fetchContacts, loading, toast, showAllContacts]);
+  }, [isAuthenticated, user?.id, loading, hasInitialFetch, fetchContacts, toast, isAdmin, showAllContacts]);
+
+  // Handle toggle changes
+  useEffect(() => {
+    if (hasInitialFetch && isAuthenticated && user) {
+      console.log("ContactsContext: Toggle changed, refetching with showAll:", showAllContacts);
+      fetchContacts(isAdmin || showAllContacts).catch(err => {
+        console.error("Error during toggle fetch:", err);
+        toast({
+          title: "Error",
+          description: "Failed to refresh contacts.",
+          variant: "destructive",
+        });
+      });
+    }
+  }, [showAllContacts, hasInitialFetch, isAuthenticated, user, fetchContacts, toast, isAdmin]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {
@@ -82,7 +98,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const refreshContacts = async () => {
     try {
       console.log("ContactsContext: Manual refresh requested with showAll:", showAllContacts);
-      await refreshContactsBase(showAllContacts);
+      await refreshContactsBase(isAdmin || showAllContacts);
     } catch (err) {
       console.error("Error refreshing contacts:", err);
       toast({

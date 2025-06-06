@@ -16,6 +16,7 @@ export const useOrdersFetch = () => {
   const fetchOrders = useCallback(async () => {
     if (!user) {
       console.log("useOrdersFetch: No user, skipping orders fetch");
+      setOrders([]);
       return;
     }
 
@@ -23,8 +24,7 @@ export const useOrdersFetch = () => {
       setLoading(true);
       console.log("useOrdersFetch: Fetching orders for user:", user.id);
       
-      // The RLS policies will automatically filter based on user role
-      // Admins will see all orders, agents will see their own
+      // Simple query - let RLS handle the filtering automatically
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
@@ -35,9 +35,9 @@ export const useOrdersFetch = () => {
         throw ordersError;
       }
 
-      console.log("useOrdersFetch: Raw orders data from Supabase:", ordersData);
+      console.log("useOrdersFetch: Raw orders data from Supabase:", ordersData?.length || 0);
       
-      // Then get all order items for the orders we can see
+      // Get all order items
       const { data: itemsData, error: itemsError } = await supabase
         .from('order_items')
         .select('*');
@@ -48,9 +48,9 @@ export const useOrdersFetch = () => {
       }
       
       // Map items to their respective orders
-      const formattedOrders = ordersData.map(order => {
+      const formattedOrders = (ordersData || []).map(order => {
         // Find all items for this order
-        const orderItems = itemsData
+        const orderItems = (itemsData || [])
           .filter(item => item.order_id === order.id)
           .map(item => {
             // Get the corresponding product

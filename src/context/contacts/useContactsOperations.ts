@@ -8,24 +8,33 @@ export const useContactsOperations = () => {
   const { addContact: addContactBase, updateContact: updateContactBase, deleteContact: deleteContactBase } = useContactCRUD();
   const { sendContactEmail, bulkUpdateContacts: bulkUpdateContactsBase, importContactsFromCsv: importContactsFromCsvBase } = useContactUtils();
 
-  // Wrap CRUD operations to pass setContacts
+  // Wrap CRUD operations to pass current showAll state
   const addContact = async (contactData: Parameters<typeof addContactBase>[0]) => {
     console.log("Adding contact:", contactData);
     const result = await addContactBase(contactData);
-    await fetchContacts(false); // Refresh with current filter state
+    if (result) {
+      // Add the new contact to the current list instead of refetching
+      setContacts(prev => [result, ...prev]);
+    }
     return result;
   };
 
   const updateContact = async (id: string, contactData: Parameters<typeof updateContactBase>[1]) => {
     const result = await updateContactBase(id, contactData);
-    await fetchContacts(false); // Refresh with current filter state
+    if (result) {
+      // Update the contact in the current list
+      setContacts(prev => prev.map(contact => 
+        contact.id === id ? result : contact
+      ));
+    }
     return result;
   };
 
   const deleteContact = async (id: string) => {
     const result = await deleteContactBase(id);
     if (result) {
-      await fetchContacts(false); // Refresh with current filter state
+      // Remove the contact from the current list
+      setContacts(prev => prev.filter(contact => contact.id !== id));
     }
     return result;
   };
