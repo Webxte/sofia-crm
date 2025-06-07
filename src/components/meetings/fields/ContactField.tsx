@@ -27,6 +27,13 @@ export const ContactField = ({ form, disabled }: ContactFieldProps) => {
     return (a.fullName || "").localeCompare(b.fullName || "");
   });
 
+  const getDisplayName = (contact: any) => {
+    if (contact.company) {
+      return contact.fullName ? `${contact.company} (${contact.fullName})` : contact.company;
+    }
+    return contact.fullName || "Unnamed Contact";
+  };
+
   return (
     <FormField
       control={form.control}
@@ -47,9 +54,7 @@ export const ContactField = ({ form, disabled }: ContactFieldProps) => {
             <SelectContent>
               {sortedContacts.map((contact) => (
                 <SelectItem key={contact.id} value={contact.id}>
-                  {contact.company ? 
-                    `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
-                    (contact.fullName || "Unnamed Contact")}
+                  {getDisplayName(contact)}
                 </SelectItem>
               ))}
             </SelectContent>

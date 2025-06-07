@@ -25,14 +25,20 @@ export const ContactsList = ({ contacts, onScheduleMeeting, onCreateTask, onCrea
     setShowEmailDialog(true);
   };
   
+  const getDisplayName = (contact: Contact) => {
+    if (contact.company) {
+      return contact.fullName ? `${contact.company} (${contact.fullName})` : contact.company;
+    }
+    return contact.fullName || "Unnamed Contact";
+  };
+  
   return (
     <>
       <div className="border rounded-md overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Company</TableHead>
+              <TableHead>Company/Contact</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="hidden md:table-cell">Phone</TableHead>
               <TableHead>Source</TableHead>
@@ -42,8 +48,7 @@ export const ContactsList = ({ contacts, onScheduleMeeting, onCreateTask, onCrea
           <TableBody>
             {contacts.map((contact) => (
               <TableRow key={contact.id}>
-                <TableCell className="font-medium">{contact.fullName || "-"}</TableCell>
-                <TableCell>{contact.company || "-"}</TableCell>
+                <TableCell className="font-medium">{getDisplayName(contact)}</TableCell>
                 <TableCell className="hidden md:table-cell">{contact.email || "-"}</TableCell>
                 <TableCell className="hidden md:table-cell">{contact.phone || "-"}</TableCell>
                 <TableCell>{contact.source || "-"}</TableCell>

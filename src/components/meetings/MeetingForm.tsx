@@ -14,9 +14,9 @@ import { NotesField } from "./fields/NotesField";
 import { meetingSchema, type MeetingFormData } from "./validation/meetingSchema";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { MeetingFormHeader } from "./form/MeetingFormHeader";
+import { FollowUpSection } from "./form/FollowUpSection";
+import { MeetingFormActions } from "./form/MeetingFormActions";
 
 interface MeetingFormProps {
   contactId?: string;
@@ -28,9 +28,11 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { addMeeting, updateMeeting, getMeetingById } = useMeetings();
-  const [scheduleFollowUp, setScheduleFollowUp] = useState(false);
-  const [followUpDate, setFollowUpDate] = useState("");
-  const [followUpTime, setFollowUpTime] = useState("");
+  const [followUpData, setFollowUpData] = useState({
+    schedule: false,
+    date: "",
+    time: "",
+  });
 
   const isEdit = Boolean(id);
   const existingMeeting = isEdit ? getMeetingById(id!) : null;
@@ -67,10 +69,6 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
     }
   }, [existingMeeting, form]);
 
-  const handleFollowUpChange = (checked: boolean | "indeterminate") => {
-    setScheduleFollowUp(checked === true);
-  };
-
   const onSubmit = async (data: MeetingFormData) => {
     try {
       // Ensure contactId is provided
@@ -102,14 +100,15 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
           description: "Meeting updated successfully",
         });
       } else {
+        // Create the main meeting
         await addMeeting(meetingData);
         
-        // If scheduling follow-up, create another meeting
-        if (scheduleFollowUp && followUpDate && followUpTime) {
+        // Only create follow-up if scheduled and has valid date/time
+        if (followUpData.schedule && followUpData.date && followUpData.time) {
           const followUpMeetingData = {
             ...meetingData,
-            date: followUpDate,
-            time: followUpTime,
+            date: followUpData.date,
+            time: followUpData.time,
             notes: `Follow-up meeting from ${data.date}`,
           };
           await addMeeting(followUpMeetingData);
@@ -138,14 +137,7 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {isEdit ? "Edit Meeting" : "New Meeting"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isEdit ? "Update meeting details" : "Schedule a new meeting with a contact"}
-        </p>
-      </div>
+      <MeetingFormHeader isEdit={isEdit} />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -160,58 +152,12 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
           
           <NotesField form={form} />
 
-          {!isEdit && (
-            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="scheduleFollowUp"
-                  checked={scheduleFollowUp}
-                  onCheckedChange={handleFollowUpChange}
-                />
-                <Label htmlFor="scheduleFollowUp" className="text-sm font-medium">
-                  Schedule Follow-up Meeting
-                </Label>
-              </div>
-              
-              {scheduleFollowUp && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="followUpDate" className="text-sm">Follow-up Date</Label>
-                    <Input
-                      id="followUpDate"
-                      type="date"
-                      value={followUpDate}
-                      onChange={(e) => setFollowUpDate(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="followUpTime" className="text-sm">Follow-up Time</Label>
-                    <Input
-                      id="followUpTime"
-                      type="time"
-                      value={followUpTime}
-                      onChange={(e) => setFollowUpTime(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          <FollowUpSection
+            isEdit={isEdit}
+            onFollowUpChange={setFollowUpData}
+          />
 
-          <div className="flex gap-4">
-            <Button type="submit">
-              {isEdit ? "Update Meeting" : "Create Meeting"}
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => navigate("/meetings")}
-            >
-              Cancel
-            </Button>
-          </div>
+          <MeetingFormActions isEdit={isEdit} />
         </form>
       </Form>
     </div>
