@@ -1,70 +1,71 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Meeting } from "@/types";
-import { useMeetings } from "@/context/meetings";
-import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { ArrowLeft } from "lucide-react";
-import { meetingSchema, MeetingFormValues } from "./validation/meetingSchema";
+import { useToast } from "@/hooks/use-toast";
+import { useMeetings } from "@/context/meetings";
 import { ContactField } from "./fields/ContactField";
 import { MeetingTypeField } from "./fields/MeetingTypeField";
 import { DateTimeFields } from "./fields/DateTimeFields";
 import { LocationField } from "./fields/LocationField";
 import { NotesField } from "./fields/NotesField";
+import { meetingSchema, type MeetingFormData } from "./validation/meetingSchema";
+import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 interface MeetingFormProps {
-  meeting?: Meeting;
-  isEditing?: boolean;
   contactId?: string;
 }
 
-const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addMeeting, updateMeeting } = useMeetings();
-  const { toast } = useToast();
+const MeetingForm = ({ contactId }: MeetingFormProps) => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { addMeeting, updateMeeting, getMeetingById } = useMeetings();
 
-  const defaultValues: Partial<MeetingFormValues> = {
-    contactId: contactId || meeting?.contactId || "",
-    type: meeting?.type || "meeting",
-    date: meeting?.date ? new Date(meeting.date) : new Date(),
-    time: meeting?.time || format(new Date(), "HH:mm"),
-    location: meeting?.location || "",
-    notes: meeting?.notes || "",
-    nextSteps: meeting?.nextSteps || [],
-  };
+  const isEdit = Boolean(id);
+  const existingMeeting = isEdit ? getMeetingById(id!) : null;
 
-  const form = useForm<MeetingFormValues>({
+  const form = useForm<MeetingFormData>({
     resolver: zodResolver(meetingSchema),
-    defaultValues,
+    defaultValues: {
+      contactId: contactId || "",
+      type: "meeting",
+      date: "",
+      time: "",
+      location: "",
+      notes: "",
+      nextSteps: [],
+    },
   });
 
-  const onSubmit = async (data: MeetingFormValues) => {
-    setIsSubmitting(true);
-    
+  useEffect(() => {
+    if (existingMeeting) {
+      form.reset({
+        contactId: existingMeeting.contactId,
+        type: existingMeeting.type,
+        date: existingMeeting.date,
+        time: existingMeeting.time,
+        location: existingMeeting.location || "",
+        notes: existingMeeting.notes || "",
+        nextSteps: existingMeeting.nextSteps || [],
+      });
+    }
+  }, [existingMeeting, form]);
+
+  const onSubmit = async (data: MeetingFormData) => {
     try {
-      // Create complete object with all required properties
-      const meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt"> = {
-        contactId: data.contactId,
-        type: data.type,
-        date: format(data.date, 'yyyy-MM-dd'),
-        time: data.time,
-        notes: data.notes,
-        location: data.location || "",
-        nextSteps: data.nextSteps || [],
-        organizationId: "",
-        contactName: "",
-        agentId: "",
-        agentName: ""
+      const meetingData = {
+        ...data,
+        agentId: user?.id || '',
+        agentName: user?.user_metadata?.name || user?.email || 'Unknown Agent',
       };
-      
-      if (isEditing && meeting) {
-        await updateMeeting(meeting.id, meetingData);
+
+      if (isEdit && id) {
+        await updateMeeting(id, meetingData);
         toast({
           title: "Success",
           description: "Meeting updated successfully",
@@ -72,60 +73,56 @@ const MeetingForm = ({ meeting, isEditing = false, contactId }: MeetingFormProps
       } else {
         await addMeeting(meetingData);
         toast({
-          title: "Success",
+          title: "Success", 
           description: "Meeting created successfully",
         });
       }
+      
       navigate("/meetings");
     } catch (error) {
-      console.error(error);
+      console.error("Error saving meeting:", error);
       toast({
         title: "Error",
-        description: "Something went wrong",
+        description: "Failed to save meeting. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="mr-2"
-          onClick={() => navigate("/meetings")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+      <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          {isEditing ? "Edit Meeting" : "Add Meeting"}
+          {isEdit ? "Edit Meeting" : "New Meeting"}
         </h1>
+        <p className="text-muted-foreground">
+          {isEdit ? "Update meeting details" : "Schedule a new meeting with a contact"}
+        </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ContactField form={form} disabled={!!contactId} />
-            <MeetingTypeField form={form} />
-            <DateTimeFields form={form} />
+            <ContactField control={form.control} />
+            <MeetingTypeField control={form.control} />
           </div>
 
-          <LocationField form={form} />
-          <NotesField form={form} />
+          <DateTimeFields control={form.control} />
+          
+          <LocationField control={form.control} />
+          
+          <NotesField control={form.control} />
 
-          <div className="flex justify-end gap-4">
+          <div className="flex gap-4">
+            <Button type="submit">
+              {isEdit ? "Update Meeting" : "Create Meeting"}
+            </Button>
             <Button 
               type="button" 
               variant="outline" 
               onClick={() => navigate("/meetings")}
             >
               Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
-              {isSubmitting ? "Saving..." : isEditing ? "Update Meeting" : "Add Meeting"}
             </Button>
           </div>
         </form>

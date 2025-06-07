@@ -53,7 +53,7 @@ export const AgentOverviewCards = ({
             {filteredMeetings.length}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {filteredMeetings.filter(m => m.followUpScheduled).length} with follow-ups
+            {filteredMeetings.filter(m => new Date(m.date) > new Date()).length} upcoming
           </p>
         </CardContent>
       </Card>

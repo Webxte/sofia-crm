@@ -11,11 +11,19 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const settingsOperations = useSettingsOperations(isAuthenticated, user);
 
   useEffect(() => {
-    console.log("SettingsProvider: Authentication state changed", { isAuthenticated });
-    if (isAuthenticated) {
+    console.log("SettingsProvider: Authentication state changed", { 
+      isAuthenticated, 
+      userId: user?.id,
+      hasUser: !!user 
+    });
+    
+    if (isAuthenticated && user?.id) {
+      console.log("SettingsProvider: Refreshing settings for authenticated user");
       settingsOperations.refreshSettings();
+    } else {
+      console.log("SettingsProvider: User not authenticated or no user ID");
     }
-  }, [isAuthenticated, settingsOperations.refreshSettings]);
+  }, [isAuthenticated, user?.id, settingsOperations.refreshSettings]);
 
   return (
     <SettingsContext.Provider value={settingsOperations}>

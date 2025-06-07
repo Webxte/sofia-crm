@@ -53,7 +53,7 @@ const OverviewCards: React.FC<OverviewCardsProps> = ({ data }) => {
             {meetings.length}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {meetings.filter(m => m.followUpScheduled).length} with follow-ups
+            {meetings.filter(m => new Date(m.date) > new Date()).length} upcoming
           </p>
         </CardContent>
       </Card>
