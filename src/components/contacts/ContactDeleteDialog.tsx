@@ -55,7 +55,7 @@ export const ContactDeleteDialog = ({
 
   // Check for associated data
   const associatedMeetings = meetings.filter(meeting => meeting.contactId === contact.id);
-  const associatedOrders = orders.filter(order => order.contact_id === contact.id);
+  const associatedOrders = orders.filter(order => order.contactId === contact.id);
   const associatedTasks = tasks.filter(task => task.contactId === contact.id);
 
   const hasAssociatedData = associatedMeetings.length > 0 || associatedOrders.length > 0 || associatedTasks.length > 0;

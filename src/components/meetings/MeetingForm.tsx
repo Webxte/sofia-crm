@@ -67,6 +67,10 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
     }
   }, [existingMeeting, form]);
 
+  const handleFollowUpChange = (checked: boolean | "indeterminate") => {
+    setScheduleFollowUp(checked === true);
+  };
+
   const onSubmit = async (data: MeetingFormData) => {
     try {
       // Ensure contactId is provided
@@ -162,7 +166,7 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
                 <Checkbox
                   id="scheduleFollowUp"
                   checked={scheduleFollowUp}
-                  onCheckedChange={setScheduleFollowUp}
+                  onCheckedChange={handleFollowUpChange}
                 />
                 <Label htmlFor="scheduleFollowUp" className="text-sm font-medium">
                   Schedule Follow-up Meeting
