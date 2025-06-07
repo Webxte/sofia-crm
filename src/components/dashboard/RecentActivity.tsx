@@ -23,7 +23,7 @@ export function RecentActivity() {
     .slice(0, 5);
 
   const activeTasks = tasks
-    .filter(task => task.status === "pending" || task.status === "in_progress" || task.status === "active")
+    .filter(task => task.status !== "completed" && task.status !== "cancelled")
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 

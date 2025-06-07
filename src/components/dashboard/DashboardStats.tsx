@@ -47,9 +47,9 @@ export function DashboardStats() {
     isFuture(new Date(meeting.date))
   ).length;
 
-  // Task statistics - fix the status comparison
+  // Task statistics - using correct status values
   const activeTasks = tasks.filter(task => 
-    task.status === "pending" || task.status === "in_progress" || task.status === "active"
+    task.status !== "completed" && task.status !== "cancelled"
   );
 
   // Order statistics

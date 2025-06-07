@@ -1,7 +1,8 @@
+
 import { useState } from "react";
-import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Meeting } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useContacts } from "@/context/contacts/ContactsContext";
 
@@ -9,64 +10,61 @@ export const useMeetingCRUD = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { contacts } = useContacts();
+  const { getContactById } = useContacts();
 
-  const createMeeting = async (meetingData: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const createMeeting = async (meetingData: Omit<Meeting, "id" | "createdAt" | "updatedAt">) => {
+    console.log("useMeetingCRUD: Creating meeting with data:", meetingData);
+    
     if (!user) {
-      const errorMsg = "User not found";
-      console.error("createMeeting error:", errorMsg);
-      toast({
-        title: "Error",
-        description: errorMsg,
-        variant: "destructive",
-      });
-      throw new Error(errorMsg);
+      console.error("useMeetingCRUD: User not authenticated");
+      throw new Error("User not authenticated");
     }
-
+    
     setLoading(true);
     try {
-      console.log("Creating meeting for user:", user.id);
+      // Get contact name from contact ID
+      const contact = getContactById(meetingData.contactId);
+      const contactName = contact ? contact.fullName : 'Unknown Contact';
       
-      const newMeeting = {
-        contact_id: meetingData.contactId,
-        contact_name: meetingData.contactName,
-        type: meetingData.type,
-        date: meetingData.date,
-        time: meetingData.time,
-        location: meetingData.location,
-        notes: meetingData.notes,
-        next_steps: meetingData.nextSteps,
-        agent_id: user.id,
-        agent_name: user.name || user.email || "",
-      };
-
-      console.log("Meeting data being inserted:", newMeeting);
+      console.log("useMeetingCRUD: Found contact:", contactName, "for ID:", meetingData.contactId);
 
       const { data, error } = await supabase
         .from("meetings")
-        .insert([newMeeting])
+        .insert([{
+          contact_id: meetingData.contactId,
+          contact_name: contactName,
+          type: meetingData.type,
+          date: meetingData.date,
+          time: meetingData.time,
+          location: meetingData.location || '',
+          notes: meetingData.notes || '',
+          next_steps: meetingData.nextSteps || [],
+          agent_id: user.id,
+          agent_name: user.user_metadata?.name || user.email || 'Unknown Agent',
+        }])
         .select()
         .single();
 
       if (error) {
-        console.error("Database error creating meeting:", error);
+        console.error("useMeetingCRUD: Supabase error:", error);
         throw error;
       }
 
-      console.log("Meeting created successfully:", data);
+      console.log("useMeetingCRUD: Meeting created successfully:", data);
 
-      const createdMeeting: Meeting = {
+      // Convert database format to app format
+      const newMeeting: Meeting = {
         id: data.id,
         contactId: data.contact_id,
-        contactName: data.contact_name || "",
-        type: data.type as "meeting" | "phone" | "email" | "online" | "other",
+        contactName: data.contact_name,
+        type: data.type as Meeting["type"],
         date: data.date,
         time: data.time,
-        location: data.location || "",
+        location: data.location,
         notes: data.notes,
         nextSteps: data.next_steps || [],
-        agentId: data.agent_id || "",
-        agentName: data.agent_name || "",
+        agentId: data.agent_id,
+        agentName: data.agent_name,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -76,9 +74,9 @@ export const useMeetingCRUD = () => {
         description: "Meeting created successfully",
       });
 
-      return createdMeeting;
+      return newMeeting;
     } catch (error) {
-      console.error("Error creating meeting:", error);
+      console.error("useMeetingCRUD: Error creating meeting:", error);
       toast({
         title: "Error",
         description: "Failed to create meeting",
@@ -90,104 +88,72 @@ export const useMeetingCRUD = () => {
     }
   };
 
-  const addMeeting = async (meetingData: any) => {
-    try {
-      setLoading(true);
-      
-      // Get contact name from contacts list
-      const contact = contacts.find(c => c.id === meetingData.contactId);
-      const contactName = contact ? contact.fullName : 'Unknown Contact';
-      
-      console.log("useMeetingCRUD: Adding meeting with contact name:", contactName);
-      
-      const { data, error } = await supabase
-        .from('meetings')
-        .insert({
-          contact_id: meetingData.contactId,
-          contact_name: contactName,
-          type: meetingData.type,
-          date: meetingData.date,
-          time: meetingData.time,
-          location: meetingData.location || '',
-          notes: meetingData.notes || '',
-          next_steps: meetingData.nextSteps || [],
-          agent_id: user?.id || '',
-          agent_name: meetingData.agentName || user?.user_metadata?.name || user?.email || 'Unknown Agent',
-        })
-        .select()
-        .single();
+  const addMeeting = createMeeting;
 
-      if (error) {
-        console.error('useMeetingCRUD: Error adding meeting:', error);
-        throw error;
+  const updateMeeting = async (id: string, meetingData: Partial<Meeting>) => {
+    console.log("useMeetingCRUD: Updating meeting:", id, meetingData);
+    
+    setLoading(true);
+    try {
+      // Get contact name if contactId is being updated
+      let contactName = meetingData.contactName;
+      if (meetingData.contactId && !contactName) {
+        const contact = getContactById(meetingData.contactId);
+        contactName = contact ? contact.fullName : 'Unknown Contact';
       }
 
-      console.log("useMeetingCRUD: Meeting added successfully:", data);
-      
-      toast({
-        title: "Success",
-        description: "Meeting added successfully",
-      });
-
-      return data;
-    } catch (error) {
-      console.error('useMeetingCRUD: Error in addMeeting:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add meeting. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateMeeting = async (id: string, meetingData: any) => {
-    try {
-      setLoading(true);
-      
-      // Get contact name from contacts list
-      const contact = contacts.find(c => c.id === meetingData.contactId);
-      const contactName = contact ? contact.fullName : 'Unknown Contact';
-      
-      console.log("useMeetingCRUD: Updating meeting with contact name:", contactName);
-      
       const { data, error } = await supabase
-        .from('meetings')
+        .from("meetings")
         .update({
           contact_id: meetingData.contactId,
           contact_name: contactName,
           type: meetingData.type,
           date: meetingData.date,
           time: meetingData.time,
-          location: meetingData.location || '',
-          notes: meetingData.notes || '',
-          next_steps: meetingData.nextSteps || [],
-          agent_name: meetingData.agentName || user?.user_metadata?.name || user?.email || 'Unknown Agent',
+          location: meetingData.location,
+          notes: meetingData.notes,
+          next_steps: meetingData.nextSteps,
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single();
 
       if (error) {
-        console.error('useMeetingCRUD: Error updating meeting:', error);
+        console.error("useMeetingCRUD: Update error:", error);
         throw error;
       }
 
       console.log("useMeetingCRUD: Meeting updated successfully:", data);
-      
+
+      // Convert database format to app format
+      const updatedMeeting: Meeting = {
+        id: data.id,
+        contactId: data.contact_id,
+        contactName: data.contact_name,
+        type: data.type as Meeting["type"],
+        date: data.date,
+        time: data.time,
+        location: data.location,
+        notes: data.notes,
+        nextSteps: data.next_steps || [],
+        agentId: data.agent_id,
+        agentName: data.agent_name,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+
       toast({
         title: "Success",
         description: "Meeting updated successfully",
       });
 
-      return data;
+      return updatedMeeting;
     } catch (error) {
-      console.error('useMeetingCRUD: Error in updateMeeting:', error);
+      console.error("useMeetingCRUD: Error updating meeting:", error);
       toast({
         title: "Error",
-        description: "Failed to update meeting. Please try again.",
+        description: "Failed to update meeting",
         variant: "destructive",
       });
       throw error;
@@ -197,22 +163,22 @@ export const useMeetingCRUD = () => {
   };
 
   const deleteMeeting = async (id: string) => {
+    console.log("useMeetingCRUD: Deleting meeting:", id);
+    
+    setLoading(true);
     try {
-      setLoading(true);
-      console.log("useMeetingCRUD: Deleting meeting:", id);
-      
       const { error } = await supabase
-        .from('meetings')
+        .from("meetings")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) {
-        console.error('useMeetingCRUD: Error deleting meeting:', error);
+        console.error("useMeetingCRUD: Delete error:", error);
         throw error;
       }
 
       console.log("useMeetingCRUD: Meeting deleted successfully");
-      
+
       toast({
         title: "Success",
         description: "Meeting deleted successfully",
@@ -220,10 +186,10 @@ export const useMeetingCRUD = () => {
 
       return true;
     } catch (error) {
-      console.error('useMeetingCRUD: Error in deleteMeeting:', error);
+      console.error("useMeetingCRUD: Error deleting meeting:", error);
       toast({
         title: "Error",
-        description: "Failed to delete meeting. Please try again.",
+        description: "Failed to delete meeting",
         variant: "destructive",
       });
       return false;
@@ -237,6 +203,6 @@ export const useMeetingCRUD = () => {
     addMeeting,
     updateMeeting,
     deleteMeeting,
-    loading
+    loading,
   };
 };

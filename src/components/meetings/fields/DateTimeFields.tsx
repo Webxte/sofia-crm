@@ -34,7 +34,7 @@ export const DateTimeFields = ({ form }: DateTimeFieldsProps) => {
                     )}
                   >
                     {field.value ? (
-                      format(field.value, "PPP")
+                      format(new Date(field.value), "PPP")
                     ) : (
                       <span>Pick a date</span>
                     )}
@@ -45,8 +45,8 @@ export const DateTimeFields = ({ form }: DateTimeFieldsProps) => {
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={field.value}
-                  onSelect={field.onChange}
+                  selected={field.value ? new Date(field.value) : undefined}
+                  onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
