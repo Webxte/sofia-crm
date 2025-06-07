@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -216,5 +217,6 @@ export const useSettingsOperations = (isAuthenticated: boolean, user: any): Sett
     loading,
     updateSettings,
     refreshSettings,
+    fetchSettings,
   };
 };

@@ -18,12 +18,12 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     });
     
     if (isAuthenticated && user?.id) {
-      console.log("SettingsProvider: Refreshing settings for authenticated user");
-      settingsOperations.refreshSettings();
+      console.log("SettingsProvider: Fetching settings for authenticated user");
+      settingsOperations.fetchSettings();
     } else {
       console.log("SettingsProvider: User not authenticated or no user ID");
     }
-  }, [isAuthenticated, user?.id, settingsOperations.refreshSettings]);
+  }, [isAuthenticated, user?.id]);
 
   return (
     <SettingsContext.Provider value={settingsOperations}>

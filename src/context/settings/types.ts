@@ -26,4 +26,5 @@ export interface SettingsContextType {
   loading: boolean;
   updateSettings: (settings: Partial<SettingsData>) => Promise<void>;
   refreshSettings: () => void;
+  fetchSettings: () => Promise<void>;
 }
