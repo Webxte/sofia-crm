@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +13,7 @@ export const useMeetingsFetch = () => {
 
   const fetchMeetings = useCallback(async () => {
     if (!isAuthenticated || !user) {
-      console.log("useMeetingsFetch: User not authenticated");
+      console.log("useMeetingsFetch: User not authenticated, clearing meetings");
       setMeetings([]);
       return;
     }
@@ -65,6 +65,14 @@ export const useMeetingsFetch = () => {
       setLoading(false);
     }
   }, [isAuthenticated, user, toast]);
+
+  // Auto-fetch when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log("useMeetingsFetch: Auth state changed, fetching meetings");
+      fetchMeetings();
+    }
+  }, [isAuthenticated, user, fetchMeetings]);
 
   return {
     meetings,

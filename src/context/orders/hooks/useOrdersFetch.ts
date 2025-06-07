@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,12 +10,12 @@ export const useOrdersFetch = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { getProductById } = useProducts();
 
   const fetchOrders = useCallback(async () => {
-    if (!user) {
-      console.log("useOrdersFetch: No user, skipping orders fetch");
+    if (!isAuthenticated || !user) {
+      console.log("useOrdersFetch: User not authenticated, clearing orders");
       setOrders([]);
       return;
     }
@@ -108,7 +108,15 @@ export const useOrdersFetch = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, getProductById, toast]);
+  }, [isAuthenticated, user, getProductById, toast]);
+
+  // Auto-fetch when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log("useOrdersFetch: Auth state changed, fetching orders");
+      fetchOrders();
+    }
+  }, [isAuthenticated, user, fetchOrders]);
 
   return {
     orders,

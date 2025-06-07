@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode, useEffect } from "react";
 import { useMeetingsOperations } from "./useMeetingsOperations";
 import { MeetingsContextType } from "./types";
 
@@ -7,6 +7,12 @@ const MeetingsContext = createContext<MeetingsContextType | undefined>(undefined
 
 export const MeetingsProvider = ({ children }: { children: ReactNode }) => {
   const operations = useMeetingsOperations();
+  
+  // Auto-fetch meetings when the provider mounts
+  useEffect(() => {
+    console.log("MeetingsProvider: Initializing, fetching meetings");
+    operations.fetchMeetings();
+  }, []);
   
   // Fix the sendMeetingEmail return type to match expected type
   const contextValue: MeetingsContextType = {
