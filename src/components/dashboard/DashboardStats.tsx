@@ -47,10 +47,8 @@ export function DashboardStats() {
     isFuture(new Date(meeting.date))
   ).length;
 
-  // Task statistics - using correct status values
-  const activeTasks = tasks.filter(task => 
-    task.status !== "completed" && task.status !== "cancelled"
-  );
+  // Task statistics - only "active" tasks (since status can only be "active" | "completed")
+  const activeTasks = tasks.filter(task => task.status === "active");
 
   // Order statistics
   const draftOrders = orders.filter(order => order.status === "draft").length;

@@ -66,7 +66,7 @@ export const AgentOverviewCards = ({
             {filteredTasks.length}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {filteredTasks.filter(t => t.status !== "completed" && t.status !== "cancelled").length} active
+            {filteredTasks.filter(t => t.status === "active").length} active
           </p>
         </CardContent>
       </Card>
