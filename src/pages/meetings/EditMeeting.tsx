@@ -13,7 +13,7 @@ const EditMeeting = () => {
     return <Navigate to="/meetings" replace />;
   }
   
-  return <MeetingForm meeting={meeting} isEditing />;
+  return <MeetingForm />;
 };
 
 export default EditMeeting;

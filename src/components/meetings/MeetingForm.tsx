@@ -58,8 +58,24 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
 
   const onSubmit = async (data: MeetingFormData) => {
     try {
+      // Ensure contactId is provided
+      if (!data.contactId) {
+        toast({
+          title: "Error",
+          description: "Please select a contact",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const meetingData = {
-        ...data,
+        contactId: data.contactId,
+        type: data.type,
+        date: data.date,
+        time: data.time,
+        location: data.location || "",
+        notes: data.notes || "",
+        nextSteps: data.nextSteps || [],
         agentId: user?.id || '',
         agentName: user?.user_metadata?.name || user?.email || 'Unknown Agent',
       };
@@ -103,15 +119,15 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ContactField control={form.control} />
-            <MeetingTypeField control={form.control} />
+            <ContactField form={form} />
+            <MeetingTypeField form={form} />
           </div>
 
-          <DateTimeFields control={form.control} />
+          <DateTimeFields form={form} />
           
-          <LocationField control={form.control} />
+          <LocationField form={form} />
           
-          <NotesField control={form.control} />
+          <NotesField form={form} />
 
           <div className="flex gap-4">
             <Button type="submit">

@@ -47,8 +47,10 @@ export function DashboardStats() {
     isFuture(new Date(meeting.date))
   ).length;
 
-  // Task statistics
-  const activeTasks = tasks.filter(task => task.status === "active" || task.status === "pending" || task.status === "in_progress");
+  // Task statistics - fix the status comparison
+  const activeTasks = tasks.filter(task => 
+    task.status === "pending" || task.status === "in_progress" || task.status === "active"
+  );
 
   // Order statistics
   const draftOrders = orders.filter(order => order.status === "draft").length;

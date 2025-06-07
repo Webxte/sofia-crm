@@ -12,3 +12,4 @@ export const meetingSchema = z.object({
 });
 
 export type MeetingFormData = z.infer<typeof meetingSchema>;
+export type MeetingFormValues = MeetingFormData; // Add this export for compatibility
