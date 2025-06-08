@@ -51,6 +51,12 @@ const Orders = () => {
   console.log("Orders page - Admin status:", { isAdmin, userId: user?.id, showAllOrders });
   console.log("Orders page - Contacts count:", contacts.length, "Orders count:", orders.length);
   
+  // Debug: Log all contact IDs that the agent has access to
+  console.log("Agent's contact IDs:", contacts.map(c => c.id));
+  
+  // Debug: Log all order contact IDs
+  console.log("Order contact IDs:", orders.map(o => ({ orderId: o.id, contactId: o.contactId, agentId: o.agentId })));
+  
   const filteredOrders = filterOrders(orders, {
     searchQuery,
     filterStatus,
@@ -73,8 +79,16 @@ const Orders = () => {
       contactId: order.contactId,
       agentId: order.agentId,
       reference: order.reference,
-      mappedName: companyNameMap[order.contactId]
+      mappedName: companyNameMap[order.contactId],
+      contactExists: !!getContactById(order.contactId)
     })));
+    
+    // Check if these missing contact IDs belong to other agents
+    const missingContactIds = ordersWithMissingContacts.map(o => o.contactId);
+    console.log("Missing contact IDs:", missingContactIds);
+    console.log("Orders that reference missing contacts but belong to current agent:", 
+      ordersWithMissingContacts.filter(o => o.agentId === user?.id)
+    );
   }
   
   const sortedOrders = [...filteredOrders].sort(
