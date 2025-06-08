@@ -1,6 +1,5 @@
-
 import { Order } from "@/types";
-import { Contact } from "@/context/contacts/types";
+import { Contact } from "@/types";
 
 export const getStatusColor = (status: string) => {
   switch (status?.toLowerCase()) {
