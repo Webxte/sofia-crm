@@ -24,6 +24,7 @@ const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [showAllOrders, setShowAllOrders] = useState(false);
   const { orders } = useOrders();
   const { contacts, getContactById } = useContacts();
   const { isAdmin, user } = useAuth();
@@ -44,7 +45,7 @@ const Orders = () => {
     searchQuery,
     filterStatus,
     contactId,
-    isAdmin,
+    isAdmin: isAdmin && showAllOrders,
     userId: user?.id,
     getContactById
   });
@@ -78,6 +79,8 @@ const Orders = () => {
         setViewMode={setViewMode}
         handleExport={handleExport}
         isMobile={isMobile}
+        showAllOrders={showAllOrders}
+        onShowAllOrdersChange={setShowAllOrders}
       />
 
       {sortedOrders.length === 0 ? (

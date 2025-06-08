@@ -9,6 +9,10 @@ interface MeetingFormActionsProps {
 export const MeetingFormActions = ({ isEdit }: MeetingFormActionsProps) => {
   const navigate = useNavigate();
 
+  const handleCancel = () => {
+    navigate("/meetings");
+  };
+
   return (
     <div className="flex gap-4">
       <Button type="submit">
@@ -17,7 +21,7 @@ export const MeetingFormActions = ({ isEdit }: MeetingFormActionsProps) => {
       <Button 
         type="button" 
         variant="outline" 
-        onClick={() => navigate("/meetings")}
+        onClick={handleCancel}
       >
         Cancel
       </Button>

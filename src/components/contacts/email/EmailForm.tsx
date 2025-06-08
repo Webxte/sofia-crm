@@ -1,15 +1,15 @@
-import { useState } from "react";
+
 import { Contact } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { Loader2, Plus, Send, X } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSettings } from "@/context/settings";
+import { useEmailForm } from "./hooks/useEmailForm";
+import { CcSection } from "./components/CcSection";
+import { CustomLinksSection } from "./components/CustomLinksSection";
 
 // Schema definition
 export const emailFormSchema = z.object({
@@ -29,41 +29,13 @@ interface EmailFormProps {
 
 export const EmailForm = ({ contact, onSubmit, isSending }: EmailFormProps) => {
   const { settings } = useSettings();
-  const [newCc, setNewCc] = useState("");
-  const [selectedCustomLink, setSelectedCustomLink] = useState<string | null>(null);
-  
-  // Create message with placeholders replaced
-  const getDefaultMessage = () => {
-    const defaultTemplate = settings.defaultContactEmailMessage || 
-      `Dear [Name],
-
-Thank you for your time during our recent meeting. As discussed, I've attached the links to our product catalog and price list.
-
-Catalog: [Catalog URL]
-Price List: [Price List URL]
-
-Please don't hesitate to reach out if you have any questions.
-
-Best regards,
-[Company Name]`;
-    
-    // Replace placeholders with actual values
-    return defaultTemplate
-      .replace(/\[Name\]/g, contact.fullName || "valued customer")
-      .replace(/\[Company Name\]/g, settings.companyName || "The Team")
-      .replace(/\[Catalog URL\]/g, settings.catalogUrl || "[Catalog URL]")
-      .replace(/\[Price List URL\]/g, settings.priceListUrl || "[Price List URL]");
-  };
-  
-  const form = useForm<EmailFormValues>({
-    resolver: zodResolver(emailFormSchema),
-    defaultValues: {
-      to: contact.email || "",
-      cc: [],
-      subject: "Follow-up from our meeting",
-      message: getDefaultMessage(),
-    },
-  });
+  const {
+    form,
+    newCc,
+    setNewCc,
+    selectedCustomLink,
+    setSelectedCustomLink,
+  } = useEmailForm(contact);
   
   const handleAddCc = () => {
     if (newCc && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCc)) {
@@ -120,48 +92,13 @@ Best regards,
           )}
         />
         
-        <div>
-          <FormLabel>CC</FormLabel>
-          <div className="flex space-x-2 mb-2">
-            <Input 
-              placeholder="Add CC email" 
-              value={newCc} 
-              onChange={(e) => setNewCc(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddCc();
-                }
-              }}
-            />
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleAddCc}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          {form.getValues("cc").length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {form.getValues("cc").map((email) => (
-                <div 
-                  key={email} 
-                  className="bg-muted text-sm rounded-full px-3 py-1 flex items-center"
-                >
-                  <span className="mr-1">{email}</span>
-                  <button 
-                    type="button" 
-                    onClick={() => handleRemoveCc(email)}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <CcSection
+          newCc={newCc}
+          setNewCc={setNewCc}
+          ccEmails={form.getValues("cc")}
+          onAddCc={handleAddCc}
+          onRemoveCc={handleRemoveCc}
+        />
         
         <FormField
           control={form.control}
@@ -176,33 +113,12 @@ Best regards,
           )}
         />
         
-        {availableCustomLinks.length > 0 && (
-          <div className="flex items-end space-x-2">
-            <div className="flex-1">
-              <FormLabel>Add Custom Link</FormLabel>
-              <Select value={selectedCustomLink || ""} onValueChange={setSelectedCustomLink}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a link to add" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableCustomLinks.map((link, idx) => (
-                    <SelectItem key={idx} value={String(link.index)}>
-                      {link.description || link.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleAddCustomLink}
-              disabled={!selectedCustomLink}
-            >
-              <Plus className="h-4 w-4 mr-1" /> Add Link
-            </Button>
-          </div>
-        )}
+        <CustomLinksSection
+          availableCustomLinks={availableCustomLinks}
+          selectedCustomLink={selectedCustomLink}
+          setSelectedCustomLink={setSelectedCustomLink}
+          onAddCustomLink={handleAddCustomLink}
+        />
         
         <FormField
           control={form.control}

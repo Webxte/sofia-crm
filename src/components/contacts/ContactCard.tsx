@@ -1,113 +1,154 @@
 
-import { Contact } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Calendar, ListTodo, Mail, User, Building, Phone, ShoppingCart } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Contact } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Building2, Mail, MapPin, MoreVertical, Phone, Eye, Trash2, Edit, ShoppingCart, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
 import { ContactEmailDialog } from "./email/ContactEmailDialog";
 
 interface ContactCardProps {
   contact: Contact;
-  onScheduleMeeting: (contactId: string) => void;
-  onCreateTask: (contactId: string) => void;
-  onCreateOrder: (contactId: string) => void;
+  onDelete: (contact: Contact) => void;
 }
 
-const ContactCard = ({
-  contact,
-  onScheduleMeeting,
-  onCreateTask,
-  onCreateOrder,
-}: ContactCardProps) => {
-  const navigate = useNavigate();
+export const ContactCard = ({ contact, onDelete }: ContactCardProps) => {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  
+
+  const handlePhoneClick = (phone: string) => {
+    window.open(`tel:${phone}`, '_self');
+  };
+
+  const handleEmailClick = (email: string) => {
+    setShowEmailDialog(true);
+  };
+
   return (
     <>
-      <Card className="h-full flex flex-col">
-        <CardContent className="pt-6 flex-1">
-          <div className="mb-4">
-            <h3 className="font-semibold text-lg truncate">
-              {contact.fullName || "Unknown Contact"}
-            </h3>
-            {contact.company && (
-              <div className="flex items-center text-muted-foreground mt-1">
-                <Building className="h-4 w-4 mr-1" />
-                <span className="text-sm truncate">{contact.company}</span>
-              </div>
-            )}
+      <Card className="h-full hover:shadow-md transition-shadow">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-lg leading-tight">
+                {contact.company ? (
+                  <>
+                    <div className="font-semibold">{contact.company}</div>
+                    {contact.fullName && (
+                      <div className="text-sm font-normal text-muted-foreground mt-1">
+                        {contact.fullName}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  contact.fullName || "Unnamed Contact"
+                )}
+              </CardTitle>
+              {contact.position && (
+                <p className="text-sm text-muted-foreground mt-1">{contact.position}</p>
+              )}
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to={`/contacts/${contact.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Details
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to={`/contacts/${contact.id}/edit`}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to={`/orders/new?contactId=${contact.id}`}>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Create Order
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to={`/meetings/new?contactId=${contact.id}`}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Schedule Meeting
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onDelete(contact)}
+                  className="text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          
+        </CardHeader>
+        
+        <CardContent className="space-y-3 pb-3">
           {contact.email && (
-            <div className="flex items-start mt-2">
-              <Mail className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
-              <p className="text-sm truncate">{contact.email}</p>
+            <div className="flex items-center text-sm">
+              <Mail className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <button 
+                onClick={() => handleEmailClick(contact.email!)}
+                className="text-blue-600 hover:underline cursor-pointer truncate"
+              >
+                {contact.email}
+              </button>
             </div>
           )}
           
           {contact.phone && (
-            <div className="flex items-start mt-2">
-              <Phone className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
-              <p className="text-sm">{contact.phone}</p>
+            <div className="flex items-center text-sm">
+              <Phone className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <button 
+                onClick={() => handlePhoneClick(contact.phone!)}
+                className="text-blue-600 hover:underline cursor-pointer"
+              >
+                {contact.phone}
+              </button>
             </div>
           )}
           
-          {contact.source && (
-            <div className="mt-4 pt-3 border-t">
-              <div className="text-xs text-muted-foreground flex items-center">
-                <span className="mr-1">Source:</span>
-                <span className="font-medium">{contact.source}</span>
-              </div>
+          {contact.mobile && (
+            <div className="flex items-center text-sm">
+              <Phone className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <button 
+                onClick={() => handlePhoneClick(contact.mobile!)}
+                className="text-blue-600 hover:underline cursor-pointer"
+              >
+                {contact.mobile}
+              </button>
+            </div>
+          )}
+          
+          {contact.address && (
+            <div className="flex items-start text-sm">
+              <MapPin className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <span className="text-muted-foreground text-xs">{contact.address}</span>
             </div>
           )}
         </CardContent>
-        <CardFooter className="border-t bg-muted/30 p-3 flex flex-wrap gap-2 justify-end">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate(`/contacts/${contact.id}`)}
-          >
-            <User className="h-4 w-4 mr-1" /> View
-          </Button>
-          
-          {contact.email && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setShowEmailDialog(true)}
-            >
-              <Mail className="h-4 w-4 mr-1" /> Email
-            </Button>
-          )}
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onScheduleMeeting(contact.id)}
-          >
-            <Calendar className="h-4 w-4 mr-1" /> Meeting
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onCreateTask(contact.id)}
-          >
-            <ListTodo className="h-4 w-4 mr-1" /> Task
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onCreateOrder(contact.id)}
-          >
-            <ShoppingCart className="h-4 w-4 mr-1" /> Order
-          </Button>
+        
+        <CardFooter className="pt-3 border-t">
+          <div className="flex flex-wrap gap-1">
+            {contact.source && (
+              <Badge variant="secondary" className="text-xs">
+                {contact.source}
+              </Badge>
+            )}
+          </div>
         </CardFooter>
       </Card>
-      
-      {showEmailDialog && (
+
+      {contact && (
         <ContactEmailDialog
           contact={contact}
           open={showEmailDialog}
@@ -117,5 +158,3 @@ const ContactCard = ({
     </>
   );
 };
-
-export default ContactCard;

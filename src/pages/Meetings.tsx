@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
@@ -18,6 +17,7 @@ import { MeetingEmailDialog } from '@/components/meetings/email/MeetingEmailDial
 const Meetings = () => {
   const { meetings, deleteMeeting } = useMeetings();
   const { getContactById } = useContacts();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -25,6 +25,7 @@ const Meetings = () => {
   const [selectedMeetingType, setSelectedMeetingType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
+  const [showAllMeetings, setShowAllMeetings] = useState(false);
   
   // State for email dialog
   const [selectedMeeting, setSelectedMeeting] = useState<any | null>(null);
@@ -37,6 +38,11 @@ const Meetings = () => {
 
   const filteredMeetings = meetings
     .filter(meeting => {
+      // Filter by user (if not admin or not showing all)
+      if (!isAdmin || !showAllMeetings) {
+        if (meeting.agentId !== user?.id) return false;
+      }
+      
       if (selectedMeetingType === 'all') return true;
       return meeting.type === selectedMeetingType;
     })
@@ -110,6 +116,8 @@ const Meetings = () => {
           onSortChange={setSelectedSort}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          showAllMeetings={showAllMeetings}
+          onShowAllMeetingsChange={setShowAllMeetings}
         />
         
         <Tabs value={viewMode} className="w-full">

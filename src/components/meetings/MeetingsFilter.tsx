@@ -1,19 +1,26 @@
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { MeetingTypeFilter } from "./MeetingTypeFilter";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MeetingTypeFilter } from './MeetingTypeFilter';
+import { Button } from '@/components/ui/button';
+import { Grid3X3, List } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/AuthContext';
 
 interface MeetingsFilterProps {
   searchQuery: string;
-  onSearchQueryChange: (value: string) => void;
+  onSearchQueryChange: (query: string) => void;
   selectedMeetingType: string;
-  onMeetingTypeChange: (value: string) => void;
+  onMeetingTypeChange: (type: string) => void;
   selectedSort: string;
-  onSortChange: (value: string) => void;
+  onSortChange: (sort: string) => void;
   viewMode: "grid" | "list";
-  onViewModeChange: (value: "grid" | "list") => void;
+  onViewModeChange: (mode: "grid" | "list") => void;
+  showAllMeetings: boolean;
+  onShowAllMeetingsChange: (showAll: boolean) => void;
 }
 
 export const MeetingsFilter = ({
@@ -24,46 +31,70 @@ export const MeetingsFilter = ({
   selectedSort,
   onSortChange,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  showAllMeetings,
+  onShowAllMeetingsChange,
 }: MeetingsFilterProps) => {
+  const { isAdmin } = useAuth();
+
   return (
-    <>
-      <div className="flex flex-col md:flex-row gap-4 items-end md:items-center">
-        <div className="w-full md:w-72">
+    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 flex-1">
+        <div className="relative min-w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search meetings..."
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="w-full"
+            className="pl-10"
           />
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="w-full md:w-40">
-            <MeetingTypeFilter
-              value={selectedMeetingType}
-              onValueChange={onMeetingTypeChange}
+        
+        <MeetingTypeFilter
+          selectedType={selectedMeetingType}
+          onTypeChange={onMeetingTypeChange}
+        />
+
+        <Select value={selectedSort} onValueChange={onSortChange}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {isAdmin && (
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-all-meetings"
+              checked={showAllMeetings}
+              onCheckedChange={onShowAllMeetingsChange}
             />
+            <Label htmlFor="show-all-meetings" className="text-sm whitespace-nowrap">
+              Show all meetings
+            </Label>
           </div>
-          <div className="w-full md:w-40">
-            <Select value={selectedSort} onValueChange={onSortChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        )}
       </div>
 
-      <Tabs value={viewMode} onValueChange={(v) => onViewModeChange(v as "grid" | "list")} className="w-full">
-        <TabsList className="grid w-full md:w-60 grid-cols-2">
-          <TabsTrigger value="list">List</TabsTrigger>
-          <TabsTrigger value="grid">Grid</TabsTrigger>
-        </TabsList>
-      </Tabs>
-    </>
+      <div className="flex gap-2">
+        <Button
+          variant={viewMode === "list" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onViewModeChange("list")}
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={viewMode === "grid" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onViewModeChange("grid")}
+        >
+          <Grid3X3 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 };
