@@ -25,7 +25,7 @@ const items = [
 ]
 
 export function AppSidebar() {
-  const { collapsed, setOpen } = useSidebar()
+  const { state, setOpen } = useSidebar()
   const location = useLocation()
   const currentPath = location.pathname
 
@@ -48,16 +48,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={collapsed ? "w-14" : "w-60"}
-      collapsible
+      className={state === "collapsed" ? "w-14" : "w-60"}
     >
       <SidebarTrigger className="m-2 self-end" />
 
       <SidebarContent>
-        <SidebarGroup
-          open={isExpanded}
-          onOpenChange={() => {}}
-        >
+        <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
 
           <SidebarGroupContent>
@@ -72,7 +68,7 @@ export function AppSidebar() {
                       onClick={handleNavClick}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {state !== "collapsed" && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

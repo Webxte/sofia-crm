@@ -1,7 +1,7 @@
 
 import { Contact } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ContactCard from "./ContactCard";
+import { ContactCard } from "./ContactCard";
 
 interface ContactsGridProps {
   groupedContacts: Record<string, Contact[]>;
