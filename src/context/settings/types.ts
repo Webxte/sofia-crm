@@ -15,7 +15,7 @@ export interface SettingsData {
   priceListUrl?: string;
   emailFooter?: string;
   emailSenderName?: string;
-  termsEnabled: boolean;
+  termsEnabled?: boolean;
   defaultVatRate: number;
   bulkEmailTemplate?: string;
   createdAt: Date;
