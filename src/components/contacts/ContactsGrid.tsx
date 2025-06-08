@@ -12,6 +12,12 @@ interface ContactsGridProps {
 }
 
 export const ContactsGrid = ({ groupedContacts, sortedGroups, onScheduleMeeting, onCreateTask, onCreateOrder }: ContactsGridProps) => {
+  // Placeholder function for onDelete since ContactCard requires it
+  const handleDelete = (contact: Contact) => {
+    console.log("Delete contact:", contact.id);
+    // TODO: Implement delete functionality
+  };
+
   return (
     <div className="space-y-6">
       {sortedGroups.map(group => (
@@ -27,9 +33,7 @@ export const ContactsGrid = ({ groupedContacts, sortedGroups, onScheduleMeeting,
               <ContactCard 
                 key={contact.id} 
                 contact={contact} 
-                onScheduleMeeting={onScheduleMeeting}
-                onCreateTask={onCreateTask}
-                onCreateOrder={onCreateOrder}
+                onDelete={handleDelete}
               />
             ))}
           </CardContent>

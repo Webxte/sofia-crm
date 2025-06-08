@@ -52,7 +52,7 @@ export const MeetingsFilter = ({
         
         <MeetingTypeFilter
           selectedType={selectedMeetingType}
-          onTypeChange={onMeetingTypeChange}
+          onSelectType={onMeetingTypeChange}
         />
 
         <Select value={selectedSort} onValueChange={onSortChange}>
