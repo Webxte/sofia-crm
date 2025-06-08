@@ -40,6 +40,7 @@ const Orders = () => {
   
   // Sync contact visibility with order visibility
   useEffect(() => {
+    console.log("Orders: Setting showAllContacts to:", showAllOrders);
     setShowAllContacts(showAllOrders);
   }, [showAllOrders, setShowAllContacts]);
   
@@ -60,6 +61,21 @@ const Orders = () => {
   });
   
   console.log("Filtered orders count:", filteredOrders.length, "Total orders:", orders.length);
+  
+  // Additional debugging: check which orders have missing contact info
+  const ordersWithMissingContacts = filteredOrders.filter(order => 
+    !companyNameMap[order.contactId] || companyNameMap[order.contactId] === "Unknown"
+  );
+  
+  if (ordersWithMissingContacts.length > 0) {
+    console.log("Orders with missing/unknown contacts:", ordersWithMissingContacts.map(order => ({
+      orderId: order.id,
+      contactId: order.contactId,
+      agentId: order.agentId,
+      reference: order.reference,
+      mappedName: companyNameMap[order.contactId]
+    })));
+  }
   
   const sortedOrders = [...filteredOrders].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()

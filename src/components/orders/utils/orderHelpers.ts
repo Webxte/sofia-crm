@@ -99,7 +99,16 @@ export const filterOrders = (
 ) => {
   const { searchQuery, filterStatus, contactId, isAdmin, userId, getContactById } = filters;
   
-  return orders.filter(order => {
+  console.log("filterOrders called with:", { 
+    ordersCount: orders.length, 
+    isAdmin, 
+    userId, 
+    searchQuery, 
+    filterStatus, 
+    contactId 
+  });
+  
+  const filtered = orders.filter(order => {
     // Filter by contact if specified
     if (contactId && order.contactId !== contactId) return false;
     
@@ -127,4 +136,26 @@ export const filterOrders = (
     
     return true;
   });
+  
+  // Log missing contacts for debugging
+  const missingContacts = filtered.filter(order => {
+    const contact = getContactById(order.contactId);
+    return !contact;
+  });
+  
+  if (missingContacts.length > 0) {
+    console.log("Orders with missing contacts:", missingContacts.map(order => ({
+      orderId: order.id,
+      contactId: order.contactId,
+      agentId: order.agentId,
+      reference: order.reference
+    })));
+  }
+  
+  console.log("filterOrders result:", { 
+    filteredCount: filtered.length, 
+    missingContactsCount: missingContacts.length 
+  });
+  
+  return filtered;
 };
