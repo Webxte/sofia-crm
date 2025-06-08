@@ -1,5 +1,5 @@
 
-import React from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
@@ -20,14 +20,14 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = React.useState<ExtendedUser | null>(null);
-  const [session, setSession] = React.useState<Session | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const getUserWithName = React.useCallback((supabaseUser: User | null): ExtendedUser | null => {
+  const getUserWithName = useCallback((supabaseUser: User | null): ExtendedUser | null => {
     if (!supabaseUser) return null;
     
     return {
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("Setting up auth state listener");
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -72,10 +72,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [getUserWithName]);
 
-  const isAdmin = React.useMemo(() => !!user && user.user_metadata?.role === "admin", [user]);
-  const isAuthenticated = React.useMemo(() => !!session, [session]);
+  const isAdmin = useMemo(() => !!user && user.user_metadata?.role === "admin", [user]);
+  const isAuthenticated = useMemo(() => !!session, [session]);
 
-  const loginFn = React.useCallback(async (email: string, password: string) => {
+  const loginFn = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const createUserFn = React.useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
+  const createUserFn = useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
     setIsLoading(true);
     try {
       const { error, data } = await supabase.auth.signUp({
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const logoutFn = React.useCallback(async () => {
+  const logoutFn = useCallback(async () => {
     setIsLoading(true);
     try {
       setUser(null);
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const contextValue = React.useMemo<AuthContextType>(() => ({
+  const contextValue = useMemo<AuthContextType>(() => ({
     user,
     session,
     isAuthenticated,
@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }

@@ -1,6 +1,6 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
@@ -13,10 +13,10 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-const root = ReactDOM.createRoot(rootElement);
+const root = createRoot(rootElement);
 
 root.render(
-  <React.StrictMode>
+  <StrictMode>
     <BrowserRouter>
       <HelmetProvider>
         <AuthProvider>
@@ -25,5 +25,5 @@ root.render(
         </AuthProvider>
       </HelmetProvider>
     </BrowserRouter>
-  </React.StrictMode>
+  </StrictMode>
 );

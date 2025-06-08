@@ -11,23 +11,16 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react({
-      // Using only valid options for @vitejs/plugin-react-swc
-    }),
+    react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "react": path.resolve(__dirname, "./node_modules/react"),
-      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
-      "react/jsx-runtime": path.resolve(__dirname, "./node_modules/react/jsx-runtime"),
     },
-    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    force: true,
   },
   build: {
     commonjsOptions: {
@@ -41,8 +34,5 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    cssCodeSplit: true,
   },
-  // Clear and use new cache dir to ensure full rebuild
-  cacheDir: '.vite_cache_fresh',
 }));
