@@ -1,4 +1,5 @@
 
+
 export interface SettingsData {
   id: string;
   companyName: string;
@@ -9,7 +10,7 @@ export interface SettingsData {
   defaultEmailMessage?: string;
   defaultContactEmailMessage?: string;
   defaultTermsAndConditions?: string;
-  customLinks: any[];
+  customLinks?: any[];
   catalogUrl?: string;
   priceListUrl?: string;
   emailFooter?: string;
@@ -28,3 +29,4 @@ export interface SettingsContextType {
   refreshSettings: () => void;
   fetchSettings: () => Promise<void>;
 }
+
