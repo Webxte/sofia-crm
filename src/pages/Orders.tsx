@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
@@ -26,7 +26,7 @@ const Orders = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [showAllOrders, setShowAllOrders] = useState(false);
   const { orders } = useOrders();
-  const { contacts, getContactById } = useContacts();
+  const { contacts, getContactById, setShowAllContacts } = useContacts();
   const { isAdmin, user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
@@ -38,11 +38,17 @@ const Orders = () => {
   // If on mobile, force list view which we've optimized for mobile
   const effectiveViewMode = isMobile ? "list" : viewMode;
   
+  // Sync contact visibility with order visibility
+  useEffect(() => {
+    setShowAllContacts(showAllOrders);
+  }, [showAllOrders, setShowAllContacts]);
+  
   // Build a map of contact IDs to company names for quick lookup
   const companyNameMap = buildCompanyNameMap(contacts);
   
   // Debug logging for admin functionality
   console.log("Orders page - Admin status:", { isAdmin, userId: user?.id, showAllOrders });
+  console.log("Orders page - Contacts count:", contacts.length, "Orders count:", orders.length);
   
   const filteredOrders = filterOrders(orders, {
     searchQuery,
@@ -72,6 +78,11 @@ const Orders = () => {
     downloadOrdersCSV(csvContent, { toast });
   };
 
+  const handleShowAllOrdersChange = (show: boolean) => {
+    console.log("Orders: Changing showAllOrders to:", show);
+    setShowAllOrders(show);
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <OrdersHeader contactId={contactId} />
@@ -85,7 +96,7 @@ const Orders = () => {
         handleExport={handleExport}
         isMobile={isMobile}
         showAllOrders={showAllOrders}
-        onShowAllOrdersChange={setShowAllOrders}
+        onShowAllOrdersChange={handleShowAllOrdersChange}
       />
 
       {sortedOrders.length === 0 ? (

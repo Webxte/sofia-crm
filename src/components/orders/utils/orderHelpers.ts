@@ -1,3 +1,4 @@
+
 import { Order } from "@/types";
 import { Contact } from "@/types";
 
@@ -23,10 +24,16 @@ export const getStatusColor = (status: string) => {
 };
 
 export const buildCompanyNameMap = (contacts: Contact[]) => {
-  return contacts.reduce((acc, contact) => {
-    acc[contact.id] = contact.company || contact.fullName || "Unknown";
+  console.log("Building company name map from contacts:", contacts.length);
+  const map = contacts.reduce((acc, contact) => {
+    const name = contact.company || contact.fullName || "Unknown";
+    acc[contact.id] = name;
+    console.log(`Contact mapping: ${contact.id} -> ${name}`);
     return acc;
   }, {} as Record<string, string>);
+  
+  console.log("Final company name map:", map);
+  return map;
 };
 
 export const generateOrdersCSV = (orders: Order[], companyNameMap: Record<string, string>) => {
