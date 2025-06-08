@@ -14,14 +14,14 @@ import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
 import type { Settings as SettingsType } from "@/types";
 
 const Settings = () => {
-  const { settings, updateSettings, refreshSettings } = useSettings();
+  const { settings, updateSettings, refreshSettings, loading } = useSettings();
   const { importProductsFromFile } = useProducts();
   const { toast } = useToast();
   
   useEffect(() => {
     console.log("Settings page mounted, refreshing settings...");
     refreshSettings();
-  }, []);
+  }, [refreshSettings]);
 
   useEffect(() => {
     console.log("Settings state changed:", settings);
@@ -32,9 +32,9 @@ const Settings = () => {
     await updateSettings(formData);
   };
   
-  // If settings is null, show a loading state or default settings
-  if (!settings) {
-    console.log("Settings is null, showing loading state");
+  // Show loading state while fetching settings
+  if (loading || !settings) {
+    console.log("Settings loading or null, showing loading state", { loading, settings: !!settings });
     return (
       <div className="space-y-6">
         <div>

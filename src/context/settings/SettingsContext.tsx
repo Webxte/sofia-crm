@@ -1,14 +1,16 @@
 
 import { createContext, useContext, useEffect, ReactNode } from "react";
 import { SettingsContextType } from "./types";
-import { useSettingsOperations } from "./useSettingsOperations";
+import { useFetchSettings } from "./useFetchSettings";
+import { useUpdateSettings } from "./useUpdateSettings";
 import { useAuth } from "../AuthContext";
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user } = useAuth();
-  const settingsOperations = useSettingsOperations(isAuthenticated, user);
+  const { settings, setSettings, loading, refreshSettings } = useFetchSettings(isAuthenticated);
+  const { updateSettings } = useUpdateSettings(setSettings);
 
   useEffect(() => {
     console.log("SettingsProvider: Authentication state changed", { 
@@ -21,14 +23,22 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     
     if (isAuthenticated && user?.id) {
       console.log("SettingsProvider: Fetching settings for authenticated user");
-      settingsOperations.fetchSettings();
+      refreshSettings();
     } else {
       console.log("SettingsProvider: User not authenticated or no user ID");
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, refreshSettings]);
+
+  const contextValue: SettingsContextType = {
+    settings,
+    loading,
+    updateSettings,
+    refreshSettings,
+    fetchSettings: refreshSettings,
+  };
 
   return (
-    <SettingsContext.Provider value={settingsOperations}>
+    <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   );
