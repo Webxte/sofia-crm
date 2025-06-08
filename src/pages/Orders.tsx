@@ -57,6 +57,27 @@ const Orders = () => {
   // Debug: Log all order contact IDs
   console.log("Order contact IDs:", orders.map(o => ({ orderId: o.id, contactId: o.contactId, agentId: o.agentId })));
   
+  // Debug: Find the specific missing contact IDs
+  const agentContactIds = new Set(contacts.map(c => c.id));
+  const agentOrders = orders.filter(o => o.agentId === user?.id);
+  const missingContactIdsForAgent = agentOrders
+    .filter(o => !agentContactIds.has(o.contactId))
+    .map(o => o.contactId);
+  
+  console.log("PROBLEM IDENTIFIED:");
+  console.log("Agent orders count:", agentOrders.length);
+  console.log("Agent contact IDs:", Array.from(agentContactIds));
+  console.log("Missing contact IDs for agent's orders:", missingContactIdsForAgent);
+  console.log("Orders with missing contacts (details):", 
+    agentOrders.filter(o => !agentContactIds.has(o.contactId)).map(o => ({
+      orderId: o.id,
+      reference: o.reference,
+      contactId: o.contactId,
+      agentId: o.agentId,
+      status: o.status
+    }))
+  );
+  
   const filteredOrders = filterOrders(orders, {
     searchQuery,
     filterStatus,

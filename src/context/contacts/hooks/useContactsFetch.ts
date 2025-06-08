@@ -22,28 +22,72 @@ export const useContactsFetch = () => {
       setLoading(true);
       console.log("useContactsFetch: Fetching contacts for user:", user.id, "showAll:", showAll, "isAdmin:", isAdmin);
       
-      // Simple query - let RLS handle the filtering
-      let query = supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let contactsData = [];
+      
+      if (isAdmin || showAll) {
+        // Admin or showAll: get all contacts
+        const { data, error } = await supabase
+          .from('contacts')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      // For agents: if showAll is false, explicitly filter by agent_id
-      // If showAll is true or user is admin, let RLS policies handle it
-      if (!isAdmin && !showAll) {
-        query = query.eq('agent_id', user.id);
+        if (error) throw error;
+        contactsData = data || [];
+      } else {
+        // Agent: get their own contacts AND contacts referenced by their orders
+        console.log("useContactsFetch: Fetching agent's contacts plus contacts from their orders");
+        
+        // First, get the agent's own contacts
+        const { data: ownContacts, error: ownContactsError } = await supabase
+          .from('contacts')
+          .select('*')
+          .eq('agent_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (ownContactsError) throw ownContactsError;
+        
+        // Get contact IDs referenced by this agent's orders
+        const { data: agentOrders, error: ordersError } = await supabase
+          .from('orders')
+          .select('contact_id')
+          .eq('agent_id', user.id);
+
+        if (ordersError) throw ordersError;
+        
+        const orderContactIds = agentOrders?.map(order => order.contact_id) || [];
+        const uniqueOrderContactIds = [...new Set(orderContactIds)];
+        
+        console.log("useContactsFetch: Agent's order contact IDs:", uniqueOrderContactIds);
+        
+        // Get contacts referenced by orders (that might not be owned by this agent)
+        let orderContacts = [];
+        if (uniqueOrderContactIds.length > 0) {
+          const { data: referencedContacts, error: referencedContactsError } = await supabase
+            .from('contacts')
+            .select('*')
+            .in('id', uniqueOrderContactIds);
+
+          if (referencedContactsError) {
+            console.warn("useContactsFetch: Error fetching referenced contacts:", referencedContactsError);
+          } else {
+            orderContacts = referencedContacts || [];
+          }
+        }
+        
+        // Combine and deduplicate contacts
+        const ownContactIds = new Set((ownContacts || []).map(c => c.id));
+        const additionalContacts = orderContacts.filter(c => !ownContactIds.has(c.id));
+        
+        contactsData = [...(ownContacts || []), ...additionalContacts];
+        
+        console.log("useContactsFetch: Own contacts:", (ownContacts || []).length);
+        console.log("useContactsFetch: Additional contacts from orders:", additionalContacts.length);
+        console.log("useContactsFetch: Total contacts:", contactsData.length);
       }
 
-      const { data, error } = await query;
+      console.log("useContactsFetch: Raw contacts data from Supabase:", contactsData?.length || 0);
 
-      if (error) {
-        console.error('useContactsFetch: Error fetching contacts:', error);
-        throw error;
-      }
-
-      console.log("useContactsFetch: Raw contacts data from Supabase:", data?.length || 0);
-
-      const formattedContacts: Contact[] = (data || []).map(contact => ({
+      const formattedContacts: Contact[] = (contactsData || []).map(contact => ({
         id: contact.id,
         fullName: contact.full_name || '',
         company: contact.company || '',
