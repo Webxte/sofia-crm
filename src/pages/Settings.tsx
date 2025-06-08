@@ -19,8 +19,13 @@ const Settings = () => {
   const { toast } = useToast();
   
   useEffect(() => {
+    console.log("Settings page mounted, refreshing settings...");
     refreshSettings();
   }, []);
+
+  useEffect(() => {
+    console.log("Settings state changed:", settings);
+  }, [settings]);
   
   const handleUpdateSettings = async (formData: Partial<SettingsType>) => {
     console.log("Updating settings with form data:", formData);
@@ -29,6 +34,7 @@ const Settings = () => {
   
   // If settings is null, show a loading state or default settings
   if (!settings) {
+    console.log("Settings is null, showing loading state");
     return (
       <div className="space-y-6">
         <div>
@@ -37,9 +43,17 @@ const Settings = () => {
             Loading settings...
           </p>
         </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading settings...</p>
+          </div>
+        </div>
       </div>
     );
   }
+  
+  console.log("Rendering settings with data:", settings);
   
   // Convert context settings to component-expected format
   const componentSettings: SettingsType = {

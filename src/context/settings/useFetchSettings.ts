@@ -17,6 +17,7 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
       return;
     }
 
+    console.log("Starting settings fetch...");
     setLoading(true);
     try {
       console.log("Fetching settings from Supabase...");
@@ -30,7 +31,7 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
         console.error("Error fetching settings:", error);
         toast({
           title: "Error",
-          description: "Failed to load settings.",
+          description: `Failed to load settings: ${error.message}`,
           variant: "destructive",
         });
         return;
@@ -44,7 +45,7 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
         // Parse VAT rate
         const vatRate = parseVatRate(data.default_vat_rate);
 
-        setSettings({
+        const newSettings = {
           ...DEFAULT_SETTINGS,
           id: data.id,
           company_name: data.company_name || DEFAULT_SETTINGS.company_name,
@@ -78,9 +79,12 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
           catalogUrl: data.catalog_url,
           price_list_url: data.price_list_url,
           priceListUrl: data.price_list_url,
-        });
+        };
+        
+        console.log("Setting new settings state:", newSettings);
+        setSettings(newSettings);
       } else {
-        console.log("No settings data found, using defaults");
+        console.log("No settings data found, creating initial settings");
         // If no settings are found, create initial settings
         createInitialSettings();
       }
@@ -93,6 +97,7 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
       });
     } finally {
       setLoading(false);
+      console.log("Settings fetch completed");
     }
   }, [isAuthenticated, toast]);
   

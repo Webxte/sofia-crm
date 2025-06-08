@@ -1,7 +1,8 @@
 
 import { useState } from "react"
-import { Circle, Square, Triangle, Star, Hexagon } from "lucide-react"
+import { Circle, Square, Triangle, Star, Hexagon, Calendar, Settings } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
+import { useAuth } from "@/context/AuthContext"
 
 import {
   Sidebar,
@@ -20,14 +21,17 @@ const items = [
   { title: "Dashboard", url: "/", icon: Circle },
   { title: "Contacts", url: "/contacts", icon: Square },
   { title: "Meetings", url: "/meetings", icon: Triangle },
+  { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Orders", url: "/orders", icon: Star },
   { title: "Tasks", url: "/tasks", icon: Hexagon },
+  { title: "Settings", url: "/settings", icon: Settings },
 ]
 
 export function AppSidebar() {
   const { state, setOpen } = useSidebar()
   const location = useLocation()
   const currentPath = location.pathname
+  const { isAdmin } = useAuth()
 
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "/"
@@ -46,6 +50,11 @@ export function AppSidebar() {
     }
   }
 
+  // Filter items - Settings only for admins, but show all others
+  const filteredItems = items.filter(item => 
+    item.title !== "Settings" || isAdmin
+  )
+
   return (
     <Sidebar
       className={state === "collapsed" ? "w-14" : "w-60"}
@@ -58,7 +67,7 @@ export function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 

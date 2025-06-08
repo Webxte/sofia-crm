@@ -14,7 +14,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     console.log("SettingsProvider: Authentication state changed", { 
       isAuthenticated, 
       userId: user?.id,
-      hasUser: !!user 
+      hasUser: !!user,
+      preview: window.location.hostname.includes('preview'),
+      published: !window.location.hostname.includes('preview')
     });
     
     if (isAuthenticated && user?.id) {

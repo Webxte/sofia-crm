@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Grid3X3, List } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/context/AuthContext';
 
 interface MeetingsFilterProps {
   searchQuery: string;
@@ -35,8 +34,6 @@ export const MeetingsFilter = ({
   showAllMeetings,
   onShowAllMeetingsChange,
 }: MeetingsFilterProps) => {
-  const { isAdmin } = useAuth();
-
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-4 flex-1">
@@ -65,18 +62,16 @@ export const MeetingsFilter = ({
           </SelectContent>
         </Select>
 
-        {isAdmin && (
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="show-all-meetings"
-              checked={showAllMeetings}
-              onCheckedChange={onShowAllMeetingsChange}
-            />
-            <Label htmlFor="show-all-meetings" className="text-sm whitespace-nowrap">
-              Show all meetings
-            </Label>
-          </div>
-        )}
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="show-all-meetings"
+            checked={showAllMeetings}
+            onCheckedChange={onShowAllMeetingsChange}
+          />
+          <Label htmlFor="show-all-meetings" className="text-sm whitespace-nowrap">
+            Show all meetings
+          </Label>
+        </div>
       </div>
 
       <div className="flex gap-2">
