@@ -8,9 +8,9 @@ import { useAuth } from "../AuthContext";
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const { settings, setSettings, loading, refreshSettings } = useFetchSettings(isAuthenticated);
-  const { updateSettings } = useUpdateSettings(setSettings);
+  const { updateSettings } = useUpdateSettings(isAuthenticated, isAdmin, refreshSettings, setSettings);
 
   useEffect(() => {
     console.log("SettingsProvider: Authentication state changed", { 
