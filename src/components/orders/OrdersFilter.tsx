@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
 
 interface OrdersFilterProps {
   searchQuery: string;
@@ -37,6 +38,8 @@ export const OrdersFilter = ({
   showAllOrders,
   onShowAllOrdersChange,
 }: OrdersFilterProps) => {
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-4 flex-1">
@@ -64,16 +67,19 @@ export const OrdersFilter = ({
           </SelectContent>
         </Select>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="show-all-orders"
-            checked={showAllOrders}
-            onCheckedChange={onShowAllOrdersChange}
-          />
-          <Label htmlFor="show-all-orders" className="text-sm whitespace-nowrap">
-            Show all orders
-          </Label>
-        </div>
+        {/* Show the toggle for all authenticated users */}
+        {user && (
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-all-orders"
+              checked={showAllOrders}
+              onCheckedChange={onShowAllOrdersChange}
+            />
+            <Label htmlFor="show-all-orders" className="text-sm whitespace-nowrap">
+              Show all orders
+            </Label>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2">

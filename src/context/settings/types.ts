@@ -1,12 +1,11 @@
 
-
-
 export interface SettingsData {
   id: string;
   companyName: string;
   companyEmail?: string;
   companyPhone?: string;
   companyAddress?: string;
+  companyLogo?: string;
   defaultEmailSubject?: string;
   defaultEmailMessage?: string;
   defaultContactEmailMessage?: string;
@@ -30,4 +29,3 @@ export interface SettingsContextType {
   refreshSettings: () => void;
   fetchSettings: () => Promise<void>;
 }
-

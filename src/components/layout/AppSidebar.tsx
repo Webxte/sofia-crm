@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
+import { useSettings } from "@/context/settings"
 
 import {
   Sidebar,
@@ -40,6 +41,7 @@ export function AppSidebar() {
   const location = useLocation()
   const currentPath = location.pathname
   const { isAdmin } = useAuth()
+  const { settings } = useSettings()
 
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "/"
@@ -61,10 +63,15 @@ export function AppSidebar() {
     item.title !== "Settings" || isAdmin
   )
 
+  const companyName = settings?.companyName || "Belmorso"
+
   return (
     <Sidebar className="border-r">
       <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-lg font-semibold">CRM</h2>
+        <div className="flex items-center gap-2">
+          {/* Placeholder for future logo implementation */}
+          <h2 className="text-lg font-semibold">{companyName}</h2>
+        </div>
         <SidebarTrigger />
       </div>
 

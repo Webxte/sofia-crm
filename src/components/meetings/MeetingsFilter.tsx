@@ -1,13 +1,17 @@
 
-import React from 'react';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MeetingTypeFilter } from './MeetingTypeFilter';
-import { Button } from '@/components/ui/button';
-import { Grid3X3, List } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Search, Calendar, SortDesc, List, Grid3X3 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
 
 interface MeetingsFilterProps {
   searchQuery: string;
@@ -34,6 +38,8 @@ export const MeetingsFilter = ({
   showAllMeetings,
   onShowAllMeetingsChange,
 }: MeetingsFilterProps) => {
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex flex-col sm:flex-row gap-4 flex-1">
@@ -47,31 +53,43 @@ export const MeetingsFilter = ({
           />
         </div>
         
-        <MeetingTypeFilter
-          selectedType={selectedMeetingType}
-          onSelectType={onMeetingTypeChange}
-        />
-
-        <Select value={selectedSort} onValueChange={onSortChange}>
+        <Select value={selectedMeetingType} onValueChange={onMeetingTypeChange}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder="Meeting type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest First</SelectItem>
-            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="sales">Sales</SelectItem>
+            <SelectItem value="follow-up">Follow-up</SelectItem>
+            <SelectItem value="support">Support</SelectItem>
+            <SelectItem value="demo">Demo</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="show-all-meetings"
-            checked={showAllMeetings}
-            onCheckedChange={onShowAllMeetingsChange}
-          />
-          <Label htmlFor="show-all-meetings" className="text-sm whitespace-nowrap">
-            Show all meetings
-          </Label>
-        </div>
+        <Select value={selectedSort} onValueChange={onSortChange}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Show the toggle for all authenticated users */}
+        {user && (
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-all-meetings"
+              checked={showAllMeetings}
+              onCheckedChange={onShowAllMeetingsChange}
+            />
+            <Label htmlFor="show-all-meetings" className="text-sm whitespace-nowrap">
+              Show all meetings
+            </Label>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2">
