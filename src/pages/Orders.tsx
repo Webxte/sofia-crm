@@ -41,14 +41,19 @@ const Orders = () => {
   // Build a map of contact IDs to company names for quick lookup
   const companyNameMap = buildCompanyNameMap(contacts);
   
+  // Debug logging for admin functionality
+  console.log("Orders page - Admin status:", { isAdmin, userId: user?.id, showAllOrders });
+  
   const filteredOrders = filterOrders(orders, {
     searchQuery,
     filterStatus,
     contactId,
-    isAdmin: isAdmin && showAllOrders,
+    isAdmin: isAdmin && showAllOrders, // Only show all if admin AND toggle is on
     userId: user?.id,
     getContactById
   });
+  
+  console.log("Filtered orders count:", filteredOrders.length, "Total orders:", orders.length);
   
   const sortedOrders = [...filteredOrders].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()

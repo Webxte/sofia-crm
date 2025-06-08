@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/ContactsContext';
@@ -36,6 +37,9 @@ const Meetings = () => {
     setViewMode(isMobile ? "grid" : "list");
   }, [isMobile]);
 
+  // Debug logging for admin functionality
+  console.log("Meetings page - Admin status:", { isAdmin, userId: user?.id, showAllMeetings });
+
   const filteredMeetings = meetings
     .filter(meeting => {
       // Filter by user (if not admin or not showing all)
@@ -58,6 +62,8 @@ const Meetings = () => {
              contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
              companyName.toLowerCase().includes(searchQuery.toLowerCase());
     });
+
+  console.log("Filtered meetings count:", filteredMeetings.length, "Total meetings:", meetings.length);
 
   const sortedMeetings = [...filteredMeetings].sort((a, b) => {
     const dateA = new Date(a.date).getTime();

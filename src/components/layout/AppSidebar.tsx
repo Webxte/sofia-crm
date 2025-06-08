@@ -1,6 +1,14 @@
 
 import { useState } from "react"
-import { Circle, Square, Triangle, Star, Hexagon, Calendar, Settings } from "lucide-react"
+import { 
+  Home, 
+  Users, 
+  Video, 
+  Calendar, 
+  ShoppingBag, 
+  CheckSquare, 
+  Settings 
+} from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 
@@ -18,12 +26,12 @@ import {
 } from "@/components/ui/sidebar"
 
 const items = [
-  { title: "Dashboard", url: "/", icon: Circle },
-  { title: "Contacts", url: "/contacts", icon: Square },
-  { title: "Meetings", url: "/meetings", icon: Triangle },
+  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Contacts", url: "/contacts", icon: Users },
+  { title: "Meetings", url: "/meetings", icon: Video },
   { title: "Calendar", url: "/calendar", icon: Calendar },
-  { title: "Orders", url: "/orders", icon: Star },
-  { title: "Tasks", url: "/tasks", icon: Hexagon },
+  { title: "Orders", url: "/orders", icon: ShoppingBag },
+  { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Settings", url: "/settings", icon: Settings },
 ]
 
@@ -37,8 +45,6 @@ export function AppSidebar() {
     if (path === "/") return currentPath === "/"
     return currentPath.startsWith(path)
   }
-  
-  const isExpanded = items.some((i) => isActive(i.url))
   
   const getNavCls = (isActiveRoute: boolean) =>
     isActiveRoute ? "bg-muted text-primary font-medium" : "hover:bg-muted/50"
@@ -56,14 +62,15 @@ export function AppSidebar() {
   )
 
   return (
-    <Sidebar
-      className={state === "collapsed" ? "w-14" : "w-60"}
-    >
-      <SidebarTrigger className="m-2 self-end" />
+    <Sidebar className="border-r">
+      <div className="flex items-center justify-between p-4 border-b">
+        <h2 className="text-lg font-semibold">CRM</h2>
+        <SidebarTrigger />
+      </div>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
 
           <SidebarGroupContent>
             <SidebarMenu>
@@ -76,8 +83,8 @@ export function AppSidebar() {
                       className={getNavCls(isActive(item.url))}
                       onClick={handleNavClick}
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {state !== "collapsed" && <span>{item.title}</span>}
+                      <item.icon className="mr-3 h-5 w-5" />
+                      <span className="text-sm font-medium">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
