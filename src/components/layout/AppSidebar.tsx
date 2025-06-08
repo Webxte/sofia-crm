@@ -50,7 +50,7 @@ export function AppSidebar() {
     isActiveRoute ? "bg-muted text-primary font-medium" : "hover:bg-muted/50"
 
   const handleNavClick = () => {
-    // Close sidebar on mobile when navigation item is clicked
+    // Close sidebar on mobile when any navigation item is clicked
     if (window.innerWidth < 768) {
       setOpen(false)
     }

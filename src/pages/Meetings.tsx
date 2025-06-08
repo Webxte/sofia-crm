@@ -42,8 +42,8 @@ const Meetings = () => {
 
   const filteredMeetings = meetings
     .filter(meeting => {
-      // Filter by user (if not admin or not showing all)
-      if (!isAdmin || !showAllMeetings) {
+      // Filter by user (if not showing all meetings)
+      if (!showAllMeetings) {
         if (meeting.agentId !== user?.id) return false;
       }
       

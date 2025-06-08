@@ -48,7 +48,7 @@ const Orders = () => {
     searchQuery,
     filterStatus,
     contactId,
-    isAdmin: isAdmin && showAllOrders, // Only show all if admin AND toggle is on
+    isAdmin: showAllOrders, // Allow both admins and agents to see all when toggle is on
     userId: user?.id,
     getContactById
   });
