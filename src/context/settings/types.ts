@@ -1,5 +1,6 @@
 
 
+
 export interface SettingsData {
   id: string;
   companyName: string;
@@ -16,7 +17,7 @@ export interface SettingsData {
   emailFooter?: string;
   emailSenderName?: string;
   termsEnabled?: boolean;
-  defaultVatRate: number;
+  defaultVatRate?: number;
   bulkEmailTemplate?: string;
   createdAt: Date;
   updatedAt: Date;
