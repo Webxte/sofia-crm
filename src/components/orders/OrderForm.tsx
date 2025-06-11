@@ -94,14 +94,16 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Safe access to settings with fallbacks
+  // Safe access to settings with fallbacks - use 0% as default VAT rate
   const safeSettings = settings || {
     defaultTermsAndConditions: '',
-    defaultVatRate: 21,
+    defaultVatRate: 0, // Changed from 21 to 0
     companyName: '',
     companyPhone: '',
     companyEmail: ''
   };
+
+  console.log("OrderForm: Settings default VAT rate:", safeSettings.defaultVatRate);
 
   const defaultValues: Partial<OrderFormValues> = {
     contactId: contactId || order?.contactId || "",
@@ -121,6 +123,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     if (!isEditing && !form.getValues("reference")) {
       const newReference = generateOrderReference();
       form.setValue("reference", newReference);
+      console.log("OrderForm: Generated new reference:", newReference);
     }
   }, [isEditing, form, generateOrderReference]);
 
@@ -128,11 +131,15 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     if (newItem.code) {
       const product = getProductByCode(newItem.code);
       if (product) {
+        // Use product VAT if available, otherwise use settings default (which should be 0)
+        const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
+        console.log("OrderForm: Setting VAT for product", product.code, "to", vatRate, "Product VAT:", product.vat, "Settings default:", safeSettings.defaultVatRate);
+        
         setNewItem(prev => ({
           ...prev,
           description: product.description,
           price: product.price,
-          vat: product.vat || safeSettings.defaultVatRate || 21
+          vat: vatRate
         }));
       }
     }
@@ -152,6 +159,10 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
   const addItemToOrder = (productToAdd = null) => {
     if (productToAdd) {
+      // Use product VAT if available, otherwise use settings default (0%)
+      const vatRate = productToAdd.vat !== undefined ? productToAdd.vat : safeSettings.defaultVatRate || 0;
+      console.log("OrderForm: Adding product", productToAdd.code, "with VAT rate:", vatRate);
+      
       const orderItem: OrderItem = {
         id: Math.random().toString(36).substring(2, 9),
         productId: productToAdd.id,
@@ -159,7 +170,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         description: productToAdd.description,
         price: productToAdd.price,
         quantity: productToAdd.caseQuantity || 1,
-        vat: productToAdd.vat || safeSettings.defaultVatRate || 21,
+        vat: vatRate,
         subtotal: productToAdd.price * (productToAdd.caseQuantity || 1),
         product: productToAdd as any
       };
@@ -202,16 +213,21 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
     setOrderItems(prev => [...prev, newOrderItem]);
     
+    // Reset with correct default VAT rate
     setNewItem({
       code: "",
       description: "",
       price: 0,
       quantity: 1,
-      vat: safeSettings.defaultVatRate || 21
+      vat: safeSettings.defaultVatRate || 0
     });
   };
 
   const handleProductSelected = (product, quantity) => {
+    // Use product VAT if available, otherwise use settings default (0%)
+    const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
+    console.log("OrderForm: Product selected", product.code, "with VAT rate:", vatRate);
+    
     const orderItem: OrderItem = {
       id: Math.random().toString(36).substring(2, 9),
       productId: product.id,
@@ -219,7 +235,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       description: product.description,
       price: product.price,
       quantity: quantity,
-      vat: product.vat || safeSettings.defaultVatRate || 21,
+      vat: vatRate,
       subtotal: product.price * quantity,
       product: product as any
     };

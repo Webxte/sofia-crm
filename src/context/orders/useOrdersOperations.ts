@@ -2,12 +2,14 @@
 import { useOrdersFetch } from "./hooks/useOrdersFetch";
 import { useOrderCRUD } from "./hooks/useOrderCRUD";
 import { useOrderCreate } from "./hooks/useOrderCreate";
-import { generateOrderReference } from "./orderUtils";
+import { generateOrderReference } from "./utils/orderReferenceUtils";
+import { useAuth } from "@/context/AuthContext";
 
 export const useOrdersOperations = () => {
   const { orders, setOrders, loading, fetchOrders } = useOrdersFetch();
   const { createOrder, updateOrder: crudUpdateOrder, deleteOrder: crudDeleteOrder, loading: crudLoading } = useOrderCRUD();
   const { addOrder: createOrderHook } = useOrderCreate(fetchOrders);
+  const { user } = useAuth();
 
   const addOrder = async (orderData: any) => {
     await createOrderHook(orderData);
@@ -36,6 +38,6 @@ export const useOrdersOperations = () => {
     deleteOrder,
     refreshOrders,
     fetchOrders,
-    generateOrderReference: () => generateOrderReference(orders, '', ''),
+    generateOrderReference: () => generateOrderReference(orders, user?.email, user?.id),
   };
 };

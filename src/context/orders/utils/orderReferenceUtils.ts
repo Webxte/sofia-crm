@@ -10,16 +10,17 @@ export const generateOrderReference = (
   userEmail?: string | null, 
   userId?: string | null
 ): string => {
-  // Get prefix from email (first 3 letters) or user ID
-  let prefix = 'ORD';
+  // Get prefix from email (first 3 letters)
+  let prefix = 'ORD'; // fallback
   if (userEmail) {
     const emailName = userEmail.split('@')[0];
+    // Take first 3 characters and convert to uppercase
     prefix = emailName.substring(0, 3).toUpperCase();
-  } else if (userId) {
-    prefix = userId.substring(0, 3).toUpperCase();
   }
 
-  // Find the highest sequential number for this prefix
+  console.log("generateOrderReference: Using email:", userEmail, "Generated prefix:", prefix);
+
+  // Find the highest sequential number for this prefix across ALL orders
   let maxNumber = 0;
   orders.forEach(order => {
     if (order.reference && order.reference.startsWith(prefix)) {
@@ -34,5 +35,8 @@ export const generateOrderReference = (
 
   // Generate new reference with incremented number
   const newNumber = maxNumber + 1;
-  return `${prefix}${newNumber.toString().padStart(5, '0')}`;
+  const newReference = `${prefix}${newNumber.toString().padStart(5, '0')}`;
+  
+  console.log("generateOrderReference: Generated reference:", newReference);
+  return newReference;
 };

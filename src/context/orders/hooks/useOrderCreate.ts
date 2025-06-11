@@ -3,7 +3,7 @@ import { Order } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { generateOrderReference } from "../orderUtils";
+import { generateOrderReference } from "../utils/orderReferenceUtils";
 import { format } from "date-fns";
 
 export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
@@ -27,8 +27,10 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
         agent_name: user.name || ''
       };
       
-      // Generate a reference if not provided
+      // Generate a reference if not provided - pass user email properly
       const reference = orderData.reference || generateOrderReference([], user.email, user.id);
+      
+      console.log("useOrderCreate: Creating order with reference:", reference, "User email:", user.email);
       
       // Convert Order type to Supabase table format (snake_case)
       const newOrderData = {
@@ -42,6 +44,8 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
         reference,
         ...agentData
       };
+      
+      console.log("useOrderCreate: Inserting order data:", newOrderData);
       
       // Insert the order
       const { data: orderResult, error: orderError } = await supabase
