@@ -7,9 +7,14 @@ import { transformDbToSettings } from "./utils";
 export const useFetchSettings = (isAuthenticated: boolean) => {
   const [settings, setSettings] = useState<Settings>({
     id: "",
+    organization_id: "",
+    company_name: "",
     companyName: "",
+    company_email: "",
     companyEmail: "",
+    company_phone: "",
     companyPhone: "",
+    company_address: "",
     companyAddress: "",
     defaultEmailSubject: "",
     defaultEmailMessage: "",
