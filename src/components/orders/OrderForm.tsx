@@ -10,7 +10,7 @@ import { useOrders } from "@/context/OrdersContext";
 import { useProducts } from "@/context/products/ProductsContext";
 import { useSettings } from "@/context/settings";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -91,7 +91,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   const { addOrder, updateOrder, sendOrderEmail, generateOrderReference } = useOrders();
   const { settings } = useSettings();
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Safe access to settings with fallbacks - use 0% as default VAT rate
@@ -180,10 +179,8 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     }
 
     if (!newItem.code || !newItem.description || newItem.price <= 0 || newItem.quantity <= 0) {
-      toast({
-        title: "Invalid item",
+      toast.error("Invalid item", {
         description: "Please fill all the required fields",
-        variant: "destructive",
       });
       return;
     }
@@ -310,10 +307,8 @@ ${safeSettings.companyEmail || ""}`;
     const contact = getContactById(form.getValues("contactId"));
     
     if (!contact?.email) {
-      toast({
-        title: "No email address",
+      toast.error("No email address", {
         description: "The selected contact doesn't have an email address",
-        variant: "destructive",
       });
       return;
     }
@@ -329,10 +324,8 @@ ${safeSettings.companyEmail || ""}`;
 
   const handleSendEmail = async () => {
     if (!order?.id) {
-      toast({
-        title: "Save Required",
+      toast.error("Save Required", {
         description: "Please save the order before sending email",
-        variant: "destructive",
       });
       return;
     }
@@ -347,8 +340,7 @@ ${safeSettings.companyEmail || ""}`;
       });
       
       if (emailSent) {
-        toast({
-          title: "Email Sent",
+        toast.success("Email Sent", {
           description: `Order sent to ${emailData.recipient}`,
         });
         setIsEmailDialogOpen(false);
@@ -356,10 +348,8 @@ ${safeSettings.companyEmail || ""}`;
         throw new Error("Failed to send email");
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to send email",
-        variant: "destructive",
       });
     } finally {
       setIsSendingEmail(false);
@@ -368,10 +358,8 @@ ${safeSettings.companyEmail || ""}`;
 
   const onSubmit = async (data: OrderFormValues) => {
     if (orderItems.length === 0) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please add at least one item to the order",
-        variant: "destructive",
       });
       return;
     }
@@ -397,25 +385,21 @@ ${safeSettings.companyEmail || ""}`;
       
       if (isEditing && order) {
         await updateOrder(order.id, orderData);
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Order updated successfully",
         });
         navigate("/orders");
       } else {
         await addOrder(orderData);
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Order created successfully",
         });
         navigate("/orders");
       }
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Something went wrong",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);

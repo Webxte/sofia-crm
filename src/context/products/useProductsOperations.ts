@@ -1,13 +1,11 @@
-
 import { useState, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
 
 export const useProductsOperations = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -42,15 +40,13 @@ export const useProductsOperations = () => {
       console.log(`Fetched ${formattedProducts.length} products`);
     } catch (error) {
       console.error("Error in fetchProducts:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to load products. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const addProduct = useCallback(async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
     try {
@@ -89,24 +85,21 @@ export const useProductsOperations = () => {
 
       setProducts(prev => [newProduct, ...prev]);
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Product added successfully",
       });
 
       return newProduct;
     } catch (error) {
       console.error("Error adding product:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to add product",
-        variant: "destructive",
       });
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const updateProduct = useCallback(async (id: string, productData: Partial<Product>) => {
     try {
@@ -147,24 +140,21 @@ export const useProductsOperations = () => {
 
       setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Product updated successfully",
       });
 
       return updatedProduct;
     } catch (error) {
       console.error("Error updating product:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update product",
-        variant: "destructive",
       });
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const deleteProduct = useCallback(async (id: string) => {
     try {
@@ -179,24 +169,21 @@ export const useProductsOperations = () => {
 
       setProducts(prev => prev.filter(p => p.id !== id));
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Product deleted successfully",
       });
 
       return true;
     } catch (error) {
       console.error("Error deleting product:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to delete product",
-        variant: "destructive",
       });
       return false;
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const getProductById = useCallback((id: string) => {
     return products.find(product => product.id === id);
@@ -216,11 +203,10 @@ export const useProductsOperations = () => {
 
   const importProductsFromFile = useCallback(async (file: File) => {
     console.log("Import products from file:", file.name);
-    toast({
-      title: "Info",
+    toast.info("Info", {
       description: "Product import functionality not implemented yet",
     });
-  }, [toast]);
+  }, []);
 
   const importProductsFromCsv = useCallback(async (file: File) => {
     await importProductsFromFile(file);
@@ -228,11 +214,10 @@ export const useProductsOperations = () => {
 
   const importProducts = useCallback(async (csvData: string) => {
     console.log("Import products from CSV data:", csvData);
-    toast({
-      title: "Info",
+    toast.info("Info", {
       description: "CSV import functionality not implemented yet",
     });
-  }, [toast]);
+  }, []);
 
   const refreshProducts = useCallback(async () => {
     await fetchProducts();

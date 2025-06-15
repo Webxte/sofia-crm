@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Camera, CameraOff, Upload, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface BusinessCardScannerProps {
   open: boolean;
@@ -27,7 +26,6 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCameraSupported, setIsCameraSupported] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { toast } = useToast();
   
   // Start the camera when the dialog opens
   useEffect(() => {
@@ -71,10 +69,8 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
     } catch (error) {
       console.error("Error accessing camera:", error);
       setIsCameraSupported(false);
-      toast({
-        title: "Camera access denied",
+      toast.error("Camera access denied", {
         description: "Please allow camera access or upload an image instead.",
-        variant: "destructive"
       });
     }
   };
@@ -119,10 +115,8 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
       }
     } catch (error) {
       console.error("Error capturing image:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to capture image. Please try again.",
-        variant: "destructive"
       });
     } finally {
       setIsProcessing(false);
@@ -151,10 +145,8 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error processing file:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to process image. Please try again.",
-        variant: "destructive"
       });
     } finally {
       setIsProcessing(false);
@@ -181,8 +173,7 @@ export const BusinessCardScanner = ({ open, onOpenChange, onScanComplete }: Busi
       onScanComplete(mockResult);
       handleOpenChange(false);
       
-      toast({
-        title: "Business Card Scanned",
+      toast.success("Business Card Scanned", {
         description: "Contact information has been extracted successfully.",
       });
     }, 1500);

@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Meeting } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useContacts } from "@/context/ContactsContext";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -32,7 +31,6 @@ interface MeetingEmailDialogProps {
 }
 
 export const MeetingEmailDialog = ({ meeting, open, onOpenChange }: MeetingEmailDialogProps) => {
-  const { toast } = useToast();
   const { getContactById } = useContacts();
   const [isSending, setIsSending] = useState(false);
   const [newCc, setNewCc] = useState("");
@@ -74,10 +72,8 @@ Best regards,`,
   
   const handleSubmit = async (values: EmailFormValues) => {
     if (!values.to) {
-      toast({
-        title: "Missing Email",
+      toast.error("Missing Email", {
         description: "Contact does not have an email address.",
-        variant: "destructive"
       });
       return;
     }
@@ -99,18 +95,15 @@ Best regards,`,
       
       if (error) throw error;
       
-      toast({
-        title: "Email Sent",
+      toast.success("Email Sent", {
         description: `Email successfully sent to ${contact?.fullName || contact?.email || "contact"}`,
       });
       
       onOpenChange(false);
     } catch (error) {
       console.error("Error sending email:", error);
-      toast({
-        title: "Failed to Send Email",
+      toast.error("Failed to Send Email", {
         description: "There was an error sending the email. Please try again.",
-        variant: "destructive"
       });
     } finally {
       setIsSending(false);
