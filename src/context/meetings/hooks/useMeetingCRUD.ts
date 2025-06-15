@@ -1,14 +1,12 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Meeting } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useContacts } from "@/context/contacts/ContactsContext";
 
 export const useMeetingCRUD = () => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
   const { getContactById } = useContacts();
 
@@ -69,18 +67,15 @@ export const useMeetingCRUD = () => {
         updatedAt: new Date(data.updated_at),
       };
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Meeting created successfully",
       });
 
       return newMeeting;
     } catch (error) {
       console.error("useMeetingCRUD: Error creating meeting:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to create meeting",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -143,18 +138,15 @@ export const useMeetingCRUD = () => {
         updatedAt: new Date(data.updated_at),
       };
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Meeting updated successfully",
       });
 
       return updatedMeeting;
     } catch (error) {
       console.error("useMeetingCRUD: Error updating meeting:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update meeting",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -179,18 +171,15 @@ export const useMeetingCRUD = () => {
 
       console.log("useMeetingCRUD: Meeting deleted successfully");
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Meeting deleted successfully",
       });
 
       return true;
     } catch (error) {
       console.error("useMeetingCRUD: Error deleting meeting:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to delete meeting",
-        variant: "destructive",
       });
       return false;
     } finally {

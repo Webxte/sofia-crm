@@ -1,8 +1,7 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useContacts } from '@/context/ContactsContext';
 import { Helmet } from 'react-helmet-async';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ContactActions } from '@/components/contacts/details/ContactActions';
@@ -17,7 +16,6 @@ const ContactDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getContactById, deleteContact } = useContacts();
-  const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   
@@ -33,17 +31,14 @@ const ContactDetails = () => {
   const handleDeleteConfirm = async () => {
     try {
       await deleteContact(contact.id);
-      toast({
-        title: "Contact deleted",
+      toast.success("Contact deleted", {
         description: `${contact.fullName || 'Contact'} has been deleted successfully.`,
       });
       navigate('/contacts');
     } catch (error) {
       console.error('Error deleting contact:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to delete contact",
-        variant: "destructive",
       });
     }
   };

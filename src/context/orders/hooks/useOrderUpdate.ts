@@ -1,12 +1,9 @@
-
 import { Order } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 export const useOrderUpdate = (refreshOrders: () => Promise<void>) => {
-  const { toast } = useToast();
-
   const updateOrder = async (id: string, orderData: Partial<Order>) => {
     try {
       // Convert Order type to Supabase table format (snake_case)
@@ -32,10 +29,8 @@ export const useOrderUpdate = (refreshOrders: () => Promise<void>) => {
       
       if (orderError) {
         console.error('Error updating order:', orderError);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to update order",
-          variant: "destructive",
         });
         return;
       }
@@ -50,10 +45,8 @@ export const useOrderUpdate = (refreshOrders: () => Promise<void>) => {
         
         if (deleteError) {
           console.error('Error deleting order items:', deleteError);
-          toast({
-            title: "Error",
+          toast.error("Error", {
             description: "Failed to update order items",
-            variant: "destructive",
           });
           return;
         }
@@ -76,10 +69,8 @@ export const useOrderUpdate = (refreshOrders: () => Promise<void>) => {
         
         if (insertError) {
           console.error('Error inserting new order items:', insertError);
-          toast({
-            title: "Error",
+          toast.error("Error", {
             description: "Failed to update order items",
-            variant: "destructive",
           });
           return;
         }
@@ -88,16 +79,13 @@ export const useOrderUpdate = (refreshOrders: () => Promise<void>) => {
       // Refresh orders to get updated data
       await refreshOrders();
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Order updated successfully",
       });
     } catch (err) {
       console.error('Unexpected error updating order:', err);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "An unexpected error occurred",
-        variant: "destructive",
       });
     }
   };

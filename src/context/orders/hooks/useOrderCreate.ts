@@ -1,22 +1,18 @@
-
 import { Order } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { generateOrderReference } from "../utils/orderReferenceUtils";
 import { format } from "date-fns";
 
 export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
   const { user } = useAuth();
-  const { toast } = useToast();
 
   const addOrder = async (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">): Promise<void> => {
     try {
       if (!user) {
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "You must be logged in to add orders",
-          variant: "destructive",
         });
         return;
       }
@@ -56,10 +52,8 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
       
       if (orderError) {
         console.error('Error adding order:', orderError);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to add order",
-          variant: "destructive",
         });
         return;
       }
@@ -85,10 +79,8 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
         console.error('Error adding order items:', itemsError);
         // Attempt to delete the order if items insertion fails
         await supabase.from('orders').delete().eq('id', orderResult.id);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to add order items",
-          variant: "destructive",
         });
         return;
       }
@@ -96,16 +88,13 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
       // Refresh orders to get the complete data including items
       await refreshOrders();
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Order added successfully",
       });
     } catch (err) {
       console.error('Unexpected error adding order:', err);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "An unexpected error occurred",
-        variant: "destructive",
       });
     }
   };

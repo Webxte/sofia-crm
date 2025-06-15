@@ -1,15 +1,13 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useProducts } from "@/context/products/ProductsContext";
 
 export const useOrdersFetch = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const { getProductById } = useProducts();
 
@@ -99,16 +97,14 @@ export const useOrdersFetch = () => {
       setOrders(formattedOrders);
     } catch (err) {
       console.error('useOrdersFetch: Unexpected error fetching orders:', err);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to load orders. Please check your connection and try again.",
-        variant: "destructive",
       });
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, getProductById, toast]);
+  }, [isAuthenticated, user, getProductById]);
 
   // Auto-fetch when authentication state changes
   useEffect(() => {

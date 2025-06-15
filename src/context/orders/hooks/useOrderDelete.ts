@@ -1,10 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useOrderDelete = (setOrders: React.Dispatch<React.SetStateAction<any[]>>) => {
-  const { toast } = useToast();
-
   const deleteOrder = async (id: string) => {
     try {
       // First delete all order items (should cascade automatically, but being explicit)
@@ -15,10 +13,8 @@ export const useOrderDelete = (setOrders: React.Dispatch<React.SetStateAction<an
       
       if (itemsError) {
         console.error('Error deleting order items:', itemsError);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to delete order items",
-          variant: "destructive",
         });
         return;
       }
@@ -31,10 +27,8 @@ export const useOrderDelete = (setOrders: React.Dispatch<React.SetStateAction<an
       
       if (orderError) {
         console.error('Error deleting order:', orderError);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to delete order",
-          variant: "destructive",
         });
         return;
       }
@@ -42,16 +36,13 @@ export const useOrderDelete = (setOrders: React.Dispatch<React.SetStateAction<an
       // Remove the order from state
       setOrders(prevOrders => prevOrders.filter(order => order.id !== id));
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Order deleted successfully",
       });
     } catch (err) {
       console.error('Unexpected error deleting order:', err);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "An unexpected error occurred",
-        variant: "destructive",
       });
     }
   };

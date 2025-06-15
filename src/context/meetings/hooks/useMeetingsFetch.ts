@@ -1,14 +1,12 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Meeting } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
 export const useMeetingsFetch = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
   const fetchMeetings = useCallback(async () => {
@@ -55,16 +53,14 @@ export const useMeetingsFetch = () => {
       setMeetings(formattedMeetings);
     } catch (error) {
       console.error('useMeetingsFetch: Error in fetchMeetings:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to load meetings. Please check your connection and try again.",
-        variant: "destructive",
       });
       setMeetings([]);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, toast]);
+  }, [isAuthenticated, user]);
 
   // Auto-fetch when authentication state changes
   useEffect(() => {

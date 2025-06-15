@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -55,7 +54,6 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const { createUser } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const form = useForm<SignupFormValues>({
@@ -74,18 +72,15 @@ const Signup = () => {
     
     try {
       await createUser(values.name, values.email, values.password, values.role);
-      toast({
-        title: "Account created",
+      toast.success("Account created", {
         description: "You've been signed up successfully.",
       });
       navigate("/");
     } catch (error: any) {
       console.error(error);
       setErrorMessage(error.message || "Something went wrong. Please try again.");
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);

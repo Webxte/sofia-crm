@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { OrdersHeader } from "@/components/orders/OrdersHeader";
 import { OrdersFilter } from "@/components/orders/OrdersFilter";
 import { OrdersGridView } from "@/components/orders/OrdersGridView";
@@ -29,7 +28,6 @@ const Orders = () => {
   const { contacts, getContactById, setShowAllContacts } = useContacts();
   const { isAdmin, user } = useAuth();
   const location = useLocation();
-  const { toast } = useToast();
   const isMobile = useIsMobile();
   
   const queryParams = new URLSearchParams(location.search);
@@ -118,8 +116,7 @@ const Orders = () => {
 
   const handleExport = () => {
     if (sortedOrders.length === 0) {
-      toast({
-        title: "No Orders",
+      toast.error("No Orders", {
         description: "There are no orders to export",
       });
       return;

@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -40,7 +39,6 @@ const UserManagement = () => {
   const { createUser, isAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -54,10 +52,8 @@ const UserManagement = () => {
 
   const onSubmit = async (data: FormValues) => {
     if (!isAdmin) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Only admins can create new users",
-        variant: "destructive",
       });
       return;
     }
@@ -66,8 +62,7 @@ const UserManagement = () => {
       setLoading(true);
       setErrorMessage("");
       await createUser(data.name, data.email, data.password, data.role);
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: `User ${data.name} created successfully`,
       });
       form.reset();
@@ -75,10 +70,8 @@ const UserManagement = () => {
       console.error("User creation error:", error);
       const errorMsg = error.message || "Failed to create user. Please try again.";
       setErrorMessage(errorMsg);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: errorMsg,
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
