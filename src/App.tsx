@@ -1,5 +1,5 @@
 
-import { Suspense, ReactNode } from 'react';
+import React, { Suspense, ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { ContactsProvider } from './context/contacts/ContactsContext';
