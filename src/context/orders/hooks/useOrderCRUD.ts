@@ -1,13 +1,11 @@
-
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Order, OrderItem } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
 export const useOrderCRUD = () => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const createOrder = async (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => {
@@ -90,18 +88,15 @@ export const useOrderCRUD = () => {
         updatedAt: new Date(orderResult.updated_at),
       };
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Order created successfully",
       });
 
       return transformedOrder;
     } catch (error) {
       console.error("Error in createOrder:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to create order",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -192,18 +187,15 @@ export const useOrderCRUD = () => {
         updatedAt: new Date(orderResult.updated_at),
       };
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Order updated successfully",
       });
 
       return transformedOrder;
     } catch (error) {
       console.error("Error in updateOrder:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update order",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -237,18 +229,15 @@ export const useOrderCRUD = () => {
         throw orderError;
       }
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Order deleted successfully",
       });
 
       return true;
     } catch (error) {
       console.error("Error in deleteOrder:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to delete order",
-        variant: "destructive",
       });
       throw error;
     } finally {
