@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
+import { logger } from "@/utils/logger";
 
 // Extend the User type to include the name property
 interface ExtendedUser extends User {
@@ -36,13 +38,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    console.log("Setting up auth state listener");
+    logger.debug("Setting up auth state listener");
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
-        console.log("Auth state changed:", event);
+        logger.debug("Auth state changed:", event);
         const extendedUser = getUserWithName(currentSession?.user ?? null);
-        console.log("User with auth change:", extendedUser ? {
+        logger.debug("User with auth change:", extendedUser ? {
           id: extendedUser.id, 
           name: extendedUser.name,
         } : null);
@@ -54,9 +56,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
+      logger.debug("Initial session check:", currentSession ? "Logged in" : "Not logged in");
       const extendedUser = getUserWithName(currentSession?.user ?? null);
-      console.log("User from initial session:", extendedUser ? {
+      logger.debug("User from initial session:", extendedUser ? {
         id: extendedUser.id, 
         name: extendedUser.name,
       } : null);
@@ -83,8 +85,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
+        logger.error("Login error:", error);
         throw error;
       }
+      
+      logger.info("User logged in successfully");
+    } catch (error) {
+      logger.error("Login failed:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -105,10 +113,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
+        logger.error("User creation error:", error);
         throw error;
       }
       
-      console.log("User created successfully:", data);
+      logger.info("User created successfully:", data);
+    } catch (error) {
+      logger.error("User creation failed:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -122,10 +134,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const { error } = await supabase.auth.signOut();
       if (error) {
+        logger.error("Logout error:", error);
         throw error;
       }
+      
+      logger.info("User logged out successfully");
     } catch (error) {
-      console.error("Error during logout:", error);
+      logger.error("Logout failed:", error);
     } finally {
       setIsLoading(false);
     }
