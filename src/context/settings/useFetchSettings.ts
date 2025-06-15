@@ -6,12 +6,12 @@ import { transformDbToSettings } from "./utils";
 
 export const useFetchSettings = (isAuthenticated: boolean) => {
   const [settings, setSettings] = useState<Settings>({
+    id: "",
+    userId: "",
     companyName: "",
     companyAddress: "",
     companyPhone: "",
     companyEmail: "",
-    emailSignature: "",
-    businessCardScanEnabled: false,
     autoEmailEnabled: false,
     customLinks: [],
     bulkEmailTemplates: [],
@@ -20,6 +20,19 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
     orderEmailTemplates: [],
     privacyPolicy: "",
     termsOfService: "",
+    defaultEmailSubject: "",
+    defaultEmailMessage: "",
+    defaultContactEmailMessage: "",
+    defaultTermsAndConditions: "",
+    catalogUrl: "",
+    priceListUrl: "",
+    emailFooter: "",
+    emailSenderName: "",
+    termsEnabled: false,
+    defaultVatRate: 0,
+    bulkEmailTemplate: "",
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
   const [loading, setLoading] = useState(false);
 

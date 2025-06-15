@@ -44,6 +44,31 @@ export const parseVatRate = (vatRateData: any): number => {
   return vatRate;
 };
 
+export const transformDbToSettings = (data: any): any => {
+  return {
+    id: data.id || "",
+    userId: data.user_id || "",
+    companyName: data.company_name || "",
+    companyEmail: data.company_email || "",
+    companyPhone: data.company_phone || "",
+    companyAddress: data.company_address || "",
+    defaultEmailSubject: data.default_email_subject || "",
+    defaultEmailMessage: data.default_email_message || "",
+    defaultContactEmailMessage: data.default_contact_email_message || "",
+    defaultTermsAndConditions: data.default_terms_and_conditions || "",
+    customLinks: parseCustomLinks(data.custom_links),
+    catalogUrl: data.catalog_url || "",
+    priceListUrl: data.price_list_url || "",
+    emailFooter: data.email_footer || "",
+    emailSenderName: data.email_sender_name || "",
+    termsEnabled: data.terms_enabled || false,
+    defaultVatRate: parseVatRate(data.default_vat_rate),
+    bulkEmailTemplate: data.bulk_email_template || "",
+    createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+    updatedAt: data.updated_at ? new Date(data.updated_at) : new Date()
+  };
+};
+
 export const prepareSettingsForDb = (updates: Partial<any>): any => {
   const dbUpdates: any = {};
   
