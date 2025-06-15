@@ -1,5 +1,4 @@
-
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsData } from "./types";
 import { transformDbToSettings } from "./utils";
@@ -64,4 +63,3 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
 
   return { settings, setSettings, loading, refreshSettings };
 };
-
