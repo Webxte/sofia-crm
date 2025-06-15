@@ -10,7 +10,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useSettings } from "@/context/settings";
 import { Contact } from "@/types";
 
@@ -27,7 +27,6 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
 }) => {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const { toast } = useToast();
   const { settings } = useSettings();
   const [isSending, setIsSending] = useState(false);
   
@@ -53,10 +52,8 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
 
   const handleSendEmails = async () => {
     if (contactCount === 0) {
-      toast({
-        title: "No Valid Recipients",
+      toast.error("No Valid Recipients", {
         description: "None of the selected contacts have email addresses.",
-        variant: "destructive",
       });
       return;
     }
@@ -87,18 +84,15 @@ export const BulkEmailDialog: React.FC<BulkEmailDialogProps> = ({
         throw new Error("Failed to send bulk email");
       }
 
-      toast({
-        title: "Bulk Email Sent",
+      toast.success("Bulk Email Sent", {
         description: `Successfully sent to ${contactCount} contacts as BCC.`,
       });
       
       onOpenChange(false);
     } catch (error) {
       console.error("Error sending emails:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to send bulk email. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsSending(false);

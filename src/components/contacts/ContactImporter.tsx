@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useContacts } from "@/context/ContactsContext";
 import { Upload, Check } from "lucide-react";
 
@@ -24,7 +23,6 @@ const ContactImporter = ({ open, onOpenChange }: ContactImporterProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [hasUploaded, setHasUploaded] = useState(false);
-  const { toast } = useToast();
   const { importContactsFromCsv, refreshContacts } = useContacts();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,10 +30,8 @@ const ContactImporter = ({ open, onOpenChange }: ContactImporterProps) => {
       const selectedFile = e.target.files[0];
       
       if (!selectedFile.name.endsWith('.csv')) {
-        toast({
-          title: "Invalid file format",
+        toast.error("Invalid file format", {
           description: "Please upload a CSV file",
-          variant: "destructive",
         });
         return;
       }
@@ -46,10 +42,8 @@ const ContactImporter = ({ open, onOpenChange }: ContactImporterProps) => {
 
   const handleImport = async () => {
     if (!file) {
-      toast({
-        title: "No file selected",
+      toast.error("No file selected", {
         description: "Please select a CSV file to import",
-        variant: "destructive",
       });
       return;
     }
@@ -61,16 +55,13 @@ const ContactImporter = ({ open, onOpenChange }: ContactImporterProps) => {
       await refreshContacts();
       
       setHasUploaded(true);
-      toast({
-        title: "Import successful",
+      toast.success("Import successful", {
         description: "Your contacts have been imported",
       });
     } catch (error) {
       console.error('Import error:', error);
-      toast({
-        title: "Import failed",
+      toast.error("Import failed", {
         description: "There was a problem importing your contacts",
-        variant: "destructive",
       });
     } finally {
       setIsUploading(false);

@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Task } from "@/types";
 import { useTasks } from "@/context/TasksContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { TaskDetailsForm } from "./TaskDetailsForm";
@@ -17,7 +16,6 @@ interface TaskFormProps {
 const TaskForm = ({ task, isEditing = false, contactId }: TaskFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addTask, updateTask } = useTasks();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (data: any) => {
@@ -37,24 +35,14 @@ const TaskForm = ({ task, isEditing = false, contactId }: TaskFormProps) => {
       
       if (isEditing && task) {
         updateTask(task.id, taskData);
-        toast({
-          title: "Success",
-          description: "Task updated successfully",
-        });
       } else {
         addTask(taskData);
-        toast({
-          title: "Success",
-          description: "Task created successfully",
-        });
       }
       navigate("/tasks");
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Something went wrong",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);

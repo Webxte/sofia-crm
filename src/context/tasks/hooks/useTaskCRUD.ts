@@ -1,13 +1,11 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Task } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
 export const useTaskCRUD = () => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const addTask = async (taskData: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
@@ -48,18 +46,15 @@ export const useTaskCRUD = () => {
         updatedAt: new Date(data.updated_at),
       };
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Task created successfully",
       });
 
       return newTask;
     } catch (error) {
       console.error("Error adding task:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to create task",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -103,18 +98,15 @@ export const useTaskCRUD = () => {
         updatedAt: new Date(data.updated_at),
       };
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Task updated successfully",
       });
 
       return updatedTask;
     } catch (error) {
       console.error("Error updating task:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update task",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -132,18 +124,15 @@ export const useTaskCRUD = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Task deleted successfully",
       });
 
       return true;
     } catch (error) {
       console.error("Error deleting task:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to delete task",
-        variant: "destructive",
       });
       return false;
     } finally {

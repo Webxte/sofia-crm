@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useOrders } from "@/context/OrdersContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -19,7 +18,6 @@ interface OrderStatusChangerProps {
 export const OrderStatusChanger = ({ orderId, currentStatus }: OrderStatusChangerProps) => {
   const [changing, setChanging] = useState(false);
   const { updateOrder } = useOrders();
-  const { toast } = useToast();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -48,15 +46,12 @@ export const OrderStatusChanger = ({ orderId, currentStatus }: OrderStatusChange
       await updateOrder(orderId, { 
         status: newStatus as "draft" | "confirmed" | "shipped" | "delivered" | "paid" | "cancelled" 
       });
-      toast({
-        title: "Status updated",
+      toast.success("Status updated", {
         description: `Order status changed to ${newStatus}`,
       });
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update order status",
-        variant: "destructive",
       });
     } finally {
       setChanging(false);

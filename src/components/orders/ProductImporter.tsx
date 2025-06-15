@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useProducts } from "@/context/products/ProductsContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,14 +23,11 @@ const ProductImporter = ({ onClose }: ProductImporterProps) => {
   const [csvData, setCsvData] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { importProducts } = useProducts();
-  const { toast } = useToast();
 
   const handleImport = () => {
     if (!csvData.trim()) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please enter CSV data",
-        variant: "destructive",
       });
       return;
     }
@@ -46,8 +42,7 @@ const ProductImporter = ({ onClose }: ProductImporterProps) => {
       importProducts(csvData);
       
       // Show success message
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: `${lines.length} products imported`,
       });
       
@@ -56,10 +51,8 @@ const ProductImporter = ({ onClose }: ProductImporterProps) => {
       setOpen(false);
       if (onClose) onClose();
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to parse CSV data. Please check the format.",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);

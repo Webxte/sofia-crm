@@ -1,10 +1,9 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useMeetings } from "@/context/meetings";
 import { ContactField } from "./fields/ContactField";
 import { MeetingTypeField } from "./fields/MeetingTypeField";
@@ -25,7 +24,6 @@ interface MeetingFormProps {
 const MeetingForm = ({ contactId }: MeetingFormProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
   const { addMeeting, updateMeeting, getMeetingById } = useMeetings();
   const [followUpData, setFollowUpData] = useState({
@@ -73,10 +71,8 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
     try {
       // Ensure contactId is provided
       if (!data.contactId) {
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Please select a contact",
-          variant: "destructive",
         });
         return;
       }
@@ -95,8 +91,7 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
 
       if (isEdit && id) {
         await updateMeeting(id, meetingData);
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Meeting updated successfully",
         });
       } else {
@@ -112,13 +107,11 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
             notes: `Follow-up meeting from ${data.date}`,
           };
           await addMeeting(followUpMeetingData);
-          toast({
-            title: "Success",
+          toast.success("Success", {
             description: "Meeting and follow-up meeting created successfully",
           });
         } else {
-          toast({
-            title: "Success", 
+          toast.success("Success", {
             description: "Meeting created successfully",
           });
         }
@@ -127,10 +120,8 @@ const MeetingForm = ({ contactId }: MeetingFormProps) => {
       navigate("/meetings");
     } catch (error) {
       console.error("Error saving meeting:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to save meeting. Please try again.",
-        variant: "destructive",
       });
     }
   };

@@ -1,14 +1,12 @@
-
 import { useState, useCallback } from "react";
 import { Task } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
 export const useTasksFetch = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
   const fetchTasks = useCallback(async () => {
@@ -56,16 +54,14 @@ export const useTasksFetch = () => {
       setTasks(formattedTasks);
     } catch (error) {
       console.error('useTasksFetch: Error in fetchTasks:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to load tasks. Please check your connection and try again.",
-        variant: "destructive",
       });
       setTasks([]);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, toast]);
+  }, [isAuthenticated, user]);
 
   return {
     tasks,

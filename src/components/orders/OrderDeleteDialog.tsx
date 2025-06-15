@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface OrderDeleteDialogProps {
   orderId: string;
@@ -17,14 +16,12 @@ export const OrderDeleteDialog = ({ orderId, reference, size }: OrderDeleteDialo
   const [open, setOpen] = useState(false);
   const { deleteOrder } = useOrders();
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const handleDelete = () => {
     deleteOrder(orderId);
     setOpen(false);
     
-    toast({
-      title: "Order Deleted",
+    toast.success("Order Deleted", {
       description: `Order ${reference || orderId.slice(0, 8)} has been deleted.`,
     });
     

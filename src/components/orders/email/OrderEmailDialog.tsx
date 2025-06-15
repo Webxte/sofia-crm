@@ -1,10 +1,9 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmailForm } from "./EmailForm";
 import { useOrderEmail } from "./useOrderEmail";
 import { useContacts } from "@/context/ContactsContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { getEmailPlaceholders, fillEmailTemplate } from "./emailUtils";
 
@@ -30,8 +29,6 @@ export const OrderEmailDialog = ({ orderId, reference, open, onOpenChange, custo
     customerEmail
   });
 
-  const { toast } = useToast();
-  
   const handleFormSubmit = async (values: any) => {
     const contactName = contact?.fullName || contact?.company || "Customer";
     const companyName = contact?.company || "";
@@ -46,7 +43,6 @@ export const OrderEmailDialog = ({ orderId, reference, open, onOpenChange, custo
       orderRef
     );
     
-    // Use the modified values for submission
     const success = await handleSubmit({
       ...values,
       message: processedMessage

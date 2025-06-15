@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { Contact } from "@/types";
 import { useContactsOperations } from "./useContactsOperations";
@@ -9,7 +8,7 @@ import {
   searchContacts 
 } from "./contactUtils";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 
 interface ContactsContextType {
@@ -32,7 +31,6 @@ const ContactsContext = createContext<ContactsContextType | undefined>(undefined
 
 export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user, isAdmin } = useAuth();
-  const { toast } = useToast();
   const [showAllContacts, setShowAllContacts] = useState(false);
   const [hasInitialFetch, setHasInitialFetch] = useState(false);
   const { 
@@ -61,14 +59,12 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         setHasInitialFetch(true);
       }).catch(err => {
         logger.error("Error during initial contacts fetch:", err);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to load contacts. Please try refreshing the page.",
-          variant: "destructive",
         });
       });
     }
-  }, [isAuthenticated, user?.id, loading, hasInitialFetch, fetchContacts, toast, isAdmin, showAllContacts]);
+  }, [isAuthenticated, user?.id, loading, hasInitialFetch, fetchContacts, isAdmin, showAllContacts]);
 
   // Handle toggle changes
   useEffect(() => {
@@ -76,14 +72,12 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
       logger.debug("ContactsContext: Toggle changed, refetching with showAll:", showAllContacts);
       fetchContacts(isAdmin || showAllContacts).catch(err => {
         logger.error("Error during toggle fetch:", err);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to refresh contacts.",
-          variant: "destructive",
         });
       });
     }
-  }, [showAllContacts, hasInitialFetch, isAuthenticated, user, fetchContacts, toast, isAdmin]);
+  }, [showAllContacts, hasInitialFetch, isAuthenticated, user, fetchContacts, isAdmin]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {
@@ -102,10 +96,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
       await refreshContactsBase(isAdmin || showAllContacts);
     } catch (err) {
       logger.error("Error refreshing contacts:", err);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to refresh contacts. Please try again.",
-        variant: "destructive",
       });
     }
   };

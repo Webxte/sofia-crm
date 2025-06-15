@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { Organization } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useOrganizationSwitcher = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const switchOrganization = async (id: string): Promise<boolean> => {
     try {
@@ -26,12 +24,10 @@ export const useOrganizationSwitcher = () => {
       return true;
     } catch (error) {
       console.error('Error switching organization:', error);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error instanceof Error 
           ? `Failed to switch organization: ${error.message}`
           : 'Failed to switch organization',
-        variant: 'destructive'
       });
       return false;
     } finally {

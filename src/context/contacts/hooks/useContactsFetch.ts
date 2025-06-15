@@ -1,14 +1,12 @@
-
 import { useState, useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
 export const useContactsFetch = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { isAuthenticated, user, isAdmin } = useAuth();
 
   const fetchContacts = useCallback(async (showAll: boolean = false) => {
@@ -108,16 +106,14 @@ export const useContactsFetch = () => {
       setContacts(formattedContacts);
     } catch (error) {
       console.error('useContactsFetch: Error in fetchContacts:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to load contacts. Please check your connection and try again.",
-        variant: "destructive",
       });
       setContacts([]);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, isAdmin, toast]);
+  }, [isAuthenticated, user, isAdmin]);
 
   return {
     contacts,

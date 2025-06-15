@@ -1,14 +1,12 @@
-
 import { useState } from "react";
 import { Contact } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
 export const useContactUtils = () => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const sendContactEmail = async (contactId: string, emailData: any) => {
@@ -31,18 +29,15 @@ export const useContactUtils = () => {
       
       console.log("Contact email sent successfully:", data);
       
-      toast({
-        title: "Email Sent",
+      toast.success("Email Sent", {
         description: "Email sent successfully",
       });
       
       return true;
     } catch (error) {
       console.error("Error sending contact email:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to send email",
-        variant: "destructive",
       });
       return false;
     } finally {
@@ -84,16 +79,13 @@ export const useContactUtils = () => {
       
       await refreshCallback();
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: `Updated ${contactIds.length} contacts`,
       });
     } catch (error) {
       console.error('Error in bulkUpdateContacts:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update contacts",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -142,16 +134,13 @@ export const useContactUtils = () => {
             
             await refreshCallback();
             
-            toast({
-              title: "Success",
+            toast.success("Success", {
               description: `Imported ${contacts.length} contacts`,
             });
           } catch (error) {
             console.error('Error processing CSV:', error);
-            toast({
-              title: "Error",
+            toast.error("Error", {
               description: "Failed to import contacts from CSV",
-              variant: "destructive",
             });
           } finally {
             setLoading(false);
@@ -159,20 +148,16 @@ export const useContactUtils = () => {
         },
         error: (error) => {
           console.error('CSV parsing error:', error);
-          toast({
-            title: "Error",
+          toast.error("Error", {
             description: "Failed to parse CSV file",
-            variant: "destructive",
           });
           setLoading(false);
         }
       });
     } catch (error) {
       console.error('Error in importContactsFromCsv:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to import contacts",
-        variant: "destructive",
       });
       setLoading(false);
     }

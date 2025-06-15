@@ -1,10 +1,9 @@
-
 import React, { useState, useRef } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProductImporter from "@/components/orders/ProductImporter";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface ProductImportSettingsProps {
   importProductsFromFile: (file: File) => Promise<void>;
@@ -14,7 +13,6 @@ const ProductImportSettings = ({ importProductsFromFile }: ProductImportSettings
   const [fileImportLoading, setFileImportLoading] = useState(false);
   const [lastImportedFile, setLastImportedFile] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
   
   const handleFileDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -25,10 +23,8 @@ const ProductImportSettings = ({ importProductsFromFile }: ProductImportSettings
       if (file.type === "text/csv" || file.name.endsWith(".csv")) {
         await processFile(file);
       } else {
-        toast({
-          title: "Invalid File Type",
+        toast.error("Invalid File Type", {
           description: "Please upload a CSV file",
-          variant: "destructive",
         });
       }
     }
@@ -41,10 +37,8 @@ const ProductImportSettings = ({ importProductsFromFile }: ProductImportSettings
       if (file.type === "text/csv" || file.name.endsWith(".csv")) {
         await processFile(file);
       } else {
-        toast({
-          title: "Invalid File Type",
+        toast.error("Invalid File Type", {
           description: "Please upload a CSV file",
-          variant: "destructive",
         });
       }
       
@@ -64,16 +58,13 @@ const ProductImportSettings = ({ importProductsFromFile }: ProductImportSettings
       // When a new file is uploaded, it will replace the old data
       await importProductsFromFile(file);
       
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: `File "${file.name}" imported successfully. Previous product data has been replaced.`,
       });
     } catch (error) {
       console.error("Error importing file:", error);
-      toast({
-        title: "Import Failed",
+      toast.error("Import Failed", {
         description: "There was an error importing the file",
-        variant: "destructive",
       });
     } finally {
       setFileImportLoading(false);

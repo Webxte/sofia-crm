@@ -1,11 +1,8 @@
-
 import { useCallback } from "react";
 import { Contact } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useContactExport = (contacts: Contact[]) => {
-  const { toast } = useToast();
-
   const exportContactsToCsv = useCallback(async () => {
     try {
       console.log("Exporting contacts to CSV, count:", contacts.length);
@@ -37,19 +34,16 @@ export const useContactExport = (contacts: Contact[]) => {
       link.click();
       document.body.removeChild(link);
       
-      toast({
-        title: "Export Successful",
+      toast.success("Export Successful", {
         description: `Exported ${contacts.length} contacts to CSV.`,
       });
     } catch (error) {
       console.error("Error exporting contacts:", error);
-      toast({
-        title: "Export Error",
+      toast.error("Export Error", {
         description: "Failed to export contacts. Please try again.",
-        variant: "destructive",
       });
     }
-  }, [contacts, toast]);
+  }, [contacts]);
 
   return {
     exportContactsToCsv

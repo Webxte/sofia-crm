@@ -1,23 +1,19 @@
-
 import { useState } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useContactCRUD = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
 
   const createContact = async (contactData: Omit<Contact, "id" | "createdAt" | "updatedAt">) => {
     if (!user) {
       const errorMsg = "User not found";
       console.error("createContact error:", errorMsg);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: errorMsg,
-        variant: "destructive",
       });
       throw new Error(errorMsg);
     }
@@ -72,18 +68,15 @@ export const useContactCRUD = () => {
         updatedAt: new Date(data.updated_at),
       };
 
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Contact created successfully",
       });
 
       return createdContact;
     } catch (error) {
       console.error("Error creating contact:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to create contact",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -139,10 +132,8 @@ export const useContactCRUD = () => {
       } as Contact;
     } catch (error) {
       console.error("Error updating contact:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update contact",
-        variant: "destructive",
       });
       throw error;
     } finally {
@@ -167,10 +158,8 @@ export const useContactCRUD = () => {
       return true;
     } catch (error) {
       console.error("Error deleting contact:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to delete contact",
-        variant: "destructive",
       });
       return false;
     } finally {

@@ -1,17 +1,15 @@
-
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useContacts } from "@/context/ContactsContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { contactFormSchema, ContactFormValues, ContactFormProps } from "./types";
 import { Contact } from "@/types";
 
 export const useContactForm = ({ initialData, contact, isEditing = false }: ContactFormProps) => {
   const { addContact, updateContact } = useContacts();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   
@@ -70,10 +68,8 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
 
       if (!user) {
         console.error("useContactForm: No user found for contact form submission");
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "You must be logged in to add contacts",
-          variant: "destructive",
         });
         return;
       }
@@ -100,8 +96,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         const result = await updateContact(contact.id, contactData);
         console.log("useContactForm: Contact update result:", !!result);
         
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Contact updated successfully!",
         });
       } else {
@@ -125,16 +120,13 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         
         if (result) {
           console.log("useContactForm: Contact created successfully with ID:", result.id);
-          toast({
-            title: "Success",
+          toast.success("Success", {
             description: "Contact created successfully!",
           });
         } else {
           console.error("useContactForm: Contact creation returned null result");
-          toast({
-            title: "Warning",
+          toast.warning("Warning", {
             description: "Contact may not have been created properly. Please check the contacts list.",
-            variant: "destructive",
           });
         }
       }
@@ -148,16 +140,12 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       
       // Check if it's an RLS policy error
       if (error instanceof Error && (error.message.includes('row-level security') || error.message.includes('permission'))) {
-        toast({
-          title: "Permission Error",
+        toast.error("Permission Error", {
           description: "You don't have permission to perform this action.",
-          variant: "destructive",
         });
       } else {
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: isEditing ? "Failed to update contact." : "Failed to create contact.",
-          variant: "destructive",
         });
       }
     }

@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +16,7 @@ import { useContacts } from "@/context/ContactsContext";
 import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/orders/OrdersContext";
 import { useTasks } from "@/context/tasks";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Contact } from "@/types";
 import { useNavigate } from "react-router-dom";
 
@@ -42,67 +41,40 @@ export const ContactDeleteDialog = ({
   const { meetings } = useMeetings();
   const { orders } = useOrders();
   const { tasks } = useTasks();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Use either controlled or uncontrolled state
   const open = controlledOpen !== undefined ? controlledOpen : isOpen;
   const setOpen = setControlledOpen || setIsOpen;
 
-  const displayName = contactName || (contact.company ? 
-    `${contact.company}${contact.fullName ? ` (${contact.fullName})` : ''}` : 
-    (contact.fullName || "Unnamed Contact"));
-
-  // Check for associated data
-  const associatedMeetings = meetings.filter(meeting => meeting.contactId === contact.id);
-  const associatedOrders = orders.filter(order => order.contactId === contact.id);
-  const associatedTasks = tasks.filter(task => task.contactId === contact.id);
-
-  const hasAssociatedData = associatedMeetings.length > 0 || associatedOrders.length > 0 || associatedTasks.length > 0;
+  const associatedMeetings = meetings.filter(m => m.contactId === contact.id).length;
+  const associatedOrders = orders.filter(o => o.contactId === contact.id).length;
+  const associatedTasks = tasks.filter(t => t.contactId === contact.id).length;
 
   const handleDelete = async () => {
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      
-      // Force delete by first deleting associated data
-      if (hasAssociatedData) {
-        // Note: In a real app, you might want to handle this more carefully
-        // For now, we'll show a more detailed error
-        toast({
-          title: "Cannot Delete Contact",
-          description: `This contact has ${associatedMeetings.length} meetings, ${associatedOrders.length} orders, and ${associatedTasks.length} tasks. Please delete or reassign these items first.`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
       const success = await deleteContact(contact.id);
-      
       if (success) {
-        toast({
-          title: "Contact deleted",
-          description: "The contact has been permanently deleted.",
+        toast.success("Contact Deleted", {
+          description: `Contact ${contactName || contact.fullName || contact.id} has been deleted.`,
         });
-        setOpen(false);
-        
-        // If we're on the contact details page, navigate back to the contacts list
-        if (window.location.pathname.includes(`/contacts/${contact.id}`)) {
-          navigate('/contacts');
-        }
-        
-        // If there's a custom onConfirm handler, call it
         if (onConfirm) {
           onConfirm();
         }
+        setOpen(false);
+        if (window.location.pathname.includes(`/contacts/${contact.id}`)) {
+            navigate("/contacts");
+        }
       } else {
-        throw new Error("Failed to delete contact");
+        toast.error("Deletion Failed", {
+          description: "Could not delete the contact. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Error deleting contact:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete contact. Please check for associated data and try again.",
-        variant: "destructive",
+      toast.error("Deletion Failed", {
+        description: "An error occurred while deleting the contact.",
       });
     } finally {
       setIsDeleting(false);
@@ -112,49 +84,34 @@ export const ContactDeleteDialog = ({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50">
+        <Button variant="destructive" size="sm">
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete {displayName}? This action cannot be undone.
-            
-            {hasAssociatedData && (
-              <div className="mt-3 p-3 bg-red-50 rounded border border-red-200">
-                <p className="font-medium text-red-800 mb-2">This contact has associated data:</p>
-                <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
-                  {associatedMeetings.length > 0 && (
-                    <li>{associatedMeetings.length} meeting(s)</li>
-                  )}
-                  {associatedOrders.length > 0 && (
-                    <li>{associatedOrders.length} order(s)</li>
-                  )}
-                  {associatedTasks.length > 0 && (
-                    <li>{associatedTasks.length} task(s)</li>
-                  )}
+            This action cannot be undone. This will permanently delete the contact
+            <span className="font-semibold"> {contactName || contact.fullName || contact.id}</span>.
+            { (associatedMeetings > 0 || associatedOrders > 0 || associatedTasks > 0) &&
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
+                <p className="font-bold text-yellow-800">This contact has associated data:</p>
+                <ul className="list-disc list-inside text-yellow-700">
+                  {associatedMeetings > 0 && <li>{associatedMeetings} meeting(s)</li>}
+                  {associatedOrders > 0 && <li>{associatedOrders} order(s)</li>}
+                  {associatedTasks > 0 && <li>{associatedTasks} task(s)</li>}
                 </ul>
-                <p className="text-red-800 font-medium mt-2">
-                  Please delete or reassign these items first.
-                </p>
+                <p className="mt-1 text-yellow-800">Deleting the contact might cause issues if this data is not handled properly.</p>
               </div>
-            )}
+            }
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault();
-              handleDelete();
-            }}
-            className="bg-red-500 hover:bg-red-600"
-            disabled={isDeleting || hasAssociatedData}
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
+          <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? 'Deleting...' : 'Continue'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Contact } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { EmailForm, EmailFormValues } from "./EmailForm";
 
 interface ContactEmailDialogProps {
@@ -13,15 +12,12 @@ interface ContactEmailDialogProps {
 }
 
 export const ContactEmailDialog = ({ contact, open, onOpenChange }: ContactEmailDialogProps) => {
-  const { toast } = useToast();
   const [isSending, setIsSending] = useState(false);
   
   const handleSubmit = async (values: EmailFormValues) => {
     if (!values.to) {
-      toast({
-        title: "Missing Email",
+      toast.error("Missing Email", {
         description: "Contact does not have an email address.",
-        variant: "destructive"
       });
       return;
     }
@@ -46,18 +42,15 @@ export const ContactEmailDialog = ({ contact, open, onOpenChange }: ContactEmail
       
       if (error) throw error;
       
-      toast({
-        title: "Email Sent",
+      toast.success("Email Sent", {
         description: `Email successfully sent to ${contact.fullName || contact.email}`,
       });
       
       onOpenChange(false);
     } catch (error) {
       console.error("Error sending email:", error);
-      toast({
-        title: "Failed to Send Email",
+      toast.error("Failed to Send Email", {
         description: "There was an error sending the email. Please try again.",
-        variant: "destructive"
       });
     } finally {
       setIsSending(false);

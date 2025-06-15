@@ -1,11 +1,8 @@
-
 import { useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import Papa from "papaparse";
 
 export const useContactImport = (refreshContacts: () => Promise<void>) => {
-  const { toast } = useToast();
-
   const importContactsFromCsv = useCallback(async (file: File) => {
     try {
       console.log("Starting CSV import for file:", file.name);
@@ -21,37 +18,30 @@ export const useContactImport = (refreshContacts: () => Promise<void>) => {
             // For now, just refresh contacts and show success
             await refreshContacts();
             
-            toast({
-              title: "Import Successful",
+            toast.success("Import Successful", {
               description: `Imported ${results.data.length} contacts from CSV.`,
             });
           } catch (error) {
             console.error("Error processing CSV data:", error);
-            toast({
-              title: "Import Error",
+            toast.error("Import Error", {
               description: "Failed to process CSV data. Please check the format.",
-              variant: "destructive",
             });
           }
         },
         error: (error) => {
           console.error("CSV parsing error:", error);
-          toast({
-            title: "CSV Error",
+          toast.error("CSV Error", {
             description: "Failed to parse CSV file. Please check the format.",
-            variant: "destructive",
           });
         }
       });
     } catch (error) {
       console.error("Error importing contacts:", error);
-      toast({
-        title: "Import Error",
+      toast.error("Import Error", {
         description: "Failed to import contacts. Please try again.",
-        variant: "destructive",
       });
     }
-  }, [refreshContacts, toast]);
+  }, [refreshContacts]);
 
   return {
     importContactsFromCsv

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOrders } from "@/context/OrdersContext";
 import { useContacts } from "@/context/ContactsContext";
 import { useSettings } from "@/context/settings";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { EmailFormValues } from "./emailSchema";
 import { generateDefaultEmailContent, generateDefaultEmailSubject } from "./emailUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,6 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   const { orders } = useOrders();
   const { getContactById } = useContacts();
   const { settings } = useSettings();
-  const { toast } = useToast();
   
   // Get order and contact information
   const order = orders.find(o => o.id === orderId);
@@ -79,8 +78,7 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
       
       console.log("Email function response:", data);
       
-      toast({
-        title: "Email Sent",
+      toast.success("Email Sent", {
         description: `Order details sent to ${values.recipient}`,
       });
       
@@ -88,10 +86,8 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
       return true;
     } catch (error) {
       console.error("Error sending email:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "An error occurred while sending the email. Please try again.",
-        variant: "destructive",
       });
       return false;
     } finally {
