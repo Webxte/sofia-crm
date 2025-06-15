@@ -1,5 +1,5 @@
 
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { ContactsProvider } from './context/contacts/ContactsContext';
@@ -44,6 +44,23 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Separate component to ensure proper context nesting
+const AppProviders = ({ children }: { children: React.ReactNode }) => (
+  <SettingsProvider>
+    <ContactsProvider>
+      <MeetingsProvider>
+        <TasksProvider>
+          <ProductsProvider>
+            <OrdersProvider>
+              {children}
+            </OrdersProvider>
+          </ProductsProvider>
+        </TasksProvider>
+      </MeetingsProvider>
+    </ContactsProvider>
+  </SettingsProvider>
+);
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -58,19 +75,9 @@ export default function App() {
         {/* Protected routes - wrapped in SimpleLayout */}
         <Route path="/" element={
           <ProtectedRoute>
-            <SettingsProvider>
-              <ContactsProvider>
-                <MeetingsProvider>
-                  <TasksProvider>
-                    <ProductsProvider>
-                      <OrdersProvider>
-                        <SimpleLayout />
-                      </OrdersProvider>
-                    </ProductsProvider>
-                  </TasksProvider>
-                </MeetingsProvider>
-              </ContactsProvider>
-            </SettingsProvider>
+            <AppProviders>
+              <SimpleLayout />
+            </AppProviders>
           </ProtectedRoute>
         }>
           <Route path="/dashboard" element={

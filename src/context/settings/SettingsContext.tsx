@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, ReactNode } from "react";
 import { SettingsContextType } from "./types";
 import { useFetchSettings } from "./useFetchSettings";
 import { useUpdateSettings } from "./useUpdateSettings";
@@ -9,6 +9,13 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user, isAdmin } = useAuth();
+  
+  // Add safety check to ensure auth context is properly initialized
+  if (typeof isAuthenticated === 'undefined') {
+    console.warn("SettingsProvider: Auth context not yet initialized");
+    return <>{children}</>;
+  }
+  
   const { settings, setSettings, loading, refreshSettings } = useFetchSettings(isAuthenticated);
   const { updateSettings } = useUpdateSettings(isAuthenticated, isAdmin, refreshSettings, setSettings);
 

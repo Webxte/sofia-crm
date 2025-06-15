@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from "react";
+
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsData } from "./types";
 import { transformDbToSettings } from "./utils";
 
 export const useFetchSettings = (isAuthenticated: boolean) => {
-  const [settings, setSettings] = useState<SettingsData>({
+  const [settings, setSettings] = useState<SettingsData>(() => ({
     id: "",
     companyName: "",
     companyEmail: "",
@@ -24,7 +25,7 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
     bulkEmailTemplate: "",
     createdAt: new Date(),
     updatedAt: new Date()
-  });
+  }));
   const [loading, setLoading] = useState(false);
 
   const refreshSettings = useCallback(async () => {
