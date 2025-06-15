@@ -3,6 +3,7 @@ import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from './context/AuthContext';
 import App from './App';
 import { Toaster } from './components/ui/sonner';
@@ -19,10 +20,12 @@ root.render(
   <StrictMode>
     <BrowserRouter>
       <HelmetProvider>
-        <AuthProvider>
-          <App />
-          <Toaster />
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <AuthProvider>
+            <App />
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </HelmetProvider>
     </BrowserRouter>
   </StrictMode>
