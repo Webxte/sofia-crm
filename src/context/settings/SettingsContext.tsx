@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, ReactNode } from "react";
 import { SettingsContextType } from "./types";
 import { useFetchSettings } from "./useFetchSettings";
 import { useUpdateSettings } from "./useUpdateSettings";
