@@ -1,20 +1,15 @@
 
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings } from "@/types";
+import { SettingsData } from "./types";
 import { transformDbToSettings } from "./utils";
 
 export const useFetchSettings = (isAuthenticated: boolean) => {
-  const [settings, setSettings] = useState<Settings>({
+  const [settings, setSettings] = useState<SettingsData>({
     id: "",
-    organization_id: "",
-    company_name: "",
     companyName: "",
-    company_email: "",
     companyEmail: "",
-    company_phone: "",
     companyPhone: "",
-    company_address: "",
     companyAddress: "",
     defaultEmailSubject: "",
     defaultEmailMessage: "",
@@ -69,3 +64,4 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
 
   return { settings, setSettings, loading, refreshSettings };
 };
+

@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Settings } from "@/types";
 import { prepareSettingsForDb } from "./utils";
+import { SettingsData } from "./types";
 
 export const useUpdateSettings = (
   isAuthenticated: boolean, 
   isAdmin: boolean, 
   refreshSettings: () => Promise<void>,
-  setSettings: React.Dispatch<React.SetStateAction<Settings>>
+  setSettings: React.Dispatch<React.SetStateAction<SettingsData>>
 ) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -88,12 +89,6 @@ export const useUpdateSettings = (
           description: "Settings updated successfully!",
         });
         
-        // Update local state with the changes 
-        setSettings(prevSettings => ({
-          ...prevSettings,
-          ...updates
-        }));
-        
         // Refresh settings from the server to ensure data consistency
         await refreshSettings();
       }
@@ -111,3 +106,4 @@ export const useUpdateSettings = (
   
   return { updateSettings, loading };
 };
+
