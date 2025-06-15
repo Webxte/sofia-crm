@@ -1,8 +1,6 @@
-
 import React, { useEffect } from "react";
 import { useSettings } from "@/context/settings";
 import { useProducts } from "@/context/products/ProductsContext";
-import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanySettings from "@/components/settings/CompanySettings";
 import TermsSettings from "@/components/settings/TermsSettings";
@@ -16,7 +14,6 @@ import type { Settings as SettingsType } from "@/types";
 const Settings = () => {
   const { settings, updateSettings, refreshSettings, loading } = useSettings();
   const { importProductsFromFile } = useProducts();
-  const { toast } = useToast();
   
   useEffect(() => {
     console.log("Settings page mounted, refreshing settings...");

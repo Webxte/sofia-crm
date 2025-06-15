@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Settings } from "@/types";
 import { prepareSettingsForDb } from "./utils";
 import { SettingsData } from "./types";
@@ -13,14 +13,11 @@ export const useUpdateSettings = (
   setSettings: React.Dispatch<React.SetStateAction<SettingsData>>
 ) => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const updateSettings = async (updates: Partial<Settings>) => {
     if (!isAuthenticated || !isAdmin) {
-      toast({
-        title: "Unauthorized",
+      toast.error("Unauthorized", {
         description: "You do not have permission to update settings.",
-        variant: "destructive",
       });
       return;
     }
@@ -36,10 +33,8 @@ export const useUpdateSettings = (
       // Check if there are any updates to make
       if (Object.keys(dbUpdates).length === 0) {
         console.warn("No updates to apply - empty update object");
-        toast({
-          title: "Warning",
+        toast.warning("Warning", {
           description: "No settings changes were detected to update.",
-          variant: "destructive",
         });
         setLoading(false);
         return;
@@ -77,15 +72,12 @@ export const useUpdateSettings = (
 
       if (error) {
         console.error("Error updating settings:", error);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: `Failed to update settings: ${error.message}`,
-          variant: "destructive",
         });
       } else {
         console.log("Settings updated successfully:", data);
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Settings updated successfully!",
         });
         
@@ -94,10 +86,8 @@ export const useUpdateSettings = (
       }
     } catch (err) {
       console.error("Exception during settings update:", err);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "An unexpected error occurred.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -106,4 +96,3 @@ export const useUpdateSettings = (
   
   return { updateSettings, loading };
 };
-
