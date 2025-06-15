@@ -1,5 +1,5 @@
 
-import { Suspense } from 'react';
+import { Suspense, ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { ContactsProvider } from './context/contacts/ContactsContext';
@@ -45,7 +45,7 @@ const LoadingFallback = () => (
 );
 
 // Separate component to ensure proper context nesting
-const AppProviders = ({ children }: { children: React.ReactNode }) => (
+const AppProviders = ({ children }: { children: ReactNode }) => (
   <SettingsProvider>
     <ContactsProvider>
       <MeetingsProvider>
