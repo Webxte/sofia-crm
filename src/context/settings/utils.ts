@@ -47,7 +47,6 @@ export const parseVatRate = (vatRateData: any): number => {
 export const transformDbToSettings = (data: any): any => {
   return {
     id: data.id || "",
-    userId: data.user_id || "",
     companyName: data.company_name || "",
     companyEmail: data.company_email || "",
     companyPhone: data.company_phone || "",
