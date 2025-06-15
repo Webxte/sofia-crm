@@ -10,6 +10,7 @@ import {
 } from "./contactUtils";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/utils/logger";
 
 interface ContactsContextType {
   contacts: Contact[];
@@ -47,7 +48,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
 
   // Initial fetch when authentication is ready
   useEffect(() => {
-    console.log("ContactsContext: Checking initial fetch condition", {
+    logger.debug("ContactsContext: Checking initial fetch condition", {
       isAuthenticated,
       user: user?.id,
       loading,
@@ -55,11 +56,11 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (isAuthenticated && user && !loading && !hasInitialFetch) {
-      console.log("ContactsContext: Performing initial fetch");
+      logger.debug("ContactsContext: Performing initial fetch");
       fetchContacts(isAdmin || showAllContacts).then(() => {
         setHasInitialFetch(true);
       }).catch(err => {
-        console.error("Error during initial contacts fetch:", err);
+        logger.error("Error during initial contacts fetch:", err);
         toast({
           title: "Error",
           description: "Failed to load contacts. Please try refreshing the page.",
@@ -72,9 +73,9 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   // Handle toggle changes
   useEffect(() => {
     if (hasInitialFetch && isAuthenticated && user) {
-      console.log("ContactsContext: Toggle changed, refetching with showAll:", showAllContacts);
+      logger.debug("ContactsContext: Toggle changed, refetching with showAll:", showAllContacts);
       fetchContacts(isAdmin || showAllContacts).catch(err => {
-        console.error("Error during toggle fetch:", err);
+        logger.error("Error during toggle fetch:", err);
         toast({
           title: "Error",
           description: "Failed to refresh contacts.",
@@ -90,17 +91,17 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     try {
       return getContactById(contacts, id);
     } catch (err) {
-      console.warn(`Error getting contact by ID ${id}:`, err);
+      logger.warn(`Error getting contact by ID ${id}:`, err);
       return undefined;
     }
   };
 
   const refreshContacts = async () => {
     try {
-      console.log("ContactsContext: Manual refresh requested with showAll:", showAllContacts);
+      logger.debug("ContactsContext: Manual refresh requested with showAll:", showAllContacts);
       await refreshContactsBase(isAdmin || showAllContacts);
     } catch (err) {
-      console.error("Error refreshing contacts:", err);
+      logger.error("Error refreshing contacts:", err);
       toast({
         title: "Error",
         description: "Failed to refresh contacts. Please try again.",
@@ -110,7 +111,7 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleShowAllContactsChange = (show: boolean) => {
-    console.log("ContactsContext: Toggle showAllContacts to:", show);
+    logger.debug("ContactsContext: Toggle showAllContacts to:", show);
     setShowAllContacts(show);
   };
 
