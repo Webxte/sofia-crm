@@ -44,6 +44,11 @@ export const useFetchSettings = (isAuthenticated: boolean) => {
         .maybeSingle();
 
       if (error) {
+        // If it's a permission error (403), it means user is not admin - this is expected
+        if (error.code === 'PGRST301' || error.message?.includes('permission') || error.message?.includes('policy')) {
+          console.log("useFetchSettings: User doesn't have permission to access settings (not admin), using defaults");
+          return;
+        }
         console.error("useFetchSettings: Error fetching settings:", error);
         return;
       }

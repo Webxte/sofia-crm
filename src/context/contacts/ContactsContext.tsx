@@ -55,7 +55,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
 
     if (isAuthenticated && user && !loading && !hasInitialFetch) {
       logger.debug("ContactsContext: Performing initial fetch");
-      fetchContacts(isAdmin || showAllContacts).then(() => {
+      // With RLS policies, we don't need to pass showAll parameter anymore
+      fetchContacts(false).then(() => {
         setHasInitialFetch(true);
       }).catch(err => {
         logger.error("Error during initial contacts fetch:", err);
@@ -64,20 +65,15 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         });
       });
     }
-  }, [isAuthenticated, user?.id, loading, hasInitialFetch, fetchContacts, isAdmin, showAllContacts]);
+  }, [isAuthenticated, user?.id, loading, hasInitialFetch, fetchContacts]);
 
-  // Handle toggle changes
+  // For admin users, the showAllContacts toggle doesn't affect data since RLS handles it
+  // But we keep it for UI consistency
   useEffect(() => {
-    if (hasInitialFetch && isAuthenticated && user) {
-      logger.debug("ContactsContext: Toggle changed, refetching with showAll:", showAllContacts);
-      fetchContacts(isAdmin || showAllContacts).catch(err => {
-        logger.error("Error during toggle fetch:", err);
-        toast.error("Error", {
-          description: "Failed to refresh contacts.",
-        });
-      });
+    if (hasInitialFetch && isAuthenticated && user && isAdmin) {
+      logger.debug("ContactsContext: Admin user, RLS policies handle data filtering automatically");
     }
-  }, [showAllContacts, hasInitialFetch, isAuthenticated, user, fetchContacts, isAdmin]);
+  }, [showAllContacts, hasInitialFetch, isAuthenticated, user, isAdmin]);
 
   // Enhanced getContactById that handles missing IDs gracefully
   const getContactByIdSafe = (id: string): Contact | undefined => {
@@ -92,8 +88,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshContacts = async () => {
     try {
-      logger.debug("ContactsContext: Manual refresh requested with showAll:", showAllContacts);
-      await refreshContactsBase(isAdmin || showAllContacts);
+      logger.debug("ContactsContext: Manual refresh requested");
+      await refreshContactsBase(false); // RLS handles filtering
     } catch (err) {
       logger.error("Error refreshing contacts:", err);
       toast.error("Error", {
@@ -105,6 +101,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
   const handleShowAllContactsChange = (show: boolean) => {
     logger.debug("ContactsContext: Toggle showAllContacts to:", show);
     setShowAllContacts(show);
+    // For non-admin users, this doesn't change data due to RLS
+    // For admin users, they always see all contacts anyway
   };
 
   return (

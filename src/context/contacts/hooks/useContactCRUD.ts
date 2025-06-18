@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +33,7 @@ export const useContactCRUD = () => {
         address: contactData.address,
         source: contactData.source,
         notes: contactData.notes,
-        agent_id: user.id,
+        agent_id: user.id, // This will be validated by RLS policies
         agent_name: user.name || user.email || "",
       };
 
@@ -104,11 +105,11 @@ export const useContactCRUD = () => {
         updated_at: new Date().toISOString(),
       };
 
+      // RLS policies will ensure users can only update their own contacts or all if admin
       const { data, error } = await supabase
         .from("contacts")
         .update(updateData)
         .eq("id", id)
-        .eq("agent_id", user.id)
         .select()
         .single();
 
@@ -148,11 +149,11 @@ export const useContactCRUD = () => {
 
     setLoading(true);
     try {
+      // RLS policies will ensure users can only delete their own contacts or all if admin
       const { error } = await supabase
         .from("contacts")
         .delete()
-        .eq("id", id)
-        .eq("agent_id", user.id);
+        .eq("id", id);
 
       if (error) throw error;
       return true;

@@ -24,17 +24,21 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated, 
       userId: user?.id,
       hasUser: !!user,
+      isAdmin,
       preview: window.location.hostname.includes('preview'),
       published: !window.location.hostname.includes('preview')
     });
     
-    if (isAuthenticated && user?.id) {
-      console.log("SettingsProvider: Fetching settings for authenticated user");
+    // Only try to fetch settings if user is authenticated and is an admin
+    if (isAuthenticated && user?.id && isAdmin) {
+      console.log("SettingsProvider: Fetching settings for authenticated admin user");
       refreshSettings();
+    } else if (isAuthenticated && user?.id && !isAdmin) {
+      console.log("SettingsProvider: User is authenticated but not admin - using default settings");
     } else {
       console.log("SettingsProvider: User not authenticated or no user ID");
     }
-  }, [isAuthenticated, user?.id, refreshSettings]);
+  }, [isAuthenticated, user?.id, isAdmin, refreshSettings]);
 
   const contextValue: SettingsContextType = {
     settings,

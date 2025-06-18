@@ -8,7 +8,7 @@ export const useContactsOperations = () => {
   const { addContact: addContactBase, updateContact: updateContactBase, deleteContact: deleteContactBase } = useContactCRUD();
   const { sendContactEmail, bulkUpdateContacts: bulkUpdateContactsBase, importContactsFromCsv: importContactsFromCsvBase } = useContactUtils();
 
-  // Wrap CRUD operations to pass current showAll state
+  // Wrap CRUD operations to update local state
   const addContact = async (contactData: Parameters<typeof addContactBase>[0]) => {
     console.log("Adding contact:", contactData);
     const result = await addContactBase(contactData);
@@ -40,7 +40,8 @@ export const useContactsOperations = () => {
   };
 
   const refreshContacts = async (showAll: boolean = false) => {
-    await fetchContacts(showAll);
+    // With RLS policies, showAll parameter is no longer needed
+    await fetchContacts(false);
   };
 
   const bulkUpdateContacts = (contactIds: string[], updateData: Parameters<typeof bulkUpdateContactsBase>[1]) =>
