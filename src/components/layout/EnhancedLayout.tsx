@@ -6,7 +6,7 @@ import { Header } from "./Header";
 import { PageTransition } from "@/utils/enhanced-transitions";
 import { cn } from "@/lib/utils";
 
-export default function SimpleLayout() {
+export default function EnhancedLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -19,7 +19,7 @@ export default function SimpleLayout() {
             "transition-all duration-300 ease-in-out"
           )}>
             <PageTransition>
-              <div className="max-w-7xl mx-auto space-y-6">
+              <div className="max-w-7xl mx-auto">
                 <Outlet />
               </div>
             </PageTransition>

@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -97,6 +96,48 @@ export default {
 				'slide-in-bottom': {
 					from: { transform: 'translateY(20px)', opacity: '0' },
 					to: { transform: 'translateY(0)', opacity: '1' }
+				},
+				'fadeInUp': {
+					'0%': { opacity: '0', transform: 'translateY(30px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fadeInDown': {
+					'0%': { opacity: '0', transform: 'translateY(-30px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fadeInLeft': {
+					'0%': { opacity: '0', transform: 'translateX(-30px)' },
+					'100%': { opacity: '1', transform: 'translateX(0)' }
+				},
+				'fadeInRight': {
+					'0%': { opacity: '0', transform: 'translateX(30px)' },
+					'100%': { opacity: '1', transform: 'translateX(0)' }
+				},
+				'scaleIn': {
+					'0%': { opacity: '0', transform: 'scale(0.9)' },
+					'100%': { opacity: '1', transform: 'scale(1)' }
+				},
+				'bounceIn': {
+					'0%': { opacity: '0', transform: 'scale(0.3)' },
+					'50%': { opacity: '1', transform: 'scale(1.05)' },
+					'70%': { transform: 'scale(0.9)' },
+					'100%': { opacity: '1', transform: 'scale(1)' }
+				},
+				'wiggle': {
+					'0%, 100%': { transform: 'rotate(-3deg)' },
+					'50%': { transform: 'rotate(3deg)' }
+				},
+				'shimmer': {
+					'0%': { backgroundPosition: '-200px 0' },
+					'100%': { backgroundPosition: 'calc(200px + 100%) 0' }
+				},
+				'wave': {
+					'0%, 60%, 100%': { transform: 'initial' },
+					'30%': { transform: 'translateY(-15px)' }
+				},
+				'slideInBottom': {
+					'0%': { transform: 'translateY(100%)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
 				}
 			},
 			animation: {
@@ -106,7 +147,20 @@ export default {
 				'fade-out': 'fade-out 0.3s ease-out',
 				'slide-in-right': 'slide-in-right 0.3s ease-out',
 				'slide-out-right': 'slide-out-right 0.3s ease-out',
-				'slide-in-bottom': 'slide-in-bottom 0.4s ease-out'
+				'slide-in-bottom': 'slide-in-bottom 0.4s ease-out',
+				'fadeInUp': 'fadeInUp 0.6s ease-out forwards',
+				'fadeInDown': 'fadeInDown 0.6s ease-out forwards',
+				'fadeInLeft': 'fadeInLeft 0.6s ease-out forwards',
+				'fadeInRight': 'fadeInRight 0.6s ease-out forwards',
+				'scaleIn': 'scaleIn 0.4s ease-out forwards',
+				'bounceIn': 'bounceIn 0.6s ease-out forwards',
+				'wiggle': 'wiggle 1s ease-in-out infinite',
+				'shimmer': 'shimmer 2s ease-in-out infinite',
+				'wave': 'wave 1.6s ease-in-out infinite',
+				'slideInBottom': 'slideInBottom 0.5s ease-out forwards'
+			},
+			backgroundImage: {
+				'shimmer-gradient': 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)'
 			}
 		}
 	},
