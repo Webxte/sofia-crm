@@ -8,7 +8,7 @@ import { MeetingsProvider } from './context/meetings';
 import { TasksProvider } from './context/tasks';
 import { ProductsProvider } from './context/products/ProductsContext';
 import { OrdersProvider } from './context/orders/OrdersContext';
-import { SafeSettingsProvider } from './context/settings/SafeSettingsProvider';
+import { SettingsProvider } from './context/settings';
 import { AuthWrapper } from './components/auth/AuthWrapper';
 import { InitialRedirect } from './components/auth/InitialRedirect';
 import SimpleLayout from './components/layout/SimpleLayout';
@@ -51,7 +51,7 @@ const AppProviders = ({ children }: { children: ReactNode }) => (
   <ErrorBoundary>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <ErrorBoundary>
-        <SafeSettingsProvider>
+        <SettingsProvider>
           <ErrorBoundary>
             <ContactsProvider>
               <MeetingsProvider>
@@ -66,7 +66,7 @@ const AppProviders = ({ children }: { children: ReactNode }) => (
               </MeetingsProvider>
             </ContactsProvider>
           </ErrorBoundary>
-        </SafeSettingsProvider>
+        </SettingsProvider>
       </ErrorBoundary>
     </ThemeProvider>
   </ErrorBoundary>
