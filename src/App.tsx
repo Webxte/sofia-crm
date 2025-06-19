@@ -1,6 +1,7 @@
 
 import React, { Suspense, ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from "next-themes";
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { ContactsProvider } from './context/contacts/ContactsContext';
 import { MeetingsProvider } from './context/meetings';
@@ -12,6 +13,7 @@ import { AuthWrapper } from './components/auth/AuthWrapper';
 import { InitialRedirect } from './components/auth/InitialRedirect';
 import SimpleLayout from './components/layout/SimpleLayout';
 import { LoadingSpinner } from './components/ui/loading-spinner';
+import { Toaster } from './components/ui/sonner';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import NotFound from './pages/NotFound';
@@ -46,211 +48,200 @@ const LoadingFallback = () => (
 
 // Separate component to ensure proper context nesting
 const AppProviders = ({ children }: { children: ReactNode }) => (
-  <SettingsProvider>
-    <ContactsProvider>
-      <MeetingsProvider>
-        <TasksProvider>
-          <ProductsProvider>
-            <OrdersProvider>
-              {children}
-            </OrdersProvider>
-          </ProductsProvider>
-        </TasksProvider>
-      </MeetingsProvider>
-    </ContactsProvider>
-  </SettingsProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <SettingsProvider>
+      <ContactsProvider>
+        <MeetingsProvider>
+          <TasksProvider>
+            <ProductsProvider>
+              <OrdersProvider>
+                {children}
+                <Toaster />
+              </OrdersProvider>
+            </ProductsProvider>
+          </TasksProvider>
+        </MeetingsProvider>
+      </ContactsProvider>
+    </SettingsProvider>
+  </ThemeProvider>
 );
 
 export default function App() {
   return (
     <ErrorBoundary>
-      <Routes>
-        {/* Auth routes - these don't require AuthProvider */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Signup />} />
-        
-        {/* Root route that redirects to dashboard */}
-        <Route path="/" element={
-          <AuthWrapper>
-            <InitialRedirect />
-          </AuthWrapper>
-        } />
-        
-        {/* Protected routes - wrapped in AuthWrapper and layout */}
-        <Route path="/dashboard" element={
-          <AuthWrapper>
-            <AppProviders>
-              <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Dashboard />
-            </Suspense>
+      <AppProviders>
+        <Routes>
+          {/* Auth routes - these don't require AuthWrapper */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Signup />} />
+          
+          {/* Root route that redirects to dashboard */}
+          <Route path="/" element={
+            <AuthWrapper>
+              <InitialRedirect />
+            </AuthWrapper>
           } />
-        </Route>
+          
+          {/* Protected routes - wrapped in AuthWrapper and layout */}
+          <Route path="/dashboard" element={
+            <AuthWrapper>
+              <SimpleLayout />
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Dashboard />
+              </Suspense>
+            } />
+          </Route>
 
-        <Route path="/contacts" element={
-          <AuthWrapper>
-            <AppProviders>
+          <Route path="/contacts" element={
+            <AuthWrapper>
               <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Contacts />
-            </Suspense>
-          } />
-          <Route path=":id" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <ContactDetails />
-            </Suspense>
-          } />
-          <Route path=":id/edit" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <EditContact />
-            </Suspense>
-          } />
-          <Route path="new" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <NewContact />
-            </Suspense>
-          } />
-        </Route>
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Contacts />
+              </Suspense>
+            } />
+            <Route path=":id" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <ContactDetails />
+              </Suspense>
+            } />
+            <Route path=":id/edit" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <EditContact />
+              </Suspense>
+            } />
+            <Route path="new" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <NewContact />
+              </Suspense>
+            } />
+          </Route>
 
-        <Route path="/meetings" element={
-          <AuthWrapper>
-            <AppProviders>
+          <Route path="/meetings" element={
+            <AuthWrapper>
               <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Meetings />
-            </Suspense>
-          } />
-          <Route path=":id" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <MeetingDetails />
-            </Suspense>
-          } />
-          <Route path=":id/edit" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <EditMeeting />
-            </Suspense>
-          } />
-          <Route path="new" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <NewMeeting />
-            </Suspense>
-          } />
-        </Route>
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Meetings />
+              </Suspense>
+            } />
+            <Route path=":id" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <MeetingDetails />
+              </Suspense>
+            } />
+            <Route path=":id/edit" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <EditMeeting />
+              </Suspense>
+            } />
+            <Route path="new" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <NewMeeting />
+              </Suspense>
+            } />
+          </Route>
 
-        <Route path="/calendar" element={
-          <AuthWrapper>
-            <AppProviders>
+          <Route path="/calendar" element={
+            <AuthWrapper>
               <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Calendar />
-            </Suspense>
-          } />
-        </Route>
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Calendar />
+              </Suspense>
+            } />
+          </Route>
 
-        <Route path="/tasks" element={
-          <AuthWrapper>
-            <AppProviders>
+          <Route path="/tasks" element={
+            <AuthWrapper>
               <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Tasks />
-            </Suspense>
-          } />
-          <Route path=":id" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <TaskDetails />
-            </Suspense>
-          } />
-          <Route path=":id/edit" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <EditTask />
-            </Suspense>
-          } />
-          <Route path="new" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <NewTask />
-            </Suspense>
-          } />
-        </Route>
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Tasks />
+              </Suspense>
+            } />
+            <Route path=":id" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <TaskDetails />
+              </Suspense>
+            } />
+            <Route path=":id/edit" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <EditTask />
+              </Suspense>
+            } />
+            <Route path="new" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <NewTask />
+              </Suspense>
+            } />
+          </Route>
 
-        <Route path="/orders" element={
-          <AuthWrapper>
-            <AppProviders>
+          <Route path="/orders" element={
+            <AuthWrapper>
               <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Orders />
-            </Suspense>
-          } />
-          <Route path=":id" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <OrderDetails />
-            </Suspense>
-          } />
-          <Route path=":id/edit" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <EditOrder />
-            </Suspense>
-          } />
-          <Route path="new" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <NewOrder />
-            </Suspense>
-          } />
-        </Route>
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Orders />
+              </Suspense>
+            } />
+            <Route path=":id" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <OrderDetails />
+              </Suspense>
+            } />
+            <Route path=":id/edit" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <EditOrder />
+              </Suspense>
+            } />
+            <Route path="new" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <NewOrder />
+              </Suspense>
+            } />
+          </Route>
 
-        <Route path="/reports" element={
-          <AuthWrapper>
-            <AppProviders>
+          <Route path="/reports" element={
+            <AuthWrapper>
               <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Reports />
-            </Suspense>
-          } />
-        </Route>
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Reports />
+              </Suspense>
+            } />
+          </Route>
 
-        <Route path="/settings" element={
-          <AuthWrapper>
-            <AppProviders>
+          <Route path="/settings" element={
+            <AuthWrapper>
               <SimpleLayout />
-            </AppProviders>
-          </AuthWrapper>
-        }>
-          <Route index element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Settings />
-            </Suspense>
-          } />
-        </Route>
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+            </AuthWrapper>
+          }>
+            <Route index element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Settings />
+              </Suspense>
+            } />
+          </Route>
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppProviders>
     </ErrorBoundary>
   );
 }
