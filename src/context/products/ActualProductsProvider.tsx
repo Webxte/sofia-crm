@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useEffect, ReactNode, useState } from "react";
 import { ProductsContextType } from "./types";
+import { useProductsOperations } from "./useProductsOperations";
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
@@ -14,9 +15,7 @@ const ProductsProviderWithHooks = ({
   children, 
   isAuthenticated 
 }: ActualProductsProviderProps) => {
-  // Only import and use hooks when this component is actually rendered
-  const { useProductsOperations } = require("./useProductsOperations");
-  
+  // Use the hook directly since we're in an ES6 module environment
   const operations = useProductsOperations();
 
   // Fetch products when the component mounts or when auth state changes

@@ -1,62 +1,39 @@
 
 import React, { createContext, useContext, useEffect, ReactNode, useState } from "react";
 import { SettingsContextType } from "./types";
-import { User } from "@supabase/supabase-js";
+import { useFetchSettings } from "./useFetchSettings";
+import { useUpdateSettings } from "./useUpdateSettings";
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 interface ActualSettingsProviderProps {
   children: ReactNode;
   isAuthenticated: boolean;
-  user: User | null;
-  isAdmin: boolean;
 }
 
 // Component that actually uses the hooks - only rendered when React is ready
 const SettingsProviderWithHooks = ({ 
   children, 
-  isAuthenticated, 
-  user, 
-  isAdmin 
+  isAuthenticated 
 }: ActualSettingsProviderProps) => {
-  // Only import and use hooks when this component is actually rendered
-  const { useFetchSettings } = require("./useFetchSettings");
-  const { useUpdateSettings } = require("./useUpdateSettings");
-  
-  const { settings, setSettings, loading, refreshSettings } = useFetchSettings(isAuthenticated);
-  const { updateSettings } = useUpdateSettings(isAuthenticated, isAdmin, refreshSettings, setSettings);
+  // Use the hooks directly since we're in an ES6 module environment
+  const fetchOperations = useFetchSettings();
+  const updateOperations = useUpdateSettings();
 
-  useEffect(() => {
-    console.log("ActualSettingsProvider: Authentication state changed", { 
-      isAuthenticated, 
-      userId: user?.id,
-      hasUser: !!user,
-      isAdmin,
-      preview: window.location.hostname.includes('preview'),
-      published: !window.location.hostname.includes('preview')
-    });
-    
-    // Only try to fetch settings if user is authenticated and is an admin
-    if (isAuthenticated && user?.id && isAdmin) {
-      console.log("ActualSettingsProvider: Fetching settings for authenticated admin user");
-      refreshSettings();
-    } else if (isAuthenticated && user?.id && !isAdmin) {
-      console.log("ActualSettingsProvider: User is authenticated but not admin - using default settings");
-    } else {
-      console.log("ActualSettingsProvider: User not authenticated or no user ID");
-    }
-  }, [isAuthenticated, user?.id, isAdmin, refreshSettings]);
-
-  const contextValue: SettingsContextType = {
-    settings,
-    loading,
-    updateSettings,
-    refreshSettings,
-    fetchSettings: refreshSettings,
+  const operations = {
+    ...fetchOperations,
+    ...updateOperations
   };
 
+  // Fetch settings when the component mounts or when auth state changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      operations.refreshSettings();
+    }
+  }, [isAuthenticated]);
+
   return (
-    <SettingsContext.Provider value={contextValue}>
+    <SettingsContext.Provider value={operations}>
       {children}
     </SettingsContext.Provider>
   );
@@ -77,11 +54,37 @@ export const ActualSettingsProvider = (props: ActualSettingsProviderProps) => {
   // Provide a fallback context while React initializes
   if (!isReactReady) {
     const fallbackContextValue: SettingsContextType = {
-      settings: null,
-      loading: true,
+      settings: {
+        companyName: '',
+        companyAddress: '',
+        companyPhone: '',
+        companyEmail: '',
+        companyWebsite: '',
+        emailTemplates: {
+          contactEmail: { subject: '', body: '' },
+          meetingEmail: { subject: '', body: '' },
+          orderEmail: { subject: '', body: '' }
+        },
+        customLinks: [],
+        termsAndConditions: '',
+        contactImportSettings: {
+          csvMappings: {},
+          defaultValues: {}
+        },
+        productImportSettings: {
+          csvMappings: {},
+          defaultValues: {}
+        }
+      },
+      loading: false,
       updateSettings: async () => {},
-      refreshSettings: () => {},
-      fetchSettings: async () => {},
+      refreshSettings: async () => {},
+      updateEmailTemplate: async () => {},
+      addCustomLink: async () => {},
+      updateCustomLink: async () => {},
+      removeCustomLink: async () => {},
+      updateContactImportSettings: async () => {},
+      updateProductImportSettings: async () => {}
     };
 
     return (
@@ -94,7 +97,7 @@ export const ActualSettingsProvider = (props: ActualSettingsProviderProps) => {
   return <SettingsProviderWithHooks {...props} />;
 };
 
-export const useSettings = () => {
+export const useSettings = (): SettingsContextType => {
   const context = useContext(SettingsContext);
   if (context === undefined) {
     throw new Error("useSettings must be used within a SettingsProvider");
