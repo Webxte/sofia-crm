@@ -38,13 +38,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    logger.debug("Setting up auth state listener");
+    let mounted = true;
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        logger.debug("Auth state changed:", event);
+    const initializeAuth = async () => {
+      try {
+        logger.debug("Setting up auth state listener");
+        
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, currentSession) => {
+            if (!mounted) return;
+            
+            logger.debug("Auth state changed:", event);
+            const extendedUser = getUserWithName(currentSession?.user ?? null);
+            logger.debug("User with auth change:", extendedUser ? {
+              id: extendedUser.id, 
+              name: extendedUser.name,
+            } : null);
+            
+            setSession(currentSession);
+            setUser(extendedUser);
+            setIsLoading(false);
+          }
+        );
+
+        // Get initial session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        
+        logger.debug("Initial session check:", currentSession ? "Logged in" : "Not logged in");
         const extendedUser = getUserWithName(currentSession?.user ?? null);
-        logger.debug("User with auth change:", extendedUser ? {
+        logger.debug("User from initial session:", extendedUser ? {
           id: extendedUser.id, 
           name: extendedUser.name,
         } : null);
@@ -52,24 +76,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(currentSession);
         setUser(extendedUser);
         setIsLoading(false);
+
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        logger.error("Auth initialization error:", error);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-    );
+    };
 
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      logger.debug("Initial session check:", currentSession ? "Logged in" : "Not logged in");
-      const extendedUser = getUserWithName(currentSession?.user ?? null);
-      logger.debug("User from initial session:", extendedUser ? {
-        id: extendedUser.id, 
-        name: extendedUser.name,
-      } : null);
-      
-      setSession(currentSession);
-      setUser(extendedUser);
-      setIsLoading(false);
-    });
-
+    const cleanup = initializeAuth();
+    
     return () => {
-      subscription.unsubscribe();
+      mounted = false;
+      cleanup?.then(cleanupFn => cleanupFn?.());
     };
   }, [getUserWithName]);
 
