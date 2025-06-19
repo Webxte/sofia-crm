@@ -5,19 +5,16 @@ import { Toaster as Sonner } from "sonner";
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  // Add a safety check to prevent rendering before theme context is ready
-  const [isReady, setIsReady] = React.useState(false);
-
-  React.useEffect(() => {
-    // Small delay to ensure theme context is initialized
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!isReady) {
+  // Check if we're in a proper React context without using hooks
+  try {
+    // Simple check to see if React is properly initialized
+    if (typeof window !== 'undefined' && window.React === undefined) {
+      // If we're in browser but React isn't available, don't render
+      return null;
+    }
+  } catch (error) {
+    // If any error occurs during the check, don't render
+    console.warn("Toaster: React context not ready, skipping render");
     return null;
   }
 
