@@ -19,7 +19,7 @@ const SettingsProviderWithHooks = ({
   user, 
   isAdmin 
 }: ActualSettingsProviderProps) => {
-  // Dynamically import the hooks to ensure React is ready
+  // Only import and use hooks when this component is actually rendered
   const { useFetchSettings } = require("./useFetchSettings");
   const { useUpdateSettings } = require("./useUpdateSettings");
   
@@ -66,25 +66,15 @@ export const ActualSettingsProvider = (props: ActualSettingsProviderProps) => {
   const [isReactReady, setIsReactReady] = useState(false);
 
   useEffect(() => {
-    // Additional safety check to ensure React is fully initialized
-    const checkReactReady = () => {
-      try {
-        // Test if React hooks are available and working
-        const testState = React.useState(true);
-        if (testState && typeof testState[0] === 'boolean' && typeof testState[1] === 'function') {
-          setIsReactReady(true);
-        }
-      } catch (error) {
-        console.warn("React not ready yet, retrying...", error);
-        // Retry after a short delay
-        setTimeout(checkReactReady, 10);
-      }
-    };
+    // Ensure React is fully initialized before rendering hook-dependent components
+    const timer = setTimeout(() => {
+      setIsReactReady(true);
+    }, 0);
 
-    checkReactReady();
+    return () => clearTimeout(timer);
   }, []);
 
-  // Fallback provider that doesn't use problematic hooks
+  // Provide a fallback context while React initializes
   if (!isReactReady) {
     const fallbackContextValue: SettingsContextType = {
       settings: null,

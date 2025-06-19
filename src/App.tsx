@@ -1,4 +1,3 @@
-
 import React, { Suspense, ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from "next-themes";
@@ -52,20 +51,18 @@ const AppProviders = ({ children }: { children: ReactNode }) => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <ErrorBoundary>
         <SettingsProvider>
-          <ErrorBoundary>
-            <ContactsProvider>
-              <MeetingsProvider>
-                <TasksProvider>
-                  <ProductsProvider>
-                    <OrdersProvider>
-                      {children}
-                      <Toaster />
-                    </OrdersProvider>
-                  </ProductsProvider>
-                </TasksProvider>
-              </MeetingsProvider>
-            </ContactsProvider>
-          </ErrorBoundary>
+          <ContactsProvider>
+            <MeetingsProvider>
+              <TasksProvider>
+                <ProductsProvider>
+                  <OrdersProvider>
+                    {children}
+                    <Toaster />
+                  </OrdersProvider>
+                </ProductsProvider>
+              </TasksProvider>
+            </MeetingsProvider>
+          </ContactsProvider>
         </SettingsProvider>
       </ErrorBoundary>
     </ThemeProvider>

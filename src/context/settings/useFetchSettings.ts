@@ -5,27 +5,7 @@ import { SettingsData } from "./types";
 import { transformDbToSettings } from "./utils";
 
 export const useFetchSettings = (isAuthenticated: boolean) => {
-  const [settings, setSettings] = useState<SettingsData>(() => ({
-    id: "",
-    companyName: "",
-    companyEmail: "",
-    companyPhone: "",
-    companyAddress: "",
-    defaultEmailSubject: "",
-    defaultEmailMessage: "",
-    defaultContactEmailMessage: "",
-    defaultTermsAndConditions: "",
-    customLinks: [],
-    catalogUrl: "",
-    priceListUrl: "",
-    emailFooter: "",
-    emailSenderName: "",
-    termsEnabled: false,
-    defaultVatRate: 0,
-    bulkEmailTemplate: "",
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }));
+  const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(false);
 
   const refreshSettings = useCallback(async () => {
