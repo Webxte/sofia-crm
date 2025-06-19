@@ -1,3 +1,4 @@
+
 import React, { Suspense, ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from "next-themes";
@@ -57,7 +58,6 @@ const AppProviders = ({ children }: { children: ReactNode }) => (
                 <ProductsProvider>
                   <OrdersProvider>
                     {children}
-                    <Toaster />
                   </OrdersProvider>
                 </ProductsProvider>
               </TasksProvider>
@@ -65,6 +65,8 @@ const AppProviders = ({ children }: { children: ReactNode }) => (
           </ContactsProvider>
         </SettingsProvider>
       </ErrorBoundary>
+      {/* Move Toaster outside the nested providers but inside ThemeProvider */}
+      <Toaster />
     </ThemeProvider>
   </ErrorBoundary>
 );

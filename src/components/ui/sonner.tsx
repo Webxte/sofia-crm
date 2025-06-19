@@ -1,26 +1,24 @@
 
 import React from "react";
 import { Toaster as Sonner } from "sonner";
+import { useTheme } from "next-themes";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  // Check if we're in a proper React context without using hooks
+  // Use a safe theme hook that handles the context not being ready
+  let theme = "light";
   try {
-    // Simple check to see if React is properly initialized
-    if (typeof window !== 'undefined' && window.React === undefined) {
-      // If we're in browser but React isn't available, don't render
-      return null;
-    }
+    const themeContext = useTheme();
+    theme = themeContext.theme || "light";
   } catch (error) {
-    // If any error occurs during the check, don't render
-    console.warn("Toaster: React context not ready, skipping render");
-    return null;
+    // If theme context is not ready, use default light theme
+    console.warn("Toaster: Theme context not ready, using default theme");
   }
 
   return (
     <Sonner
-      theme="light"
+      theme={theme as "light" | "dark"}
       className="toaster group"
       toastOptions={{
         classNames: {
