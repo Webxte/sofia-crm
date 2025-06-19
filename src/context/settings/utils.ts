@@ -1,4 +1,3 @@
-
 import { CustomLink } from "@/types";
 import { DEFAULT_SETTINGS } from "./constants";
 
