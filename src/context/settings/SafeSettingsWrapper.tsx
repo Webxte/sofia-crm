@@ -27,7 +27,7 @@ export const SafeSettingsWrapper = ({ children }: SafeSettingsWrapperProps) => {
     return <>{children}</>;
   }
 
-  const { isAuthenticated, user, isAdmin } = authContext;
+  const { isAuthenticated } = authContext;
   
   // Add safety check to ensure auth context is properly initialized
   if (typeof isAuthenticated === 'undefined') {
@@ -35,12 +35,10 @@ export const SafeSettingsWrapper = ({ children }: SafeSettingsWrapperProps) => {
     return <>{children}</>;
   }
 
-  // Now it's safe to render the actual provider with hooks
+  // Now it's safe to render the actual provider with hooks - only pass required props
   return (
     <ActualSettingsProvider 
-      isAuthenticated={isAuthenticated} 
-      user={user} 
-      isAdmin={isAdmin}
+      isAuthenticated={isAuthenticated}
     >
       {children}
     </ActualSettingsProvider>

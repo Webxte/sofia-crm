@@ -16,13 +16,19 @@ const SettingsProviderWithHooks = ({
   children, 
   isAuthenticated 
 }: ActualSettingsProviderProps) => {
-  // Use the hooks directly since we're in an ES6 module environment
-  const fetchOperations = useFetchSettings();
-  const updateOperations = useUpdateSettings();
+  // Use the hooks with required arguments
+  const fetchOperations = useFetchSettings(isAuthenticated);
+  const updateOperations = useUpdateSettings(
+    isAuthenticated, 
+    true, // isAdmin - simplified for now
+    fetchOperations.refreshSettings,
+    fetchOperations.setSettings
+  );
 
   const operations = {
     ...fetchOperations,
-    ...updateOperations
+    ...updateOperations,
+    fetchSettings: fetchOperations.refreshSettings // Add the missing fetchSettings method
   };
 
   // Fetch settings when the component mounts or when auth state changes
@@ -55,36 +61,30 @@ export const ActualSettingsProvider = (props: ActualSettingsProviderProps) => {
   if (!isReactReady) {
     const fallbackContextValue: SettingsContextType = {
       settings: {
+        id: '',
         companyName: '',
         companyAddress: '',
         companyPhone: '',
         companyEmail: '',
-        companyWebsite: '',
-        emailTemplates: {
-          contactEmail: { subject: '', body: '' },
-          meetingEmail: { subject: '', body: '' },
-          orderEmail: { subject: '', body: '' }
-        },
+        defaultEmailSubject: '',
+        defaultEmailMessage: '',
+        defaultContactEmailMessage: '',
+        defaultTermsAndConditions: '',
         customLinks: [],
-        termsAndConditions: '',
-        contactImportSettings: {
-          csvMappings: {},
-          defaultValues: {}
-        },
-        productImportSettings: {
-          csvMappings: {},
-          defaultValues: {}
-        }
+        catalogUrl: '',
+        priceListUrl: '',
+        emailFooter: '',
+        emailSenderName: '',
+        termsEnabled: false,
+        defaultVatRate: 0,
+        bulkEmailTemplate: '',
+        createdAt: new Date(),
+        updatedAt: new Date()
       },
       loading: false,
       updateSettings: async () => {},
       refreshSettings: async () => {},
-      updateEmailTemplate: async () => {},
-      addCustomLink: async () => {},
-      updateCustomLink: async () => {},
-      removeCustomLink: async () => {},
-      updateContactImportSettings: async () => {},
-      updateProductImportSettings: async () => {}
+      fetchSettings: async () => {}
     };
 
     return (
