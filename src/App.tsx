@@ -8,7 +8,7 @@ import { MeetingsProvider } from './context/meetings';
 import { TasksProvider } from './context/tasks';
 import { ProductsProvider } from './context/products/ProductsContext';
 import { OrdersProvider } from './context/orders/OrdersContext';
-import { SettingsProvider } from './context/settings';
+import { SafeSettingsProvider } from './context/settings/SafeSettingsProvider';
 import { AuthWrapper } from './components/auth/AuthWrapper';
 import { InitialRedirect } from './components/auth/InitialRedirect';
 import SimpleLayout from './components/layout/SimpleLayout';
@@ -46,24 +46,30 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Separate component to ensure proper context nesting
+// Separate component to ensure proper context nesting with error boundaries
 const AppProviders = ({ children }: { children: ReactNode }) => (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-    <SettingsProvider>
-      <ContactsProvider>
-        <MeetingsProvider>
-          <TasksProvider>
-            <ProductsProvider>
-              <OrdersProvider>
-                {children}
-                <Toaster />
-              </OrdersProvider>
-            </ProductsProvider>
-          </TasksProvider>
-        </MeetingsProvider>
-      </ContactsProvider>
-    </SettingsProvider>
-  </ThemeProvider>
+  <ErrorBoundary>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <ErrorBoundary>
+        <SafeSettingsProvider>
+          <ErrorBoundary>
+            <ContactsProvider>
+              <MeetingsProvider>
+                <TasksProvider>
+                  <ProductsProvider>
+                    <OrdersProvider>
+                      {children}
+                      <Toaster />
+                    </OrdersProvider>
+                  </ProductsProvider>
+                </TasksProvider>
+              </MeetingsProvider>
+            </ContactsProvider>
+          </ErrorBoundary>
+        </SafeSettingsProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
+  </ErrorBoundary>
 );
 
 export default function App() {

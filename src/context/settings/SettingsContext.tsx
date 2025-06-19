@@ -8,7 +8,20 @@ import { useAuth } from "../AuthContext";
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, user, isAdmin } = useAuth();
+  // Add safety check to prevent rendering before React is initialized
+  if (typeof window === 'undefined') {
+    return <>{children}</>;
+  }
+
+  const authContext = useAuth();
+  
+  // Early return if auth context is not available yet
+  if (!authContext) {
+    console.warn("SettingsProvider: Auth context not available yet");
+    return <>{children}</>;
+  }
+
+  const { isAuthenticated, user, isAdmin } = authContext;
   
   // Add safety check to ensure auth context is properly initialized
   if (typeof isAuthenticated === 'undefined') {
