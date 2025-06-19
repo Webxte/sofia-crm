@@ -1,8 +1,6 @@
 
-import { createContext, useContext, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, ReactNode, useState } from "react";
 import { SettingsContextType } from "./types";
-import { useFetchSettings } from "./useFetchSettings";
-import { useUpdateSettings } from "./useUpdateSettings";
 import { User } from "@supabase/supabase-js";
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -14,13 +12,17 @@ interface ActualSettingsProviderProps {
   isAdmin: boolean;
 }
 
-export const ActualSettingsProvider = ({ 
+// Component that actually uses the hooks - only rendered when React is ready
+const SettingsProviderWithHooks = ({ 
   children, 
   isAuthenticated, 
   user, 
   isAdmin 
 }: ActualSettingsProviderProps) => {
-  // Now we can safely call hooks unconditionally
+  // Dynamically import the hooks to ensure React is ready
+  const { useFetchSettings } = require("./useFetchSettings");
+  const { useUpdateSettings } = require("./useUpdateSettings");
+  
   const { settings, setSettings, loading, refreshSettings } = useFetchSettings(isAuthenticated);
   const { updateSettings } = useUpdateSettings(isAuthenticated, isAdmin, refreshSettings, setSettings);
 
@@ -58,6 +60,48 @@ export const ActualSettingsProvider = ({
       {children}
     </SettingsContext.Provider>
   );
+};
+
+export const ActualSettingsProvider = (props: ActualSettingsProviderProps) => {
+  const [isReactReady, setIsReactReady] = useState(false);
+
+  useEffect(() => {
+    // Additional safety check to ensure React is fully initialized
+    const checkReactReady = () => {
+      try {
+        // Test if React hooks are available and working
+        const testState = React.useState(true);
+        if (testState && typeof testState[0] === 'boolean' && typeof testState[1] === 'function') {
+          setIsReactReady(true);
+        }
+      } catch (error) {
+        console.warn("React not ready yet, retrying...", error);
+        // Retry after a short delay
+        setTimeout(checkReactReady, 10);
+      }
+    };
+
+    checkReactReady();
+  }, []);
+
+  // Fallback provider that doesn't use problematic hooks
+  if (!isReactReady) {
+    const fallbackContextValue: SettingsContextType = {
+      settings: null,
+      loading: true,
+      updateSettings: async () => {},
+      refreshSettings: () => {},
+      fetchSettings: async () => {},
+    };
+
+    return (
+      <SettingsContext.Provider value={fallbackContextValue}>
+        {props.children}
+      </SettingsContext.Provider>
+    );
+  }
+
+  return <SettingsProviderWithHooks {...props} />;
 };
 
 export const useSettings = () => {
