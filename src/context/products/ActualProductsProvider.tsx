@@ -60,7 +60,6 @@ export const ActualProductsProvider = (props: ActualProductsProviderProps) => {
       importProductsFromCsv: async () => {},
       importProductsFromFile: async () => {},
       importProducts: async () => {},
-      fetchProducts: async () => {},
     };
 
     return (
