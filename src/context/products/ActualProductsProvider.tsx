@@ -23,7 +23,7 @@ const ProductsProviderWithHooks = ({
     if (isAuthenticated) {
       operations.refreshProducts();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, operations]);
 
   return (
     <ProductsContext.Provider value={operations}>
@@ -39,7 +39,7 @@ export const ActualProductsProvider = (props: ActualProductsProviderProps) => {
     // Ensure React is fully initialized before rendering hook-dependent components
     const timer = setTimeout(() => {
       setIsReactReady(true);
-    }, 0);
+    }, 100); // Increased timeout to ensure React is ready
 
     return () => clearTimeout(timer);
   }, []);
