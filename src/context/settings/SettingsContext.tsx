@@ -13,7 +13,13 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     return <>{children}</>;
   }
 
-  const authContext = useAuth();
+  let authContext;
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    console.warn("SettingsProvider: Error getting auth context:", error);
+    return <>{children}</>;
+  }
   
   // Early return if auth context is not available yet
   if (!authContext) {
@@ -29,6 +35,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     return <>{children}</>;
   }
   
+  // Only call other hooks after we've verified auth context is available
   const { settings, setSettings, loading, refreshSettings } = useFetchSettings(isAuthenticated);
   const { updateSettings } = useUpdateSettings(isAuthenticated, isAdmin, refreshSettings, setSettings);
 
