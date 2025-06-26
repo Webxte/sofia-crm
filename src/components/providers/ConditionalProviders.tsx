@@ -2,6 +2,10 @@
 import React, { ReactNode } from 'react';
 import { DirectProductsProvider } from '../../context/products/DirectProductsProvider';
 import { DirectSettingsProvider } from '../../context/settings/DirectSettingsProvider';
+import { ContactsProvider } from '../../context/contacts/ContactsContext';
+import { MeetingsProvider } from '../../context/meetings';
+import { TasksProvider } from '../../context/tasks';
+import { OrdersProvider } from '../../context/orders/OrdersContext';
 import { useAuth } from '../../context/AuthContext';
 import { LoadingSpinner } from '../ui/loading-spinner';
 
@@ -28,7 +32,15 @@ export const ConditionalProviders = ({ children }: ConditionalProvidersProps) =>
   return (
     <DirectSettingsProvider>
       <DirectProductsProvider>
-        {children}
+        <ContactsProvider>
+          <MeetingsProvider>
+            <TasksProvider>
+              <OrdersProvider>
+                {children}
+              </OrdersProvider>
+            </TasksProvider>
+          </MeetingsProvider>
+        </ContactsProvider>
       </DirectProductsProvider>
     </DirectSettingsProvider>
   );
