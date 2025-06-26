@@ -1,7 +1,9 @@
+
 import React, { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
+import { parseProductCSV } from "./productsUtils";
 
 export const useProductsOperations = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -202,10 +204,23 @@ export const useProductsOperations = () => {
   }, [products]);
 
   const importProductsFromFile = useCallback(async (file: File) => {
-    console.log("Import products from file:", file.name);
-    toast.info("Info", {
-      description: "Product import functionality not implemented yet",
-    });
+    try {
+      setLoading(true);
+      console.log("Starting file import for:", file.name);
+      
+      const text = await file.text();
+      await importProducts(text);
+      
+      console.log("File import completed successfully");
+    } catch (error) {
+      console.error("Error importing file:", error);
+      toast.error("Error", {
+        description: "Failed to import products from file",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const importProductsFromCsv = useCallback(async (file: File) => {
@@ -213,11 +228,70 @@ export const useProductsOperations = () => {
   }, [importProductsFromFile]);
 
   const importProducts = useCallback(async (csvData: string) => {
-    console.log("Import products from CSV data:", csvData);
-    toast.info("Info", {
-      description: "CSV import functionality not implemented yet",
-    });
-  }, []);
+    try {
+      setLoading(true);
+      console.log("Starting CSV import with data length:", csvData.length);
+      
+      // Parse the CSV data
+      const parsedProducts = parseProductCSV(csvData);
+      console.log("Parsed products count:", parsedProducts.length);
+      
+      if (parsedProducts.length === 0) {
+        toast.error("Error", {
+          description: "No valid products found in CSV data",
+        });
+        return;
+      }
+
+      // First, delete all existing products
+      const { error: deleteError } = await supabase
+        .from("products")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all products
+      
+      if (deleteError) {
+        console.error("Error deleting existing products:", deleteError);
+        throw deleteError;
+      }
+
+      // Insert new products in batches
+      const batchSize = 100;
+      let insertedCount = 0;
+      
+      for (let i = 0; i < parsedProducts.length; i += batchSize) {
+        const batch = parsedProducts.slice(i, i + batchSize);
+        
+        const { error: insertError } = await supabase
+          .from("products")
+          .insert(batch);
+        
+        if (insertError) {
+          console.error("Error inserting product batch:", insertError);
+          throw insertError;
+        }
+        
+        insertedCount += batch.length;
+        console.log(`Inserted batch: ${insertedCount}/${parsedProducts.length} products`);
+      }
+
+      // Refresh the products list
+      await fetchProducts();
+      
+      toast.success("Success", {
+        description: `Successfully imported ${insertedCount} products`,
+      });
+      
+      console.log(`Import completed: ${insertedCount} products imported`);
+    } catch (error) {
+      console.error("Error importing products:", error);
+      toast.error("Error", {
+        description: "Failed to import products. Please check the CSV format.",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchProducts]);
 
   const refreshProducts = useCallback(async () => {
     await fetchProducts();
