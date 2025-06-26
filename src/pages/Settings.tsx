@@ -12,10 +12,65 @@ import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import { useSettings } from "@/context/settings/DirectSettingsProvider";
 import { useProducts } from "@/context/products/DirectProductsProvider";
+import { Settings as SettingsType } from "@/types";
+import { SettingsData } from "@/context/settings/types";
 
 const Settings = () => {
   const { settings, loading, updateSettings } = useSettings();
   const { importProductsFromFile } = useProducts();
+
+  // Transform SettingsData to Settings interface
+  const transformToSettings = (data: SettingsData | null): SettingsType => {
+    if (!data) {
+      return {
+        id: "",
+        userId: "",
+        companyName: "",
+        companyEmail: "",
+        companyPhone: "",
+        companyAddress: "",
+        defaultEmailSubject: "",
+        defaultEmailMessage: "",
+        defaultContactEmailMessage: "",
+        defaultTermsAndConditions: "",
+        customLinks: [],
+        catalogUrl: "",
+        priceListUrl: "",
+        emailFooter: "",
+        emailSenderName: "",
+        termsEnabled: false,
+        defaultVatRate: 0,
+        bulkEmailTemplate: "",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+
+    return {
+      id: data.id,
+      userId: data.id, // Using id as userId for compatibility
+      companyName: data.companyName || "",
+      companyEmail: data.companyEmail || "",
+      companyPhone: data.companyPhone || "",
+      companyAddress: data.companyAddress || "",
+      defaultEmailSubject: data.defaultEmailSubject || "",
+      defaultEmailMessage: data.defaultEmailMessage || "",
+      defaultContactEmailMessage: data.defaultContactEmailMessage || "",
+      defaultTermsAndConditions: data.defaultTermsAndConditions || "",
+      customLinks: data.customLinks || [],
+      catalogUrl: data.catalogUrl || "",
+      priceListUrl: data.priceListUrl || "",
+      emailFooter: data.emailFooter || "",
+      emailSenderName: data.emailSenderName || "",
+      termsEnabled: data.termsEnabled || false,
+      defaultVatRate: data.defaultVatRate || 0,
+      bulkEmailTemplate: data.bulkEmailTemplate || "",
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt
+    };
+  };
+
+  const transformedSettings = transformToSettings(settings);
 
   if (loading) {
     return (
@@ -58,7 +113,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CompanySettings initialSettings={settings} onSubmit={updateSettings} />
+              <CompanySettings initialSettings={transformedSettings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -72,7 +127,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <EmailTemplates initialSettings={settings} onSubmit={updateSettings} />
+              <EmailTemplates initialSettings={transformedSettings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -86,7 +141,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ContactEmailTemplates initialSettings={settings} onSubmit={updateSettings} />
+              <ContactEmailTemplates initialSettings={transformedSettings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -100,7 +155,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TermsSettings initialSettings={settings} onSubmit={updateSettings} />
+              <TermsSettings initialSettings={transformedSettings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -114,7 +169,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CustomLinksSettings initialSettings={settings} onSubmit={updateSettings} />
+              <CustomLinksSettings initialSettings={transformedSettings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
