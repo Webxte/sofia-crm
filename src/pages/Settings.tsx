@@ -11,9 +11,11 @@ import ContactEmailTemplates from "@/components/settings/ContactEmailTemplates";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import { useSettings } from "@/context/settings/DirectSettingsProvider";
+import { useProducts } from "@/context/products/DirectProductsProvider";
 
 const Settings = () => {
-  const { loading } = useSettings();
+  const { settings, loading, updateSettings } = useSettings();
+  const { importProductsFromFile } = useProducts();
 
   if (loading) {
     return (
@@ -56,7 +58,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CompanySettings />
+              <CompanySettings initialSettings={settings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -70,7 +72,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <EmailTemplates />
+              <EmailTemplates initialSettings={settings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -84,7 +86,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ContactEmailTemplates />
+              <ContactEmailTemplates initialSettings={settings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -98,7 +100,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TermsSettings />
+              <TermsSettings initialSettings={settings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -112,7 +114,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CustomLinksSettings />
+              <CustomLinksSettings initialSettings={settings} onSubmit={updateSettings} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -140,7 +142,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ProductImportSettings />
+              <ProductImportSettings importProductsFromFile={importProductsFromFile} />
             </CardContent>
           </Card>
         </TabsContent>

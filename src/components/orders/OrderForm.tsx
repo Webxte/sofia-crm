@@ -220,7 +220,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     });
   };
 
-  const handleProductSelected = (product, quantity) => {
+  const handleProductSelected = (product) => {
     // Use product VAT if available, otherwise use settings default (0%)
     const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
     console.log("OrderForm: Product selected", product.code, "with VAT rate:", vatRate);
@@ -231,9 +231,9 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       code: product.code,
       description: product.description,
       price: product.price,
-      quantity: quantity,
+      quantity: product.caseQuantity || 1,
       vat: vatRate,
-      subtotal: product.price * quantity,
+      subtotal: product.price * (product.caseQuantity || 1),
       product: product as any
     };
 
@@ -651,8 +651,9 @@ ${safeSettings.companyEmail || ""}`;
                   <tr className="bg-muted/50">
                     <td colSpan={7} className="px-4 py-3">
                       <ProductSelector 
-                        onProductSelected={handleProductSelected}
-                        onTabSuccess={() => {}}
+                        open={false}
+                        onOpenChange={() => {}}
+                        onSelect={handleProductSelected}
                       />
                     </td>
                   </tr>
