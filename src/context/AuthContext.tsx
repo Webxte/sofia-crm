@@ -23,8 +23,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Safe wrapper component that ensures React is ready
-const AuthProviderWithHooks = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -187,41 +186,6 @@ const AuthProviderWithHooks = ({ children }: { children: React.ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isReactReady, setIsReactReady] = useState(false);
-
-  useEffect(() => {
-    // Ensure React is fully initialized before rendering hook-dependent components
-    const timer = setTimeout(() => {
-      setIsReactReady(true);
-    }, 150); // Increased timeout to ensure React is ready
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Provide a fallback context while React initializes
-  if (!isReactReady) {
-    const fallbackContextValue: AuthContextType = {
-      user: null,
-      session: null,
-      isAuthenticated: false,
-      isAdmin: false,
-      isLoading: true,
-      login: async () => {},
-      createUser: async () => {},
-      logout: async () => {},
-    };
-
-    return (
-      <AuthContext.Provider value={fallbackContextValue}>
-        {children}
-      </AuthContext.Provider>
-    );
-  }
-
-  return <AuthProviderWithHooks>{children}</AuthProviderWithHooks>;
 };
 
 export const useAuth = (): AuthContextType => {
