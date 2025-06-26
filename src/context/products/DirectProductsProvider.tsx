@@ -21,7 +21,7 @@ export const DirectProductsProvider = ({ children }: DirectProductsProviderProps
     }
   }, [authLoading]);
 
-  // Always provide a valid context, but with loading states when not ready
+  // Always provide a fallback context value that satisfies the interface
   const fallbackContextValue: ProductsContextType = {
     products: [],
     loading: !isReady || authLoading,
@@ -37,6 +37,7 @@ export const DirectProductsProvider = ({ children }: DirectProductsProviderProps
     importProducts: async () => {},
   };
 
+  // If not ready, provide the fallback context
   if (!isReady) {
     return (
       <ProductsContext.Provider value={fallbackContextValue}>
@@ -45,6 +46,7 @@ export const DirectProductsProvider = ({ children }: DirectProductsProviderProps
     );
   }
 
+  // Once ready, render the component with hooks
   return <ProductsProviderWithHooks isAuthenticated={isAuthenticated}>{children}</ProductsProviderWithHooks>;
 };
 
