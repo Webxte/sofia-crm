@@ -24,7 +24,6 @@ const Settings = () => {
     if (!data) {
       return {
         id: "",
-        userId: "",
         companyName: "",
         companyEmail: "",
         companyPhone: "",
@@ -48,7 +47,6 @@ const Settings = () => {
 
     return {
       id: data.id,
-      userId: data.id, // Using id as userId for compatibility
       companyName: data.companyName || "",
       companyEmail: data.companyEmail || "",
       companyPhone: data.companyPhone || "",
