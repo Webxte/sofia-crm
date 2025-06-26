@@ -1,197 +1,129 @@
 
-import { useEffect, useState, useRef } from "react";
-import { useProducts } from "@/context/products/ProductsContext";
-import { FormControl } from "@/components/ui/form";
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search, Package, Plus } from "lucide-react";
 import { Product } from "@/types";
-import { Plus, X } from "lucide-react";
-import { useOrders } from "@/context/OrdersContext";
+import { useProducts } from "@/context/products/DirectProductsProvider";
 
 interface ProductSelectorProps {
-  onProductSelected: (product: Product, quantity: number) => void;
-  onTabSuccess?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (product: Product) => void;
+  selectedProducts?: Product[];
 }
 
-export const ProductSelector = ({ onProductSelected, onTabSuccess }: ProductSelectorProps) => {
-  const { products } = useProducts();
-  const { createOrderItem } = useOrders();
-  const [code, setCode] = useState("");
-  const [quantity, setQuantity] = useState(1);
+export const ProductSelector = ({
+  open,
+  onOpenChange,
+  onSelect,
+  selectedProducts = []
+}: ProductSelectorProps) => {
+  const { products, searchProducts, loading } = useProducts();
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const codeInputRef = useRef<HTMLInputElement>(null);
-  const quantityInputRef = useRef<HTMLInputElement>(null);
-  const addButtonRef = useRef<HTMLButtonElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (code.length >= 2) {
-      const filtered = products
-        .filter((product) => product.code.toLowerCase().includes(code.toLowerCase()))
-        .slice(0, 10); // Limit to 10 suggestions
-      setFilteredProducts(filtered);
-      setShowSuggestions(filtered.length > 0);
+    if (searchQuery.trim()) {
+      setFilteredProducts(searchProducts(searchQuery));
     } else {
-      setFilteredProducts([]);
-      setShowSuggestions(false);
+      setFilteredProducts(products);
     }
-  }, [code, products]);
+  }, [searchQuery, products, searchProducts]);
 
-  useEffect(() => {
-    // Set default quantity based on first matching product's caseQuantity
-    if (filteredProducts.length > 0 && filteredProducts[0].caseQuantity) {
-      setQuantity(filteredProducts[0].caseQuantity || 1);
-    }
-  }, [filteredProducts]);
-
-  useEffect(() => {
-    // Close suggestions on click outside
-    const handleClickOutside = (event: MouseEvent) => {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleSelectProduct = (product: Product) => {
-    setCode("");
-    setFilteredProducts([]);
-    setShowSuggestions(false);
-    
-    // Always use caseQuantity from product if available
-    const defaultQuantity = product.caseQuantity && product.caseQuantity > 0 
-      ? product.caseQuantity 
-      : 1;
-    
-    onProductSelected(product, defaultQuantity);
-    
-    // Focus back on code input for next product
-    setTimeout(() => {
-      if (codeInputRef.current) {
-        codeInputRef.current.focus();
-      }
-    }, 10);
+  const isProductSelected = (product: Product) => {
+    return selectedProducts.some(p => p.id === product.id);
   };
 
-  const handleAddProduct = () => {
-    const product = products.find((p) => p.code.toLowerCase() === code.toLowerCase());
-    if (product) {
-      handleSelectProduct(product);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Tab') {
-      if (e.currentTarget === codeInputRef.current) {
-        // If we have suggestions and Tab is pressed while in code field
-        if (filteredProducts.length > 0) {
-          e.preventDefault();
-          handleSelectProduct(filteredProducts[0]);
-        } else if (code) {
-          // Try to find exact match
-          const product = products.find((p) => p.code.toLowerCase() === code.toLowerCase());
-          if (product) {
-            e.preventDefault();
-            handleSelectProduct(product);
-          }
-        }
-      } else if (e.currentTarget === quantityInputRef.current && !e.shiftKey) {
-        // If Tab is pressed on the quantity field
-        e.preventDefault();
-        if (addButtonRef.current) {
-          addButtonRef.current.focus();
-        }
-      }
-    }
-  };
-
-  // Create a button-specific key handler that matches ButtonElement type
-  const handleButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      handleAddProduct();
-      if (codeInputRef.current) {
-        codeInputRef.current.focus();
-      }
-      if (onTabSuccess) {
-        onTabSuccess();
-      }
-    }
+  const handleSelect = (product: Product) => {
+    onSelect(product);
+    onOpenChange(false);
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-start space-x-2 relative">
-        <div className="flex-1 relative">
-          <FormControl>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] max-h-[600px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Select Product
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              ref={codeInputRef}
-              placeholder="Enter product code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onKeyDown={handleKeyDown}
-              autoComplete="off"
+              placeholder="Search products by code or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
             />
-          </FormControl>
-          
-          {showSuggestions && (
-            <div 
-              ref={suggestionsRef}
-              className="absolute z-10 top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-border max-h-64 overflow-y-auto"
-            >
-              {filteredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="px-2 py-1 hover:bg-muted cursor-pointer flex items-center justify-between text-xs"
-                  onClick={() => handleSelectProduct(product)}
-                >
-                  <div className="flex items-center space-x-2 truncate">
-                    <span className="font-medium">{product.code}</span>
-                    <span className="text-muted-foreground truncate">{product.description}</span>
+          </div>
+
+          <ScrollArea className="h-[400px] pr-4">
+            {loading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {searchQuery ? "No products found matching your search." : "No products available."}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className={`p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors ${
+                      isProductSelected(product) ? 'bg-accent border-primary' : ''
+                    }`}
+                    onClick={() => handleSelect(product)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {product.code}
+                          </Badge>
+                          {isProductSelected(product) && (
+                            <Badge variant="default" className="text-xs">
+                              Selected
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="font-medium truncate">{product.description}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                          <span>Price: £{product.price.toFixed(2)}</span>
+                          {product.caseQuantity && (
+                            <span>Case: {product.caseQuantity}</span>
+                          )}
+                          {product.vat > 0 && (
+                            <span>VAT: {product.vat}%</span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={isProductSelected(product) ? "secondary" : "outline"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelect(product);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2 text-xs whitespace-nowrap">
-                    <span>€{product.price.toFixed(2)}</span>
-                    {product.caseQuantity && (
-                      <span className="text-muted-foreground">Qty: {product.caseQuantity}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </ScrollArea>
         </div>
-        
-        <FormControl>
-          <Input
-            ref={quantityInputRef}
-            type="number"
-            min="0"
-            className="w-24"
-            placeholder="Qty"
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-            onKeyDown={handleKeyDown}
-          />
-        </FormControl>
-        
-        <Button 
-          ref={addButtonRef}
-          type="button" 
-          size="sm" 
-          onClick={handleAddProduct}
-          className="flex-shrink-0"
-          tabIndex={0}
-          onKeyDown={handleButtonKeyDown}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

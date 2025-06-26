@@ -1,140 +1,162 @@
-import React, { useEffect } from "react";
-import { useSettings } from "@/context/settings";
-import { useProducts } from "@/context/products/ProductsContext";
+
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import CompanySettings from "@/components/settings/CompanySettings";
+import EmailTemplates from "@/components/settings/EmailTemplates";
 import TermsSettings from "@/components/settings/TermsSettings";
+import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
+import UserManagement from "@/components/settings/UserManagement";
+import ContactEmailTemplates from "@/components/settings/ContactEmailTemplates";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
-import UserManagement from "@/components/settings/UserManagement";
-import UnifiedEmailSettings from "@/components/settings/UnifiedEmailSettings";
-import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
-import type { Settings as SettingsType } from "@/types";
+import { useSettings } from "@/context/settings/DirectSettingsProvider";
 
 const Settings = () => {
-  const { settings, updateSettings, refreshSettings, loading } = useSettings();
-  const { importProductsFromFile } = useProducts();
-  
-  useEffect(() => {
-    console.log("Settings page mounted, refreshing settings...");
-    refreshSettings();
-  }, [refreshSettings]);
+  const { loading } = useSettings();
 
-  useEffect(() => {
-    console.log("Settings state changed:", settings);
-  }, [settings]);
-  
-  const handleUpdateSettings = async (formData: Partial<SettingsType>) => {
-    console.log("Updating settings with form data:", formData);
-    await updateSettings(formData);
-  };
-  
-  // Show loading state while fetching settings
-  if (loading || !settings) {
-    console.log("Settings loading or null, showing loading state", { loading, settings: !!settings });
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Loading settings...
-          </p>
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading settings...</p>
-          </div>
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse space-y-8">
+          <div className="h-8 bg-gray-200 rounded w-48"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
   }
-  
-  console.log("Rendering settings with data:", settings);
-  
-  // Convert context settings to component-expected format
-  const componentSettings: SettingsType = {
-    id: settings.id,
-    organization_id: "", // Add required field with default
-    company_name: settings.companyName,
-    companyName: settings.companyName,
-    companyEmail: settings.companyEmail,
-    companyPhone: settings.companyPhone,
-    companyAddress: settings.companyAddress,
-    defaultEmailSubject: settings.defaultEmailSubject,
-    defaultEmailMessage: settings.defaultEmailMessage,
-    defaultContactEmailMessage: settings.defaultContactEmailMessage,
-    defaultTermsAndConditions: settings.defaultTermsAndConditions,
-    customLinks: settings.customLinks,
-    catalogUrl: settings.catalogUrl,
-    priceListUrl: settings.priceListUrl,
-    emailFooter: settings.emailFooter,
-    emailSenderName: settings.emailSenderName,
-    termsEnabled: settings.termsEnabled,
-    defaultVatRate: settings.defaultVatRate,
-    bulkEmailTemplate: settings.bulkEmailTemplate,
-    createdAt: settings.createdAt,
-    updatedAt: settings.updatedAt,
-  };
-  
+
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto p-6 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your application settings
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your application settings and preferences.
         </p>
       </div>
-      
-      <Tabs defaultValue="company">
-        <TabsList className="mb-4">
+
+      <Tabs defaultValue="company" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="company">Company</TabsTrigger>
-          <TabsTrigger value="data">Data Import</TabsTrigger>
-          <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
-          <TabsTrigger value="email">Email Templates</TabsTrigger>
-          <TabsTrigger value="custom-links">Custom Links</TabsTrigger>
+          <TabsTrigger value="email">Email</TabsTrigger>
+          <TabsTrigger value="contact-email">Contact Email</TabsTrigger>
+          <TabsTrigger value="terms">Terms</TabsTrigger>
+          <TabsTrigger value="links">Links</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="contacts">Contacts</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="company">
-          <CompanySettings 
-            initialSettings={componentSettings} 
-            onSubmit={handleUpdateSettings} 
-          />
+
+        <TabsContent value="company" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Company Information</CardTitle>
+              <CardDescription>
+                Update your company details and contact information.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CompanySettings />
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        <TabsContent value="data">
-          <div className="space-y-6">
-            <ProductImportSettings 
-              importProductsFromFile={importProductsFromFile} 
-            />
-            <ContactImportSettings />
-          </div>
+
+        <TabsContent value="email" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Email Templates</CardTitle>
+              <CardDescription>
+                Configure default email templates for various communications.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EmailTemplates />
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        <TabsContent value="terms">
-          <TermsSettings 
-            initialSettings={componentSettings} 
-            onSubmit={handleUpdateSettings} 
-          />
+
+        <TabsContent value="contact-email" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Email Templates</CardTitle>
+              <CardDescription>
+                Configure email templates specifically for contact communications.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ContactEmailTemplates />
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        <TabsContent value="email">
-          <UnifiedEmailSettings
-            initialSettings={componentSettings}
-            onSubmit={handleUpdateSettings}
-          />
+
+        <TabsContent value="terms" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Terms and Conditions</CardTitle>
+              <CardDescription>
+                Manage your terms and conditions settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TermsSettings />
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        <TabsContent value="custom-links">
-          <CustomLinksSettings
-            initialSettings={componentSettings}
-            onSubmit={handleUpdateSettings}
-          />
+
+        <TabsContent value="links" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom Links</CardTitle>
+              <CardDescription>
+                Add custom links to include in your communications.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomLinksSettings />
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        <TabsContent value="users">
-          <UserManagement />
+
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>
+                Manage system users and their permissions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UserManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Import Settings</CardTitle>
+              <CardDescription>
+                Configure settings for importing products from CSV files.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductImportSettings />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contacts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Import Settings</CardTitle>
+              <CardDescription>
+                Configure settings for importing contacts from various sources.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ContactImportSettings />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

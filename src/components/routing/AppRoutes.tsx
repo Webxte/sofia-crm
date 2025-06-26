@@ -1,174 +1,79 @@
 
-import React, { Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { AuthWrapper } from '../auth/AuthWrapper';
-import { InitialRedirect } from '../auth/InitialRedirect';
-import { LoadingFallback } from '../ui/LoadingFallback';
-import { ProtectedRouteWithSuspense } from './ProtectedRoute';
-import Login from '../../pages/auth/Login';
-import Signup from '../../pages/auth/Signup';
-import NotFound from '../../pages/NotFound';
-import {
-  Dashboard,
-  Contacts,
-  ContactDetails,
-  EditContact,
-  NewContact,
-  Meetings,
-  MeetingDetails,
-  EditMeeting,
-  NewMeeting,
-  Tasks,
-  TaskDetails,
-  EditTask,
-  NewTask,
-  Orders,
-  OrderDetails,
-  EditOrder,
-  NewOrder,
-  Settings,
-  Reports,
-  Calendar
-} from './LazyComponents';
+import React, { Suspense } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { ConditionalProviders } from "../providers/ConditionalProviders";
+import { LoadingFallback } from "../ui/LoadingFallback";
+import Layout from "../layout/Layout";
+import ProtectedRoute from "../auth/ProtectedRoute";
 
-export const AppRoutes = () => (
-  <Routes>
-    {/* Auth routes - these don't require AuthWrapper */}
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Signup />} />
-    
-    {/* Root route that redirects to dashboard */}
-    <Route path="/" element={
-      <AuthWrapper>
-        <InitialRedirect />
-      </AuthWrapper>
-    } />
-    
-    {/* Protected routes - wrapped in AuthWrapper and layout */}
-    <Route path="/dashboard" element={<ProtectedRouteWithSuspense><Dashboard /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Dashboard />
-        </Suspense>
-      } />
-    </Route>
+// Lazy load components
+import Index from "@/pages/Index";
+import Login from "@/pages/auth/Login";
+import Signup from "@/pages/auth/Signup";
+import Dashboard from "@/pages/Dashboard";
+import Contacts from "@/pages/Contacts";
+import ContactDetails from "@/pages/ContactDetails";
+import NewContact from "@/pages/contacts/NewContact";
+import EditContact from "@/pages/contacts/EditContact";
+import Meetings from "@/pages/Meetings";
+import MeetingDetails from "@/pages/MeetingDetails";
+import NewMeeting from "@/pages/meetings/NewMeeting";
+import EditMeeting from "@/pages/meetings/EditMeeting";
+import Tasks from "@/pages/Tasks";
+import TaskDetails from "@/pages/TaskDetails";
+import NewTask from "@/pages/tasks/NewTask";
+import EditTask from "@/pages/tasks/EditTask";
+import Orders from "@/pages/Orders";
+import NewOrder from "@/pages/orders/NewOrder";
+import EditOrder from "@/pages/orders/EditOrder";
+import Reports from "@/pages/Reports";
+import Settings from "@/pages/Settings";
+import Profile from "@/pages/Profile";
+import Calendar from "@/pages/Calendar";
+import NotFound from "@/pages/NotFound";
 
-    <Route path="/contacts" element={<ProtectedRouteWithSuspense><Contacts /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Contacts />
-        </Suspense>
-      } />
-      <Route path=":id" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <ContactDetails />
-        </Suspense>
-      } />
-      <Route path=":id/edit" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <EditContact />
-        </Suspense>
-      } />
-      <Route path="new" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <NewContact />
-        </Suspense>
-      } />
-    </Route>
-
-    <Route path="/meetings" element={<ProtectedRouteWithSuspense><Meetings /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Meetings />
-        </Suspense>
-      } />
-      <Route path=":id" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <MeetingDetails />
-        </Suspense>
-      } />
-      <Route path=":id/edit" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <EditMeeting />
-        </Suspense>
-      } />
-      <Route path="new" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <NewMeeting />
-        </Suspense>
-      } />
-    </Route>
-
-    <Route path="/calendar" element={<ProtectedRouteWithSuspense><Calendar /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Calendar />
-        </Suspense>
-      } />
-    </Route>
-
-    <Route path="/tasks" element={<ProtectedRouteWithSuspense><Tasks /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Tasks />
-        </Suspense>
-      } />
-      <Route path=":id" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <TaskDetails />
-        </Suspense>
-      } />
-      <Route path=":id/edit" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <EditTask />
-        </Suspense>
-      } />
-      <Route path="new" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <NewTask />
-        </Suspense>
-      } />
-    </Route>
-
-    <Route path="/orders" element={<ProtectedRouteWithSuspense><Orders /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Orders />
-        </Suspense>
-      } />
-      <Route path=":id" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <OrderDetails />
-        </Suspense>
-      } />
-      <Route path=":id/edit" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <EditOrder />
-        </Suspense>
-      } />
-      <Route path="new" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <NewOrder />
-        </Suspense>
-      } />
-    </Route>
-
-    <Route path="/reports" element={<ProtectedRouteWithSuspense><Reports /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Reports />
-        </Suspense>
-      } />
-    </Route>
-
-    <Route path="/settings" element={<ProtectedRouteWithSuspense><Settings /></ProtectedRouteWithSuspense>}>
-      <Route index element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Settings />
-        </Suspense>
-      } />
-    </Route>
-    
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+export const AppRoutes = () => {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <ConditionalProviders>
+                <Layout />
+              </ConditionalProviders>
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="contacts" element={<Contacts />} />
+          <Route path="contacts/new" element={<NewContact />} />
+          <Route path="contacts/:id" element={<ContactDetails />} />
+          <Route path="contacts/:id/edit" element={<EditContact />} />
+          <Route path="meetings" element={<Meetings />} />
+          <Route path="meetings/new" element={<NewMeeting />} />
+          <Route path="meetings/:id" element={<MeetingDetails />} />
+          <Route path="meetings/:id/edit" element={<EditMeeting />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="tasks/new" element={<NewTask />} />
+          <Route path="tasks/:id" element={<TaskDetails />} />
+          <Route path="tasks/:id/edit" element={<EditTask />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="orders/new" element={<NewOrder />} />
+          <Route path="orders/:id/edit" element={<EditOrder />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </Suspense>
+  );
+};
