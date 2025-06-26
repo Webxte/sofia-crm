@@ -21,23 +21,23 @@ export const DirectProductsProvider = ({ children }: DirectProductsProviderProps
     }
   }, [authLoading]);
 
-  // Provide fallback context while not ready
-  if (!isReady) {
-    const fallbackContextValue: ProductsContextType = {
-      products: [],
-      loading: false,
-      addProduct: async () => null,
-      updateProduct: async () => null,
-      deleteProduct: async () => false,
-      getProductById: () => undefined,
-      getProductByCode: () => undefined,
-      searchProducts: () => [],
-      refreshProducts: async () => {},
-      importProductsFromCsv: async () => {},
-      importProductsFromFile: async () => {},
-      importProducts: async () => {},
-    };
+  // Always provide a valid context, but with loading states when not ready
+  const fallbackContextValue: ProductsContextType = {
+    products: [],
+    loading: !isReady || authLoading,
+    addProduct: async () => null,
+    updateProduct: async () => null,
+    deleteProduct: async () => false,
+    getProductById: () => undefined,
+    getProductByCode: () => undefined,
+    searchProducts: () => [],
+    refreshProducts: async () => {},
+    importProductsFromCsv: async () => {},
+    importProductsFromFile: async () => {},
+    importProducts: async () => {},
+  };
 
+  if (!isReady) {
     return (
       <ProductsContext.Provider value={fallbackContextValue}>
         {children}
