@@ -1,14 +1,9 @@
 
 import React, { ReactNode } from "react";
-import { SafeProductsWrapper } from "./SafeProductsWrapper";
+import { DirectProductsProvider, useProducts } from "./DirectProductsProvider";
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  return (
-    <SafeProductsWrapper>
-      {children}
-    </SafeProductsWrapper>
-  );
+  return <DirectProductsProvider>{children}</DirectProductsProvider>;
 };
 
-// Re-export useProducts from ActualProductsProvider
-export { useProducts } from "./ActualProductsProvider";
+export { useProducts };

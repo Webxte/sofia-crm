@@ -1,14 +1,9 @@
 
 import React, { ReactNode } from "react";
-import { SafeSettingsWrapper } from "./SafeSettingsWrapper";
+import { DirectSettingsProvider, useSettings } from "./DirectSettingsProvider";
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  return (
-    <SafeSettingsWrapper>
-      {children}
-    </SafeSettingsWrapper>
-  );
+  return <DirectSettingsProvider>{children}</DirectSettingsProvider>;
 };
 
-// Re-export useSettings from ActualSettingsProvider
-export { useSettings } from "./ActualSettingsProvider";
+export { useSettings };
