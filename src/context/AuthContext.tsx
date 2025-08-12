@@ -190,37 +190,9 @@ const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Check if React hooks are available
-  try {
-    // Test if React context is available by trying to access useState
-    const testState = React.useState;
-    if (!testState) {
-      throw new Error("React hooks not available");
-    }
-    
-    return <AuthProviderInner>{children}</AuthProviderInner>;
-  } catch (error) {
-    // If React hooks aren't available yet, provide a minimal fallback
-    console.log("React hooks not ready, providing fallback context");
-    
-    const fallbackContextValue: AuthContextType = {
-      user: null,
-      session: null,
-      isAuthenticated: false,
-      isAdmin: false,
-      isLoading: true,
-      login: async () => {},
-      createUser: async () => {},
-      logout: async () => {},
-    };
-
-    return (
-      <AuthContext.Provider value={fallbackContextValue}>
-        {children}
-      </AuthContext.Provider>
-    );
-  }
+  return <AuthProviderInner>{children}</AuthProviderInner>;
 };
+
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);

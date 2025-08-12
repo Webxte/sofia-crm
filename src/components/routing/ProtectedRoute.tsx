@@ -10,9 +10,10 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => (
   <AuthWrapper>
-    <SimpleLayout />
+    {children}
   </AuthWrapper>
 );
+
 
 export const ProtectedRouteWithSuspense = ({ children }: ProtectedRouteProps) => (
   <ProtectedRoute>
