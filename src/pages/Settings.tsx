@@ -10,8 +10,8 @@ import UserManagement from "@/components/settings/UserManagement";
 import ContactEmailTemplates from "@/components/settings/ContactEmailTemplates";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
-import { useSettings } from "@/context/settings/DirectSettingsProvider";
-import { useProducts } from "@/context/products/DirectProductsProvider";
+import { useSettings } from "@/context/settings";
+import { useProducts } from "@/context/products/ProductsContext";
 import { Settings as SettingsType } from "@/types";
 import { SettingsData } from "@/context/settings/types";
 

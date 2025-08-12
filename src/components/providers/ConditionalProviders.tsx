@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
-import { DirectProductsProvider } from '../../context/products/DirectProductsProvider';
-import { DirectSettingsProvider } from '../../context/settings/DirectSettingsProvider';
+import { ProductsProvider } from '../../context/products/ProductsContext';
+import { SettingsProvider } from '../../context/settings';
 import { ContactsProvider } from '../../context/contacts/ContactsContext';
 import { MeetingsProvider } from '../../context/meetings';
 import { TasksProvider } from '../../context/tasks';
@@ -30,8 +30,8 @@ export const ConditionalProviders = ({ children }: ConditionalProvidersProps) =>
   }
 
   return (
-    <DirectSettingsProvider>
-      <DirectProductsProvider>
+    <SettingsProvider>
+      <ProductsProvider>
         <ContactsProvider>
           <MeetingsProvider>
             <TasksProvider>
@@ -41,7 +41,7 @@ export const ConditionalProviders = ({ children }: ConditionalProvidersProps) =>
             </TasksProvider>
           </MeetingsProvider>
         </ContactsProvider>
-      </DirectProductsProvider>
-    </DirectSettingsProvider>
+      </ProductsProvider>
+    </SettingsProvider>
   );
 };

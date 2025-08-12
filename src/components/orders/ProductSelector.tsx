@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Package, Plus } from "lucide-react";
 import { Product } from "@/types";
-import { useProducts } from "@/context/products/DirectProductsProvider";
+import { useProducts } from "@/context/products/ProductsContext";
 
 interface ProductSelectorProps {
   open: boolean;
