@@ -4,10 +4,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
 import { parseProductCSV } from "./productsUtils";
+import { useAuth } from "@/context/AuthContext";
 
 export const useProductsOperations = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const { isAdmin } = useAuth();
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -243,35 +245,32 @@ export const useProductsOperations = () => {
         return;
       }
 
-      // First, delete all existing products
-      const { error: deleteError } = await supabase
-        .from("products")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all products
-      
-      if (deleteError) {
-        console.error("Error deleting existing products:", deleteError);
-        throw deleteError;
+      // Only admins can import products; perform upsert to avoid data loss
+      if (!isAdmin) {
+        toast.error("Permission denied", {
+          description: "Only admins can import products.",
+        });
+        return;
       }
 
-      // Insert new products in batches
+      // Upsert new/updated products in batches (conflict on code)
       const batchSize = 100;
       let insertedCount = 0;
-      
+
       for (let i = 0; i < parsedProducts.length; i += batchSize) {
         const batch = parsedProducts.slice(i, i + batchSize);
-        
-        const { error: insertError } = await supabase
+
+        const { error: upsertError } = await supabase
           .from("products")
-          .insert(batch);
-        
-        if (insertError) {
-          console.error("Error inserting product batch:", insertError);
-          throw insertError;
+          .upsert(batch, { onConflict: "code" });
+
+        if (upsertError) {
+          console.error("Error upserting product batch:", upsertError);
+          throw upsertError;
         }
-        
+
         insertedCount += batch.length;
-        console.log(`Inserted batch: ${insertedCount}/${parsedProducts.length} products`);
+        console.log(`Processed batch: ${insertedCount}/${parsedProducts.length} products`);
       }
 
       // Refresh the products list
@@ -291,7 +290,7 @@ export const useProductsOperations = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchProducts]);
+  }, [fetchProducts, isAdmin]);
 
   const refreshProducts = useCallback(async () => {
     await fetchProducts();
