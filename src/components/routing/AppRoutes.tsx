@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ConditionalProviders } from "../providers/ConditionalProviders";
 import { LoadingFallback } from "../ui/LoadingFallback";
 import Layout from "../layout/Layout";
-import ProtectedRoute from "../auth/ProtectedRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 // Lazy load components
 import Index from "@/pages/Index";
