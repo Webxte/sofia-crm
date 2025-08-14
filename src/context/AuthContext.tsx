@@ -1,7 +1,7 @@
 import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast";
 import { logger } from "@/utils/logger";
 
 // Extend the User type to include the name property

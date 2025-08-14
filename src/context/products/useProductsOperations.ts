@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
 import { parseProductCSV } from "./productsUtils";

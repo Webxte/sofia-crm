@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Order, OrderItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast";
 import { useAuth } from "@/context/AuthContext";
 import { useProducts } from "@/context/products/ProductsContext";
 

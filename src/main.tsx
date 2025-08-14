@@ -1,33 +1,29 @@
-// Completely stripped down main.tsx - no external dependencies except React
-import * as React from 'react';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { AuthProvider } from './context/AuthContext';
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Create root using createElement to avoid any JSX issues
-const root = React.createElement.bind(null);
-
-// Simple component without hooks
-const SimpleTest = () => {
-  return React.createElement('div', {
-    style: { 
-      padding: '40px', 
-      textAlign: 'center',
-      fontFamily: 'Arial, sans-serif'
-    }
-  }, [
-    React.createElement('h1', { key: 'title' }, 'React Basic Test'),
-    React.createElement('p', { key: 'desc' }, 'Testing if React loads without external dependencies'),
-    React.createElement('button', { 
-      key: 'btn',
-      onClick: () => console.log('Button clicked - React is working!')
-    }, 'Test Button')
-  ]);
+// Simple test component to verify AuthProvider works
+const TestApp = () => {
+  return (
+    <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>
+      <h1>React + AuthProvider Test</h1>
+      <p>Testing if AuthProvider loads without errors</p>
+      <p>✅ React is working</p>
+      <p>✅ AuthProvider is working</p>
+      <button onClick={() => console.log('Button works!')}>Test Button</button>
+    </div>
+  );
 };
 
-// Use createRoot from react-dom/client
-import { createRoot } from 'react-dom/client';
-const reactRoot = createRoot(rootElement);
-reactRoot.render(React.createElement(SimpleTest));
+const root = createRoot(rootElement);
+root.render(
+  <AuthProvider>
+    <TestApp />
+  </AuthProvider>
+);
