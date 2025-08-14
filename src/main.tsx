@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from './context/AuthContext';
-import { Toaster } from './components/ui/sonner';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import App from './App';
 import './index.css';
@@ -26,7 +25,6 @@ root.render(
             <AuthProvider>
               <App />
             </AuthProvider>
-            <Toaster />
           </ThemeProvider>
         </HelmetProvider>
       </BrowserRouter>
