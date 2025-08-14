@@ -79,6 +79,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     vat: 0
   });
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [emailData, setEmailData] = useState({
     recipient: "",
     subject: "Your Order",
@@ -650,11 +651,21 @@ ${safeSettings.companyEmail || ""}`;
                   
                   <tr className="bg-muted/50">
                     <td colSpan={7} className="px-4 py-3">
-                      <ProductSelector 
-                        open={false}
-                        onOpenChange={() => {}}
-                        onSelect={handleProductSelected}
-                      />
+                      <div className="flex flex-col gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsProductSelectorOpen(true)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Product from Catalog
+                        </Button>
+                        
+                        <div className="text-sm text-muted-foreground">
+                          Or manually add a product by clicking "Add Product from Catalog" and then editing the fields directly in the table above.
+                        </div>
+                      </div>
                     </td>
                   </tr>
                   
@@ -796,6 +807,13 @@ ${safeSettings.companyEmail || ""}`;
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ProductSelector 
+        open={isProductSelectorOpen}
+        onOpenChange={setIsProductSelectorOpen}
+        onSelect={handleProductSelected}
+        selectedProducts={orderItems.map(item => item.product).filter(Boolean)}
+      />
     </div>
   );
 };
