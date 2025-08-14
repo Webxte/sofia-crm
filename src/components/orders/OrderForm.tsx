@@ -78,6 +78,8 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     quantity: 1,
     vat: 0
   });
+  const [productSuggestions, setProductSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [emailData, setEmailData] = useState({
@@ -221,10 +223,25 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     });
   };
 
-  const handleProductSelected = (product) => {
+  const handleProductCodeChange = (value: string) => {
+    setNewItem({ ...newItem, code: value });
+    
+    if (value.length >= 2) {
+      const suggestions = products.filter(product => 
+        product.code.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 10);
+      setProductSuggestions(suggestions);
+      setShowSuggestions(true);
+    } else {
+      setProductSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleProductSelected = (product: any) => {
     // Use product VAT if available, otherwise use settings default (0%)
     const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
-    console.log("OrderForm: Product selected", product.code, "with VAT rate:", vatRate);
+    const defaultQuantity = product.caseQuantity || 1;
     
     const orderItem: OrderItem = {
       id: Math.random().toString(36).substring(2, 9),
@@ -232,13 +249,24 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       code: product.code,
       description: product.description,
       price: product.price,
-      quantity: product.caseQuantity || 1,
+      quantity: defaultQuantity,
       vat: vatRate,
-      subtotal: product.price * (product.caseQuantity || 1),
+      subtotal: product.price * defaultQuantity,
       product: product as any
     };
 
     setOrderItems(prev => [...prev, orderItem]);
+    
+    // Reset the new item form
+    setNewItem({
+      code: "",
+      description: "",
+      price: 0,
+      quantity: 1,
+      vat: safeSettings.defaultVatRate || 0
+    });
+    setShowSuggestions(false);
+    setProductSuggestions([]);
   };
 
   const removeItem = (index: number) => {
@@ -671,84 +699,39 @@ ${safeSettings.companyEmail || ""}`;
                   ))}
                   
                   <tr className="bg-muted/50">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 relative">
                       <Input
-                        placeholder="Product Code"
+                        placeholder="Enter product code"
                         value={newItem.code}
-                        onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
+                        onChange={(e) => handleProductCodeChange(e.target.value)}
+                        onFocus={() => {
+                          if (productSuggestions.length > 0) {
+                            setShowSuggestions(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Delay hiding suggestions to allow for clicks
+                          setTimeout(() => setShowSuggestions(false), 200);
+                        }}
                       />
-                    </td>
-                    <td className="px-4 py-3">
-                      <Input
-                        placeholder="Description"
-                        value={newItem.description}
-                        onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                      />
-                    </td>
-                     <td className="px-4 py-3">
-                       <Input
-                         type="number"
-                         placeholder="Price"
-                         value={newItem.price}
-                         onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
-                         step="0.01"
-                         min="0"
-                       />
-                     </td>
-                     <td className="px-4 py-3">
-                       <Input
-                         type="number"
-                         placeholder="VAT %"
-                         value={newItem.vat}
-                         onChange={(e) => setNewItem({ ...newItem, vat: parseFloat(e.target.value) || 0 })}
-                         step="0.1"
-                         min="0"
-                         max="100"
-                       />
-                     </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setNewItem(prev => ({ ...prev, quantity: Math.max(1, (prev.quantity || 1) - 1) }))}
-                            className="h-7 w-7 p-0"
-                          >
-                            -
-                          </Button>
-                          <Input
-                            type="number"
-                            placeholder="Qty"
-                            value={newItem.quantity}
-                            onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 1 })}
-                            min="1"
-                            className="mx-1 text-center"
-                            style={{ width: '50px' }}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setNewItem(prev => ({ ...prev, quantity: (prev.quantity || 1) + 1 }))}
-                            className="h-7 w-7 p-0"
-                          >
-                            +
-                          </Button>
+                      {showSuggestions && productSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full max-w-md bg-white border border-gray-200 rounded-md shadow-lg mt-1">
+                          {productSuggestions.map((product) => (
+                            <div
+                              key={product.id}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                              onClick={() => handleProductSelected(product)}
+                            >
+                              <div className="font-medium text-sm">{product.code}</div>
+                              <div className="text-xs text-gray-600 truncate">{product.description}</div>
+                              <div className="text-xs text-gray-500">€{product.price} - Qty: {product.caseQuantity || 1}</div>
+                            </div>
+                          ))}
                         </div>
-                      </td>
-                    <td className="px-4 py-3 text-sm font-medium text-right">
-                      €{(newItem.quantity * newItem.price).toFixed(2)}
+                      )}
                     </td>
-                    <td className="px-4 py-3">
-                      <Button
-                        type="button"
-                        onClick={addItemToOrder}
-                        size="sm"
-                        disabled={!newItem.code || !newItem.description || newItem.quantity <= 0 || newItem.price <= 0}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {newItem.quantity || 1}
                     </td>
                   </tr>
                   
