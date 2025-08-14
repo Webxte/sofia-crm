@@ -9,10 +9,18 @@ import { useAuth } from "@/context/AuthContext";
 export const useProductsOperations = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const { isAdmin } = useAuth();
 
   const fetchProducts = useCallback(async () => {
+    // Prevent multiple simultaneous fetches
+    if (isFetching) {
+      console.log("Already fetching products, skipping...");
+      return;
+    }
+
     try {
+      setIsFetching(true);
       setLoading(true);
       console.log("Fetching products...");
       
@@ -44,13 +52,15 @@ export const useProductsOperations = () => {
       console.log(`Fetched ${formattedProducts.length} products`);
     } catch (error) {
       console.error("Error in fetchProducts:", error);
+      setProducts([]); // Clear products on error
       toast.error("Error", {
-        description: "Failed to load products. Please try again.",
+        description: "Failed to load products. Please check your connection.",
       });
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
-  }, []);
+  }, [isFetching]);
 
   const addProduct = useCallback(async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
     try {
