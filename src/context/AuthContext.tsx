@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import * as React from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -23,7 +24,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Safe component that only uses hooks when React is ready
+// Component that uses hooks - only rendered when React is ready
 const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -190,7 +191,22 @@ const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  return <AuthProviderInner>{children}</AuthProviderInner>;
+  // Add defensive check to ensure React hooks are available
+  if (typeof useState !== 'function') {
+    console.error("React hooks not available, providing fallback");
+    return React.createElement('div', { 
+      style: { padding: '20px', textAlign: 'center' } 
+    }, 'Loading...');
+  }
+
+  try {
+    return React.createElement(AuthProviderInner, null, children);
+  } catch (error) {
+    console.error("Error in AuthProvider:", error);
+    return React.createElement('div', { 
+      style: { padding: '20px', textAlign: 'center', color: 'red' } 
+    }, 'Authentication Error');
+  }
 };
 
 
