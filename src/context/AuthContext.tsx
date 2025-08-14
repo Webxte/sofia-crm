@@ -190,23 +190,15 @@ const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Add defensive check to ensure React hooks are available
-  if (typeof useState !== 'function') {
-    console.error("React hooks not available, providing fallback");
-    return React.createElement('div', { 
-      style: { padding: '20px', textAlign: 'center' } 
-    }, 'Loading...');
+// Class component wrapper to avoid hook issues during initial load
+class AuthProviderWrapper extends React.Component<{ children: React.ReactNode }> {
+  render() {
+    return React.createElement(AuthProviderInner, null, this.props.children);
   }
+}
 
-  try {
-    return React.createElement(AuthProviderInner, null, children);
-  } catch (error) {
-    console.error("Error in AuthProvider:", error);
-    return React.createElement('div', { 
-      style: { padding: '20px', textAlign: 'center', color: 'red' } 
-    }, 'Authentication Error');
-  }
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  return React.createElement(AuthProviderWrapper, { children });
 };
 
 
