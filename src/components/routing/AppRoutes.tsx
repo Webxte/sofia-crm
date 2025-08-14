@@ -32,6 +32,7 @@ import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
 import Calendar from "@/pages/Calendar";
 import NotFound from "@/pages/NotFound";
+import OrderDetails from "@/pages/orders/OrderDetails";
 
 export const AppRoutes = () => {
   return (
@@ -66,6 +67,7 @@ export const AppRoutes = () => {
           <Route path="tasks/:id/edit" element={<EditTask />} />
           <Route path="orders" element={<Orders />} />
           <Route path="orders/new" element={<NewOrder />} />
+          <Route path="orders/:id" element={<OrderDetails />} />
           <Route path="orders/:id/edit" element={<EditOrder />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
