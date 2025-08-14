@@ -15,6 +15,7 @@ interface ConditionalProvidersProps {
 
 export const ConditionalProviders = ({ children }: ConditionalProvidersProps) => {
   const { isLoading, isAuthenticated } = useAuth();
+  console.log("ConditionalProviders: isLoading =", isLoading, "isAuthenticated =", isAuthenticated);
 
   // Show loading while auth initializes
   if (isLoading) {

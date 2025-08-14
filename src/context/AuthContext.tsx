@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   React.useEffect(() => {
     let mounted = true;
     let timeoutId: NodeJS.Timeout;
+    console.log("AuthContext: useEffect triggered, isLoading:", isLoading);
     
     const initializeAuth = async () => {
       try {
@@ -233,16 +234,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const contextValue = React.useMemo(() => ({
-    user,
-    session,
-    isAuthenticated,
-    isAdmin,
-    isLoading,
-    login,
-    createUser,
-    logout,
-  }), [user, session, isAuthenticated, isAdmin, isLoading, login, createUser, logout]);
+  const contextValue = React.useMemo(() => {
+    console.log("AuthContext: Creating context value", { isLoading, isAuthenticated, hasUser: !!user });
+    return {
+      user,
+      session,
+      isAuthenticated,
+      isAdmin,
+      isLoading,
+      login,
+      createUser,
+      logout,
+    };
+  }, [user, session, isAuthenticated, isAdmin, isLoading, login, createUser, logout]);
 
   return React.createElement(
     AuthContext.Provider,
