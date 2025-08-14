@@ -7,6 +7,7 @@ import { ThemeProvider } from 'next-themes';
 import './index.css';
 import App from './App';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import { AuthProvider } from './context/AuthContext';
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient({
@@ -36,7 +37,9 @@ root.render(
         <QueryClientProvider client={queryClient}>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <BrowserRouter>
-              <App />
+              <AuthProvider>
+                <App />
+              </AuthProvider>
             </BrowserRouter>
           </ThemeProvider>
         </QueryClientProvider>
