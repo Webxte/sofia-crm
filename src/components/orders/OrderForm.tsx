@@ -650,24 +650,98 @@ ${safeSettings.companyEmail || ""}`;
                   ))}
                   
                   <tr className="bg-muted/50">
-                    <td colSpan={7} className="px-4 py-3">
-                      <div className="flex flex-col gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setIsProductSelectorOpen(true)}
-                          className="w-full sm:w-auto"
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Product from Catalog
-                        </Button>
-                        
-                        <div className="text-sm text-muted-foreground">
-                          Or manually add a product by clicking "Add Product from Catalog" and then editing the fields directly in the table above.
-                        </div>
-                      </div>
+                    <td className="px-4 py-3">
+                      <Input
+                        placeholder="Product Code"
+                        value={newItem.code}
+                        onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Input
+                        placeholder="Description"
+                        value={newItem.description}
+                        onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                      />
+                    </td>
+                     <td className="px-4 py-3">
+                       <Input
+                         type="number"
+                         placeholder="Price"
+                         value={newItem.price}
+                         onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+                         step="0.01"
+                         min="0"
+                       />
+                     </td>
+                     <td className="px-4 py-3">
+                       <Input
+                         type="number"
+                         placeholder="VAT %"
+                         value={newItem.vat}
+                         onChange={(e) => setNewItem({ ...newItem, vat: parseFloat(e.target.value) || 0 })}
+                         step="0.1"
+                         min="0"
+                         max="100"
+                       />
+                     </td>
+                     <td className="px-4 py-3">
+                       <Input
+                         type="number"
+                         placeholder="Quantity"
+                         value={newItem.quantity}
+                         onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
+                         min="1"
+                       />
+                     </td>
+                    <td className="px-4 py-3 text-sm font-medium text-right">
+                      €{(newItem.quantity * newItem.price).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Button
+                        type="button"
+                        onClick={addItemToOrder}
+                        size="sm"
+                        disabled={!newItem.code || !newItem.description || newItem.quantity <= 0 || newItem.price <= 0}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </td>
                   </tr>
+                  
+                  {/* Product suggestions based on code input */}
+                  {newItem.code.length >= 2 && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-2">
+                        <div className="max-h-40 overflow-y-auto border rounded-lg bg-background">
+                          {products
+                            .filter(product => 
+                              product.code.toLowerCase().includes(newItem.code.toLowerCase())
+                            )
+                            .slice(0, 10)
+                            .map((product) => (
+                              <div
+                                key={product.id}
+                                className="p-2 hover:bg-accent cursor-pointer text-sm border-b last:border-b-0"
+                                onClick={() => {
+                                  setNewItem({
+                                    code: product.code,
+                                    description: product.description,
+                                    quantity: 1,
+                                    price: product.price,
+                                    vat: product.vat || settings?.defaultVatRate || 0
+                                  });
+                                }}
+                              >
+                                <div className="font-medium">{product.code}</div>
+                                <div className="text-muted-foreground">{product.description}</div>
+                                <div className="text-xs">Price: €{product.price.toFixed(2)} | VAT: {product.vat || settings?.defaultVatRate || 0}%</div>
+                              </div>
+                            ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                   
                   <tr className="border-t-2">
                     <td colSpan={5} className="px-4 py-3 text-sm font-medium text-right">
