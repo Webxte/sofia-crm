@@ -23,9 +23,10 @@ root.render(
       <BrowserRouter>
         <HelmetProvider>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <h1>Loading Application...</h1>
+              <p>Initializing React modules</p>
+            </div>
             <Toaster />
           </ThemeProvider>
         </HelmetProvider>
