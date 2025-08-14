@@ -1,6 +1,4 @@
-
 import * as React from "react";
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -22,15 +20,28 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Default context value
+const defaultContextValue: AuthContextType = {
+  user: null,
+  session: null,
+  isAuthenticated: false,
+  isAdmin: false,
+  isLoading: true,
+  login: async () => {},
+  createUser: async () => {},
+  logout: async () => {},
+};
 
-// Component that uses hooks - only rendered when React is ready
-const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<ExtendedUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+const AuthContext = React.createContext<AuthContextType>(defaultContextValue);
+
+// Main Auth Provider component
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  // Use React.useState directly to avoid import issues
+  const [user, setUser] = React.useState<ExtendedUser | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   
-  const getUserWithName = useCallback((supabaseUser: User | null): ExtendedUser | null => {
+  const getUserWithName = React.useCallback((supabaseUser: User | null): ExtendedUser | null => {
     if (!supabaseUser) return null;
     
     return {
@@ -39,7 +50,7 @@ const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     let mounted = true;
     
     const initializeAuth = async () => {
@@ -60,74 +71,102 @@ const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
             
             setSession(currentSession);
             setUser(extendedUser);
+            
+            if (event === 'SIGNED_OUT') {
+              logger.debug("User signed out, clearing state");
+              setUser(null);
+              setSession(null);
+            }
+            
             setIsLoading(false);
           }
         );
 
-        // Get initial session
+        // Check current session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (!mounted) return;
+        if (mounted && currentSession) {
+          const extendedUser = getUserWithName(currentSession.user);
+          logger.debug("Initial session found:", extendedUser ? {
+            id: extendedUser.id,
+            name: extendedUser.name,
+          } : null);
+          setSession(currentSession);
+          setUser(extendedUser);
+        }
         
-        logger.debug("Initial session check:", currentSession ? "Logged in" : "Not logged in");
-        const extendedUser = getUserWithName(currentSession?.user ?? null);
-        logger.debug("User from initial session:", extendedUser ? {
-          id: extendedUser.id, 
-          name: extendedUser.name,
-        } : null);
-        
-        setSession(currentSession);
-        setUser(extendedUser);
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
 
         return () => {
-          mounted = false;
           subscription.unsubscribe();
         };
       } catch (error) {
-        logger.error("Auth initialization error:", error);
+        logger.error("Error initializing auth:", error);
         if (mounted) {
           setIsLoading(false);
         }
       }
     };
 
-    const cleanup = initializeAuth();
-    
+    initializeAuth();
+
     return () => {
       mounted = false;
-      cleanup?.then(cleanupFn => cleanupFn?.());
     };
   }, [getUserWithName]);
 
-  const isAdmin = useMemo(() => !!user && user.user_metadata?.role === "admin", [user]);
-  const isAuthenticated = useMemo(() => !!session, [session]);
+  const isAuthenticated = React.useMemo(() => !!user && !!session, [user, session]);
+  
+  const isAdmin = React.useMemo(() => {
+    return user?.user_metadata?.role === "admin" || false;
+  }, [user]);
 
-  const loginFn = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
+  const login = React.useCallback(async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      setIsLoading(true);
+      logger.debug("Attempting login for:", email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
+
       if (error) {
         logger.error("Login error:", error);
         throw error;
       }
-      
-      logger.info("User logged in successfully");
-    } catch (error) {
+
+      if (data.user) {
+        const extendedUser = getUserWithName(data.user);
+        logger.debug("Login successful for user:", extendedUser ? {
+          id: extendedUser.id,
+          name: extendedUser.name,
+        } : null);
+        setUser(extendedUser);
+        setSession(data.session);
+        
+        toast.success("Welcome!", {
+          description: `Welcome back, ${extendedUser?.name || 'User'}!`,
+        });
+      }
+    } catch (error: any) {
       logger.error("Login failed:", error);
+      toast.error("Login failed", {
+        description: error.message || "Please check your credentials and try again.",
+      });
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [getUserWithName]);
 
-  const createUserFn = useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
-    setIsLoading(true);
+  const createUser = React.useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
     try {
-      const { error, data } = await supabase.auth.signUp({
+      setIsLoading(true);
+      logger.debug("Creating user:", { name, email, role });
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -135,75 +174,83 @@ const AuthProviderInner = ({ children }: { children: React.ReactNode }) => {
             name,
             role,
           },
-        }
+        },
       });
-      
+
       if (error) {
         logger.error("User creation error:", error);
         throw error;
       }
-      
-      logger.info("User created successfully:", data);
-    } catch (error) {
+
+      if (data.user) {
+        logger.debug("User created successfully:", {
+          id: data.user.id,
+          email: data.user.email,
+        });
+        
+        toast.success("Account created!", {
+          description: "Your account has been created successfully.",
+        });
+      }
+    } catch (error: any) {
       logger.error("User creation failed:", error);
+      toast.error("Failed to create account", {
+        description: error.message || "Please try again.",
+      });
       throw error;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const logoutFn = useCallback(async () => {
-    setIsLoading(true);
+  const logout = React.useCallback(async () => {
     try {
-      setUser(null);
-      setSession(null);
+      setIsLoading(true);
+      logger.debug("User logging out");
       
       const { error } = await supabase.auth.signOut();
       if (error) {
         logger.error("Logout error:", error);
         throw error;
       }
+
+      setUser(null);
+      setSession(null);
       
-      logger.info("User logged out successfully");
-    } catch (error) {
+      toast.success("Goodbye!", {
+        description: "You have been signed out successfully.",
+      });
+    } catch (error: any) {
       logger.error("Logout failed:", error);
+      toast.error("Logout failed", {
+        description: error.message || "Please try again.",
+      });
+      throw error;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const contextValue = useMemo<AuthContextType>(() => ({
+  const contextValue = React.useMemo(() => ({
     user,
     session,
     isAuthenticated,
     isAdmin,
     isLoading,
-    login: loginFn,
-    createUser: createUserFn,
-    logout: logoutFn
-  }), [user, session, isAuthenticated, isAdmin, isLoading, loginFn, createUserFn, logoutFn]);
+    login,
+    createUser,
+    logout,
+  }), [user, session, isAuthenticated, isAdmin, isLoading, login, createUser, logout]);
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+  return React.createElement(
+    AuthContext.Provider,
+    { value: contextValue },
+    children
   );
 };
 
-// Class component wrapper to avoid hook issues during initial load
-class AuthProviderWrapper extends React.Component<{ children: React.ReactNode }> {
-  render() {
-    return React.createElement(AuthProviderInner, null, this.props.children);
-  }
-}
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  return React.createElement(AuthProviderWrapper, { children });
-};
-
-
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
