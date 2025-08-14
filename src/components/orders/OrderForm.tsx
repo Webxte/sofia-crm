@@ -623,14 +623,35 @@ ${safeSettings.companyEmail || ""}`;
                         />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          step="1"
-                          value={item.quantity}
-                          onChange={(e) => updateOrderItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                          className="p-1 h-7 text-sm text-right"
-                        />
+                        <div className="flex items-center justify-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateOrderItem(index, 'quantity', Math.max(1, item.quantity - 1))}
+                            className="h-7 w-7 p-0"
+                          >
+                            -
+                          </Button>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            step="1"
+                            value={item.quantity}
+                            onChange={(e) => updateOrderItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                            className="p-1 h-7 text-sm text-center mx-1"
+                            style={{ width: '50px' }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateOrderItem(index, 'quantity', item.quantity + 1)}
+                            className="h-7 w-7 p-0"
+                          >
+                            +
+                          </Button>
+                        </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
                         €{item.subtotal.toFixed(2)}
@@ -685,15 +706,37 @@ ${safeSettings.companyEmail || ""}`;
                          max="100"
                        />
                      </td>
-                     <td className="px-4 py-3">
-                       <Input
-                         type="number"
-                         placeholder="Quantity"
-                         value={newItem.quantity}
-                         onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
-                         min="1"
-                       />
-                     </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setNewItem(prev => ({ ...prev, quantity: Math.max(1, (prev.quantity || 1) - 1) }))}
+                            className="h-7 w-7 p-0"
+                          >
+                            -
+                          </Button>
+                          <Input
+                            type="number"
+                            placeholder="Qty"
+                            value={newItem.quantity}
+                            onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 1 })}
+                            min="1"
+                            className="mx-1 text-center"
+                            style={{ width: '50px' }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setNewItem(prev => ({ ...prev, quantity: (prev.quantity || 1) + 1 }))}
+                            className="h-7 w-7 p-0"
+                          >
+                            +
+                          </Button>
+                        </div>
+                      </td>
                     <td className="px-4 py-3 text-sm font-medium text-right">
                       €{(newItem.quantity * newItem.price).toFixed(2)}
                     </td>
