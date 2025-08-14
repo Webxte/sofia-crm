@@ -1,31 +1,33 @@
-// Completely minimal setup to test React
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+// Completely stripped down main.tsx - no external dependencies except React
+import * as React from 'react';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Test if React is working at the most basic level
-const TestComponent = () => {
-  console.log("TestComponent rendering...");
-  console.log("React object:", React);
-  console.log("React.useState:", React.useState);
-  console.log("React.useContext:", React.useContext);
-  
+// Create root using createElement to avoid any JSX issues
+const root = React.createElement.bind(null);
+
+// Simple component without hooks
+const SimpleTest = () => {
   return React.createElement('div', {
-    style: { padding: '20px', textAlign: 'center' }
+    style: { 
+      padding: '40px', 
+      textAlign: 'center',
+      fontFamily: 'Arial, sans-serif'
+    }
   }, [
-    React.createElement('h1', { key: 'h1' }, 'React Module Test'),
-    React.createElement('p', { key: 'p' }, 'Checking if React hooks are available'),
-    React.createElement('pre', { key: 'pre' }, JSON.stringify({
-      hasUseState: typeof React.useState === 'function',
-      hasUseContext: typeof React.useContext === 'function',
-      hasUseEffect: typeof React.useEffect === 'function',
-    }, null, 2))
+    React.createElement('h1', { key: 'title' }, 'React Basic Test'),
+    React.createElement('p', { key: 'desc' }, 'Testing if React loads without external dependencies'),
+    React.createElement('button', { 
+      key: 'btn',
+      onClick: () => console.log('Button clicked - React is working!')
+    }, 'Test Button')
   ]);
 };
 
-const root = createRoot(rootElement);
-root.render(React.createElement(TestComponent));
+// Use createRoot from react-dom/client
+import { createRoot } from 'react-dom/client';
+const reactRoot = createRoot(rootElement);
+reactRoot.render(React.createElement(SimpleTest));

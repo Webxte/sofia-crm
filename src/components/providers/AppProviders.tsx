@@ -8,7 +8,6 @@ import { TasksProvider } from '../../context/tasks';
 import { ProductsProvider } from '../../context/products/ProductsContext';
 import { OrdersProvider } from '../../context/orders/OrdersContext';
 import { SettingsProvider } from '../../context/settings';
-import { Toaster } from '../ui/sonner';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -32,8 +31,6 @@ export const AppProviders = ({ children }: AppProvidersProps) => (
           </ContactsProvider>
         </SettingsProvider>
       </ErrorBoundary>
-      {/* Move Toaster outside the nested providers but inside ThemeProvider */}
-      <Toaster />
     </ThemeProvider>
   </ErrorBoundary>
 );
