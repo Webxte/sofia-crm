@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -51,13 +52,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   React.useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
     
     const initializeAuth = async () => {
       try {
+        console.log("AuthContext: Starting initialization");
+        
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (mounted) {
+            console.log("AuthContext: Initialization timeout, setting loading to false");
+            setIsLoading(false);
+          }
+        }, 5000); // 5 second timeout
+        
         // Set up auth state listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           (event, currentSession) => {
             if (!mounted) return;
+            
+            console.log("AuthContext: Auth state changed", event, !!currentSession);
+            
+            // Clear timeout since we got a response
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
             
             const extendedUser = getUserWithName(currentSession?.user ?? null);
             
@@ -74,23 +93,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         );
 
         // Check current session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (mounted && currentSession) {
-          const extendedUser = getUserWithName(currentSession.user);
-          setSession(currentSession);
-          setUser(extendedUser);
+        console.log("AuthContext: Checking current session");
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("AuthContext: Error getting session:", error);
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
         }
         
         if (mounted) {
+          if (currentSession) {
+            console.log("AuthContext: Found existing session");
+            const extendedUser = getUserWithName(currentSession.user);
+            setSession(currentSession);
+            setUser(extendedUser);
+          } else {
+            console.log("AuthContext: No existing session");
+          }
+          
+          // Clear timeout and set loading to false
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
           setIsLoading(false);
         }
 
         return () => {
           subscription.unsubscribe();
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
         };
       } catch (error) {
-        console.error("Auth initialization error:", error);
+        console.error("AuthContext: Auth initialization error:", error);
         if (mounted) {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
           setIsLoading(false);
         }
       }
@@ -100,6 +142,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [getUserWithName]);
 
