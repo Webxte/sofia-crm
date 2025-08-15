@@ -69,26 +69,6 @@ interface OrderFormProps {
 }
 
 const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>(order?.items || []);
-  const [newItem, setNewItem] = useState({
-    code: "",
-    description: "",
-    price: 0,
-    quantity: 1,
-    vat: 0
-  });
-  const [productSuggestions, setProductSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
-  const [emailData, setEmailData] = useState({
-    recipient: "",
-    subject: "Your Order",
-    message: ""
-  });
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-  
   const { contacts, getContactById } = useContacts();
   const { products, getProductByCode } = useProducts();
   const { addOrder, updateOrder, sendOrderEmail, generateOrderReference } = useOrders();
@@ -104,6 +84,35 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     companyPhone: '',
     companyEmail: ''
   };
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>(order?.items || []);
+  // Always have at least one empty row for new items
+  const [newRows, setNewRows] = useState<Array<{
+    code: string;
+    description: string;
+    price: number;
+    quantity: number;
+    vat: number;
+    suggestions: any[];
+    showSuggestions: boolean;
+  }>>([{
+    code: "",
+    description: "",
+    price: 0,
+    quantity: 1,
+    vat: safeSettings.defaultVatRate || 0,
+    suggestions: [],
+    showSuggestions: false
+  }]);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
+  const [emailData, setEmailData] = useState({
+    recipient: "",
+    subject: "Your Order",
+    message: ""
+  });
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   console.log("OrderForm: Settings default VAT rate:", safeSettings.defaultVatRate);
 
@@ -129,23 +138,13 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     }
   }, [isEditing, form, generateOrderReference]);
 
+  // Initialize new rows with correct VAT rate when settings change
   useEffect(() => {
-    if (newItem.code) {
-      const product = getProductByCode(newItem.code);
-      if (product) {
-        // Use product VAT if available, otherwise use settings default (which should be 0)
-        const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
-        console.log("OrderForm: Setting VAT for product", product.code, "to", vatRate, "Product VAT:", product.vat, "Settings default:", safeSettings.defaultVatRate);
-        
-        setNewItem(prev => ({
-          ...prev,
-          description: product.description,
-          price: product.price,
-          vat: vatRate
-        }));
-      }
-    }
-  }, [newItem.code, getProductByCode, safeSettings.defaultVatRate]);
+    setNewRows(prev => prev.map(row => ({
+      ...row,
+      vat: row.vat === 0 ? safeSettings.defaultVatRate || 0 : row.vat
+    })));
+  }, [safeSettings.defaultVatRate]);
 
   useEffect(() => {
     if (form.watch("contactId")) {
@@ -159,87 +158,25 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     }
   }, [form.watch("contactId"), getContactById]);
 
-  const addItemToOrder = (productToAdd = null) => {
-    if (productToAdd) {
-      // Use product VAT if available, otherwise use settings default (0%)
-      const vatRate = productToAdd.vat !== undefined ? productToAdd.vat : safeSettings.defaultVatRate || 0;
-      console.log("OrderForm: Adding product", productToAdd.code, "with VAT rate:", vatRate);
-      
-      const orderItem: OrderItem = {
-        id: Math.random().toString(36).substring(2, 9),
-        productId: productToAdd.id,
-        code: productToAdd.code,
-        description: productToAdd.description,
-        price: productToAdd.price,
-        quantity: productToAdd.caseQuantity || 1,
-        vat: vatRate,
-        subtotal: productToAdd.price * (productToAdd.caseQuantity || 1),
-        product: productToAdd as any
-      };
-
-      setOrderItems(prev => [...prev, orderItem]);
-      return;
-    }
-
-    if (!newItem.code || !newItem.description || newItem.price <= 0 || newItem.quantity <= 0) {
-      toast.error("Invalid item", {
-        description: "Please fill all the required fields",
-      });
-      return;
-    }
-
-    const foundProduct = getProductByCode(newItem.code) || {
-      id: Math.random().toString(36).substring(2, 9),
-      code: newItem.code,
-      description: newItem.description,
-      price: newItem.price,
-      cost: newItem.price * 0.7,
-      vat: newItem.vat,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    const newOrderItem: OrderItem = {
-      id: Math.random().toString(36).substring(2, 9),
-      productId: foundProduct.id,
-      code: newItem.code,
-      description: newItem.description,
-      price: newItem.price,
-      quantity: newItem.quantity,
-      vat: newItem.vat,
-      subtotal: newItem.price * newItem.quantity,
-      product: foundProduct as any
-    };
-
-    setOrderItems(prev => [...prev, newOrderItem]);
+  const handleNewRowCodeChange = (rowIndex: number, code: string) => {
+    const updatedRows = [...newRows];
+    updatedRows[rowIndex].code = code;
     
-    // Reset with correct default VAT rate
-    setNewItem({
-      code: "",
-      description: "",
-      price: 0,
-      quantity: 1,
-      vat: safeSettings.defaultVatRate || 0
-    });
-  };
-
-  const handleProductCodeChange = (value: string) => {
-    setNewItem({ ...newItem, code: value });
-    
-    if (value.length >= 2) {
+    if (code.length >= 2) {
       const suggestions = products.filter(product => 
-        product.code.toLowerCase().includes(value.toLowerCase())
+        product.code.toLowerCase().includes(code.toLowerCase())
       ).slice(0, 10);
-      setProductSuggestions(suggestions);
-      setShowSuggestions(true);
+      updatedRows[rowIndex].suggestions = suggestions;
+      updatedRows[rowIndex].showSuggestions = true;
     } else {
-      setProductSuggestions([]);
-      setShowSuggestions(false);
+      updatedRows[rowIndex].suggestions = [];
+      updatedRows[rowIndex].showSuggestions = false;
     }
+    
+    setNewRows(updatedRows);
   };
 
-  const handleProductSelected = (product: any) => {
-    // Use product VAT if available, otherwise use settings default (0%)
+  const handleProductSelected = (rowIndex: number, product: any) => {
     const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
     const defaultQuantity = product.caseQuantity || 1;
     
@@ -257,16 +194,44 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
     setOrderItems(prev => [...prev, orderItem]);
     
-    // Reset the new item form
-    setNewItem({
+    // Reset the current row and add a new empty row if this was the last one
+    const updatedRows = [...newRows];
+    updatedRows[rowIndex] = {
       code: "",
       description: "",
       price: 0,
       quantity: 1,
-      vat: safeSettings.defaultVatRate || 0
-    });
-    setShowSuggestions(false);
-    setProductSuggestions([]);
+      vat: safeSettings.defaultVatRate || 0,
+      suggestions: [],
+      showSuggestions: false
+    };
+    
+    // Add a new empty row if this was the last one
+    if (rowIndex === newRows.length - 1) {
+      updatedRows.push({
+        code: "",
+        description: "",
+        price: 0,
+        quantity: 1,
+        vat: safeSettings.defaultVatRate || 0,
+        suggestions: [],
+        showSuggestions: false
+      });
+    }
+    
+    setNewRows(updatedRows);
+  };
+
+  const updateNewRowField = (rowIndex: number, field: string, value: any) => {
+    const updatedRows = [...newRows];
+    updatedRows[rowIndex][field] = value;
+    setNewRows(updatedRows);
+  };
+
+  const removeNewRow = (rowIndex: number) => {
+    if (newRows.length > 1) {
+      setNewRows(prev => prev.filter((_, i) => i !== rowIndex));
+    }
   };
 
   const removeItem = (index: number) => {
@@ -698,76 +663,124 @@ ${safeSettings.companyEmail || ""}`;
                     </tr>
                   ))}
                   
-                  <tr className="bg-muted/50">
-                    <td className="px-4 py-3 relative">
-                      <Input
-                        placeholder="Enter product code"
-                        value={newItem.code}
-                        onChange={(e) => handleProductCodeChange(e.target.value)}
-                        onFocus={() => {
-                          if (productSuggestions.length > 0) {
-                            setShowSuggestions(true);
-                          }
-                        }}
-                        onBlur={() => {
-                          // Delay hiding suggestions to allow for clicks
-                          setTimeout(() => setShowSuggestions(false), 200);
-                        }}
-                      />
-                      {showSuggestions && productSuggestions.length > 0 && (
-                        <div className="absolute z-50 w-full max-w-md bg-white border border-gray-200 rounded-md shadow-lg mt-1">
-                          {productSuggestions.map((product) => (
-                            <div
-                              key={product.id}
-                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                              onClick={() => handleProductSelected(product)}
-                            >
-                              <div className="font-medium text-sm">{product.code}</div>
-                              <div className="text-xs text-gray-600 truncate">{product.description}</div>
-                              <div className="text-xs text-gray-500">€{product.price} - Qty: {product.caseQuantity || 1}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center text-gray-400">
-                      {newItem.quantity || 1}
-                    </td>
-                  </tr>
-                  
-                  {/* Product suggestions based on code input */}
-                  {newItem.code.length >= 2 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-2">
-                        <div className="max-h-40 overflow-y-auto border rounded-lg bg-background">
-                          {products
-                            .filter(product => 
-                              product.code.toLowerCase().includes(newItem.code.toLowerCase())
-                            )
-                            .slice(0, 10)
-                            .map((product) => (
+                  {/* New product entry rows */}
+                  {newRows.map((row, rowIndex) => (
+                    <tr key={`new-${rowIndex}`} className="bg-muted/50">
+                      <td className="px-4 py-3 relative">
+                        <Input
+                          placeholder="Enter product code"
+                          value={row.code}
+                          onChange={(e) => handleNewRowCodeChange(rowIndex, e.target.value)}
+                          onFocus={() => {
+                            if (row.suggestions.length > 0) {
+                              const updatedRows = [...newRows];
+                              updatedRows[rowIndex].showSuggestions = true;
+                              setNewRows(updatedRows);
+                            }
+                          }}
+                          onBlur={() => {
+                            // Delay hiding suggestions to allow for clicks
+                            setTimeout(() => {
+                              const updatedRows = [...newRows];
+                              updatedRows[rowIndex].showSuggestions = false;
+                              setNewRows(updatedRows);
+                            }, 200);
+                          }}
+                        />
+                        {row.showSuggestions && row.suggestions.length > 0 && (
+                          <div className="absolute z-50 w-full max-w-md bg-white border border-gray-200 rounded-md shadow-lg mt-1">
+                            {row.suggestions.map((product) => (
                               <div
                                 key={product.id}
-                                className="p-2 hover:bg-accent cursor-pointer text-sm border-b last:border-b-0"
-                                onClick={() => {
-                                  setNewItem({
-                                    code: product.code,
-                                    description: product.description,
-                                    quantity: 1,
-                                    price: product.price,
-                                    vat: product.vat || settings?.defaultVatRate || 0
-                                  });
-                                }}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                onClick={() => handleProductSelected(rowIndex, product)}
                               >
-                                <div className="font-medium">{product.code}</div>
-                                <div className="text-muted-foreground">{product.description}</div>
-                                <div className="text-xs">Price: €{product.price.toFixed(2)} | VAT: {product.vat || settings?.defaultVatRate || 0}%</div>
+                                <div className="font-medium text-sm">{product.code}</div>
+                                <div className="text-xs text-gray-600 truncate">{product.description}</div>
+                                <div className="text-xs text-gray-500">€{product.price} - Qty: {product.caseQuantity || 1}</div>
                               </div>
                             ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Input 
+                          placeholder="Description"
+                          value={row.description}
+                          onChange={(e) => updateNewRowField(rowIndex, 'description', e.target.value)}
+                          className="p-1 h-7 text-sm"
+                        />
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01"
+                          placeholder="0.00"
+                          value={row.price || ''}
+                          onChange={(e) => updateNewRowField(rowIndex, 'price', parseFloat(e.target.value) || 0)}
+                          className="p-1 h-7 text-sm text-right"
+                        />
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01"
+                          value={row.vat || 0}
+                          onChange={(e) => updateNewRowField(rowIndex, 'vat', parseFloat(e.target.value) || 0)}
+                          className="p-1 h-7 text-sm text-right"
+                        />
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                        <div className="flex items-center justify-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateNewRowField(rowIndex, 'quantity', Math.max(1, row.quantity - 1))}
+                            className="h-7 w-7 p-0"
+                          >
+                            -
+                          </Button>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            step="1"
+                            value={row.quantity}
+                            onChange={(e) => updateNewRowField(rowIndex, 'quantity', parseInt(e.target.value) || 1)}
+                            className="p-1 h-7 text-sm text-center mx-1"
+                            style={{ width: '50px' }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateNewRowField(rowIndex, 'quantity', row.quantity + 1)}
+                            className="h-7 w-7 p-0"
+                          >
+                            +
+                          </Button>
                         </div>
                       </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-400">
+                        €{(row.price * row.quantity).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                        {newRows.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeNewRow(rowIndex)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </td>
                     </tr>
-                  )}
+                  ))}
                   
                   <tr className="border-t-2">
                     <td colSpan={5} className="px-4 py-3 text-sm font-medium text-right">
@@ -911,7 +924,7 @@ ${safeSettings.companyEmail || ""}`;
       <ProductSelector 
         open={isProductSelectorOpen}
         onOpenChange={setIsProductSelectorOpen}
-        onSelect={handleProductSelected}
+        onSelect={(product) => handleProductSelected(0, product)}
         selectedProducts={orderItems.map(item => item.product).filter(Boolean)}
       />
     </div>
