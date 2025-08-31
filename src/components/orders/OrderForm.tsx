@@ -192,7 +192,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     const updatedRows = [...newRows];
     updatedRows[rowIndex].code = code;
     
-    if (code.length >= 2 && Array.isArray(products)) {
+    if (code.length >= 1 && Array.isArray(products)) {
       // Clear existing timeout to prevent memory leaks
       if (updatedRows[rowIndex].searchTimeout) {
         clearTimeout(updatedRows[rowIndex].searchTimeout);
@@ -210,31 +210,33 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         return;
       }
       
-      // Debounce the search for suggestions
-      const searchTimeout = setTimeout(() => {
-        const suggestions = products.filter(product => 
-          product && product.code && 
-          product.code.toLowerCase().includes(code.toLowerCase())
-        ).slice(0, 10);
-        
-        // Check if there's only one suggestion and it starts with the typed code
-        if (suggestions.length === 1 && suggestions[0].code.toLowerCase().startsWith(code.toLowerCase())) {
-          // Auto-select if there's only one match that starts with the typed code
-          handleProductSelected(rowIndex, suggestions[0]);
-          return;
-        }
-        
-        setNewRows(currentRows => {
-          const newRows = [...currentRows];
-          if (newRows[rowIndex]) {
-            newRows[rowIndex].suggestions = suggestions;
-            newRows[rowIndex].showSuggestions = suggestions.length > 0;
-          }
-          return newRows;
-        });
-      }, 150); // Reduced delay for faster response
+      // Search for suggestions immediately (no debounce for better UX)
+      const searchTerm = code.toLowerCase();
       
-      updatedRows[rowIndex].searchTimeout = searchTimeout;
+      // First, find products that start with the search term
+      const startsWith = products.filter(product => 
+        product && product.code && 
+        product.code.toLowerCase().startsWith(searchTerm)
+      );
+      
+      // Then, find products that contain the search term (but don't start with it)
+      const contains = products.filter(product => 
+        product && product.code && 
+        product.code.toLowerCase().includes(searchTerm) &&
+        !product.code.toLowerCase().startsWith(searchTerm)
+      );
+      
+      // Combine results, prioritizing those that start with the search term
+      const suggestions = [...startsWith, ...contains].slice(0, 10);
+      
+      // Auto-complete if there's exactly one product that starts with the typed code
+      if (startsWith.length === 1 && code.length >= 2) {
+        handleProductSelected(rowIndex, startsWith[0]);
+        return;
+      }
+      
+      updatedRows[rowIndex].suggestions = suggestions;
+      updatedRows[rowIndex].showSuggestions = suggestions.length > 0 && code.length > 0;
     } else {
       updatedRows[rowIndex].suggestions = [];
       updatedRows[rowIndex].showSuggestions = false;
