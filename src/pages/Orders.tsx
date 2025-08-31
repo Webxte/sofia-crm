@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
@@ -24,9 +25,7 @@ const Orders = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [showAllOrders, setShowAllOrders] = useState(false);
-  const { orders } = useOrders();
-  const { contacts, getContactById, setShowAllContacts } = useContacts();
-  const { isAdmin, user } = useAuth();
+  
   const location = useLocation();
   const isMobile = useIsMobile();
   
@@ -35,100 +34,120 @@ const Orders = () => {
   
   // If on mobile, force list view which we've optimized for mobile
   const effectiveViewMode = isMobile ? "list" : viewMode;
+
+  // Add error handling for context hooks
+  let orders, contacts, getContactById, setShowAllContacts, isAdmin, user;
   
+  try {
+    const ordersContext = useOrders();
+    orders = ordersContext?.orders || [];
+    console.log("Orders context loaded successfully:", orders.length, "orders");
+  } catch (error) {
+    console.error("Error loading orders context:", error);
+    orders = [];
+  }
+
+  try {
+    const contactsContext = useContacts();
+    contacts = contactsContext?.contacts || [];
+    getContactById = contactsContext?.getContactById || (() => null);
+    setShowAllContacts = contactsContext?.setShowAllContacts || (() => {});
+    console.log("Contacts context loaded successfully:", contacts.length, "contacts");
+  } catch (error) {
+    console.error("Error loading contacts context:", error);
+    contacts = [];
+    getContactById = () => null;
+    setShowAllContacts = () => {};
+  }
+
+  try {
+    const authContext = useAuth();
+    isAdmin = authContext?.isAdmin || false;
+    user = authContext?.user || null;
+    console.log("Auth context loaded successfully:", { isAdmin, userId: user?.id });
+  } catch (error) {
+    console.error("Error loading auth context:", error);
+    isAdmin = false;
+    user = null;
+  }
+
   // Sync contact visibility with order visibility
   useEffect(() => {
-    console.log("Orders: Setting showAllContacts to:", showAllOrders);
-    setShowAllContacts(showAllOrders);
+    try {
+      console.log("Orders: Setting showAllContacts to:", showAllOrders);
+      setShowAllContacts(showAllOrders);
+    } catch (error) {
+      console.error("Error setting showAllContacts:", error);
+    }
   }, [showAllOrders, setShowAllContacts]);
   
   // Build a map of contact IDs to company names for quick lookup
-  const companyNameMap = buildCompanyNameMap(contacts);
+  let companyNameMap = {};
+  try {
+    companyNameMap = buildCompanyNameMap(contacts);
+    console.log("Company name map built successfully:", Object.keys(companyNameMap).length, "entries");
+  } catch (error) {
+    console.error("Error building company name map:", error);
+    companyNameMap = {};
+  }
   
   // Debug logging for admin functionality
   console.log("Orders page - Admin status:", { isAdmin, userId: user?.id, showAllOrders });
   console.log("Orders page - Contacts count:", contacts.length, "Orders count:", orders.length);
   
-  // Debug: Log all contact IDs that the agent has access to
-  console.log("Agent's contact IDs:", contacts.map(c => c.id));
-  
-  // Debug: Log all order contact IDs
-  console.log("Order contact IDs:", orders.map(o => ({ orderId: o.id, contactId: o.contactId, agentId: o.agentId })));
-  
-  // Debug: Find the specific missing contact IDs
-  const agentContactIds = new Set(contacts.map(c => c.id));
-  const agentOrders = orders.filter(o => o.agentId === user?.id);
-  const missingContactIdsForAgent = agentOrders
-    .filter(o => !agentContactIds.has(o.contactId))
-    .map(o => o.contactId);
-  
-  console.log("PROBLEM IDENTIFIED:");
-  console.log("Agent orders count:", agentOrders.length);
-  console.log("Agent contact IDs:", Array.from(agentContactIds));
-  console.log("Missing contact IDs for agent's orders:", missingContactIdsForAgent);
-  console.log("Orders with missing contacts (details):", 
-    agentOrders.filter(o => !agentContactIds.has(o.contactId)).map(o => ({
-      orderId: o.id,
-      reference: o.reference,
-      contactId: o.contactId,
-      agentId: o.agentId,
-      status: o.status
-    }))
-  );
-  
-  const filteredOrders = filterOrders(orders, {
-    searchQuery,
-    filterStatus,
-    contactId,
-    isAdmin: showAllOrders, // Allow both admins and agents to see all when toggle is on
-    userId: user?.id,
-    getContactById
-  });
-  
-  console.log("Filtered orders count:", filteredOrders.length, "Total orders:", orders.length);
-  
-  // Additional debugging: check which orders have missing contact info
-  const ordersWithMissingContacts = filteredOrders.filter(order => 
-    !companyNameMap[order.contactId] || companyNameMap[order.contactId] === "Unknown"
-  );
-  
-  if (ordersWithMissingContacts.length > 0) {
-    console.log("Orders with missing/unknown contacts:", ordersWithMissingContacts.map(order => ({
-      orderId: order.id,
-      contactId: order.contactId,
-      agentId: order.agentId,
-      reference: order.reference,
-      mappedName: companyNameMap[order.contactId],
-      contactExists: !!getContactById(order.contactId)
-    })));
-    
-    // Check if these missing contact IDs belong to other agents
-    const missingContactIds = ordersWithMissingContacts.map(o => o.contactId);
-    console.log("Missing contact IDs:", missingContactIds);
-    console.log("Orders that reference missing contacts but belong to current agent:", 
-      ordersWithMissingContacts.filter(o => o.agentId === user?.id)
-    );
+  let filteredOrders = [];
+  try {
+    filteredOrders = filterOrders(orders, {
+      searchQuery,
+      filterStatus,
+      contactId,
+      isAdmin: showAllOrders, // Allow both admins and agents to see all when toggle is on
+      userId: user?.id,
+      getContactById
+    });
+    console.log("Filtered orders successfully:", filteredOrders.length, "orders");
+  } catch (error) {
+    console.error("Error filtering orders:", error);
+    filteredOrders = [];
   }
   
-  const sortedOrders = [...filteredOrders].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  let sortedOrders = [];
+  try {
+    sortedOrders = [...filteredOrders].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    console.log("Sorted orders successfully:", sortedOrders.length, "orders");
+  } catch (error) {
+    console.error("Error sorting orders:", error);
+    sortedOrders = [];
+  }
 
   const handleExport = () => {
-    if (sortedOrders.length === 0) {
-      toast.error("No Orders", {
-        description: "There are no orders to export",
+    try {
+      if (sortedOrders.length === 0) {
+        toast.error("No Orders", {
+          description: "There are no orders to export",
+        });
+        return;
+      }
+      
+      const csvContent = generateOrdersCSV(sortedOrders, companyNameMap);
+      downloadOrdersCSV(csvContent, { toast });
+    } catch (error) {
+      console.error("Error exporting orders:", error);
+      toast.error("Export Error", {
+        description: "Failed to export orders",
       });
-      return;
     }
-    
-    const csvContent = generateOrdersCSV(sortedOrders, companyNameMap);
-    downloadOrdersCSV(csvContent, { toast });
   };
 
   const handleShowAllOrdersChange = (show: boolean) => {
-    console.log("Orders: Changing showAllOrders to:", show);
-    setShowAllOrders(show);
+    try {
+      console.log("Orders: Changing showAllOrders to:", show);
+      setShowAllOrders(show);
+    } catch (error) {
+      console.error("Error changing showAllOrders:", error);
+    }
   };
 
   return (
