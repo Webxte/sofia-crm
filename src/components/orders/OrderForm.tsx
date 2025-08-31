@@ -198,22 +198,41 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         clearTimeout(updatedRows[rowIndex].searchTimeout);
       }
       
-      // Debounce the search to prevent excessive filtering
+      // Immediate search for exact matches (auto-completion behavior)
+      const exactMatch = products.find(product => 
+        product && product.code && 
+        product.code.toLowerCase() === code.toLowerCase()
+      );
+      
+      if (exactMatch) {
+        // Auto-populate if exact match found
+        handleProductSelected(rowIndex, exactMatch);
+        return;
+      }
+      
+      // Debounce the search for suggestions
       const searchTimeout = setTimeout(() => {
         const suggestions = products.filter(product => 
           product && product.code && 
           product.code.toLowerCase().includes(code.toLowerCase())
         ).slice(0, 10);
         
+        // Check if there's only one suggestion and it starts with the typed code
+        if (suggestions.length === 1 && suggestions[0].code.toLowerCase().startsWith(code.toLowerCase())) {
+          // Auto-select if there's only one match that starts with the typed code
+          handleProductSelected(rowIndex, suggestions[0]);
+          return;
+        }
+        
         setNewRows(currentRows => {
           const newRows = [...currentRows];
           if (newRows[rowIndex]) {
             newRows[rowIndex].suggestions = suggestions;
-            newRows[rowIndex].showSuggestions = true;
+            newRows[rowIndex].showSuggestions = suggestions.length > 0;
           }
           return newRows;
         });
-      }, 300);
+      }, 150); // Reduced delay for faster response
       
       updatedRows[rowIndex].searchTimeout = searchTimeout;
     } else {
@@ -726,28 +745,40 @@ ${safeSettings.companyEmail || ""}`;
                               setNewRows(updatedRows);
                             }
                           }}
-                          onBlur={() => {
-                            // Delay hiding suggestions to allow for clicks
+                          onBlur={(e) => {
+                            // Delay hiding suggestions to allow for clicks, but close immediately if clicking outside
                             setTimeout(() => {
                               const updatedRows = [...newRows];
                               updatedRows[rowIndex].showSuggestions = false;
                               setNewRows(updatedRows);
-                            }, 200);
+                            }, 150);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && row.suggestions.length === 1) {
+                              e.preventDefault();
+                              handleProductSelected(rowIndex, row.suggestions[0]);
+                            } else if (e.key === 'Escape') {
+                              const updatedRows = [...newRows];
+                              updatedRows[rowIndex].showSuggestions = false;
+                              setNewRows(updatedRows);
+                            }
                           }}
                         />
                         {row.showSuggestions && row.suggestions.length > 0 && (
-                          <div className="absolute z-50 w-full max-w-md bg-white border border-gray-200 rounded-md shadow-lg mt-1">
-                            {row.suggestions.map((product) => (
-                              <div
-                                key={product.id}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                                onClick={() => handleProductSelected(rowIndex, product)}
-                              >
-                                <div className="font-medium text-sm">{product.code}</div>
-                                <div className="text-xs text-gray-600 truncate">{product.description}</div>
-                                <div className="text-xs text-gray-500">€{product.price} - Qty: {product.caseQuantity || 1}</div>
-                              </div>
-                            ))}
+                          <div className="absolute z-50 w-full max-w-md bg-popover border border-border rounded-md shadow-lg mt-1">
+                            <div className="max-h-60 overflow-y-auto">
+                              {row.suggestions.map((product) => (
+                                <div
+                                  key={product.id}
+                                  className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border last:border-b-0 transition-colors"
+                                  onClick={() => handleProductSelected(rowIndex, product)}
+                                >
+                                  <div className="font-medium text-sm text-foreground">{product.code}</div>
+                                  <div className="text-xs text-muted-foreground truncate">{product.description}</div>
+                                  <div className="text-xs text-muted-foreground">€{product.price?.toFixed(2)} - Qty: {product.caseQuantity || 1}</div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </td>
