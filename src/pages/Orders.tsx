@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
-import { useOrders } from "@/context/OrdersContext";
-import { useContacts } from "@/context/ContactsContext";
+import { useOrders } from "@/context/orders/OrdersContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { OrdersHeader } from "@/components/orders/OrdersHeader";
