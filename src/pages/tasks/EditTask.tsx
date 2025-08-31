@@ -1,6 +1,6 @@
 
 import { useParams, Navigate } from "react-router-dom";
-import { useTasks } from "@/context/TasksContext";
+import { useTasks } from "@/context/tasks";
 import TaskForm from "@/components/tasks/TaskForm";
 
 const EditTask = () => {

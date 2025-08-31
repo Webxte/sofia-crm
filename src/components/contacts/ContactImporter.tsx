@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import { Upload, Check } from "lucide-react";
 
 interface ContactImporterProps {

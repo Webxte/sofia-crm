@@ -1,6 +1,6 @@
 
 import { ControllerRenderProps } from "react-hook-form";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import {
   FormControl,
   FormItem,

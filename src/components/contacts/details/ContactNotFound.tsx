@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useContacts } from '@/context/ContactsContext';
+import { useContacts } from '@/context/contacts/ContactsContext';
 
 export const ContactNotFound = () => {
   const navigate = useNavigate();

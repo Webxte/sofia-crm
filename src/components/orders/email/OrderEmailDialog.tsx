@@ -2,7 +2,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmailForm } from "./EmailForm";
 import { useOrderEmail } from "./useOrderEmail";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { getEmailPlaceholders, fillEmailTemplate } from "./emailUtils";

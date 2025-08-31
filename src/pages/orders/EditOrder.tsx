@@ -1,18 +1,22 @@
 
 import { useParams, Navigate } from "react-router-dom";
-import { useOrders } from "@/context/OrdersContext";
-import OrderForm from "@/components/orders/OrderForm";
+import { useOrders } from "@/context/orders/OrdersContext";
+import { SafeOrderForm } from "@/components/orders/SafeOrderForm";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 import { OrderEmailDialog } from "@/components/orders/email/OrderEmailDialog";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import { useState } from "react";
 
 const EditOrder = () => {
   const { id } = useParams();
-  const { getOrderById } = useOrders();
-  const { getContactById } = useContacts();
+  const ordersContext = useOrders();
+  const contactsContext = useContacts();
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  
+  // Safe destructuring with null checks
+  const { getOrderById = () => undefined } = ordersContext || {};
+  const { getContactById = () => undefined } = contactsContext || {};
   
   const order = id ? getOrderById(id) : undefined;
   
@@ -34,7 +38,7 @@ const EditOrder = () => {
           <Mail className="mr-2 h-4 w-4" /> Send Order Email
         </Button>
       </div>
-      <OrderForm order={order} isEditing />
+      <SafeOrderForm order={order} isEditing />
       
       <OrderEmailDialog
         orderId={order.id}

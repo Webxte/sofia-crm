@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useMeetings } from '@/context/meetings';
-import { useContacts } from '@/context/ContactsContext';
+import { useContacts } from '@/context/contacts/ContactsContext';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Helmet } from 'react-helmet-async';

@@ -5,8 +5,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Order, OrderItem } from "@/types";
-import { useContacts } from "@/context/ContactsContext";
-import { useOrders } from "@/context/OrdersContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
+import { useOrders } from "@/context/orders/OrdersContext";
 import { useProducts } from "@/context/products/ProductsContext";
 import { useSettings } from "@/context/settings";
 import { useAuth } from "@/context/AuthContext";
@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ProductSelector } from "./ProductSelector";
+import { useOrderFormCleanup } from "./OrderFormCleanup";
 
 const orderSchema = z.object({
   contactId: z.string({
@@ -69,12 +70,23 @@ interface OrderFormProps {
 }
 
 const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
-  const { contacts, getContactById } = useContacts();
-  const { products, getProductByCode } = useProducts();
-  const { addOrder, updateOrder, sendOrderEmail, generateOrderReference } = useOrders();
-  const { settings } = useSettings();
+  const contactsContext = useContacts();
+  const productsContext = useProducts();
+  const ordersContext = useOrders();
+  const settingsContext = useSettings();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Safe destructuring with fallbacks to prevent crashes
+  const { contacts = [], getContactById = () => undefined } = contactsContext || {};
+  const { products = [], getProductByCode = () => undefined } = productsContext || {};
+  const { 
+    addOrder = async () => {}, 
+    updateOrder = async () => {}, 
+    sendOrderEmail = async () => false, 
+    generateOrderReference = () => `ORD-${Date.now()}` 
+  } = ordersContext || {};
+  const { settings } = settingsContext || {};
 
   // Safe access to settings with fallbacks - use 0% as default VAT rate
   const safeSettings = settings || {
@@ -96,6 +108,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     vat: number;
     suggestions: any[];
     showSuggestions: boolean;
+    searchTimeout?: NodeJS.Timeout;
   }>>([{
     code: "",
     description: "",
@@ -116,6 +129,9 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
   console.log("OrderForm: Settings default VAT rate:", safeSettings.defaultVatRate);
 
+  // Cleanup timeouts to prevent memory leaks
+  useOrderFormCleanup({ newRows });
+
   const defaultValues: Partial<OrderFormValues> = {
     contactId: contactId || order?.contactId || "",
     date: order?.date ? new Date(order.date) : new Date(),
@@ -131,10 +147,19 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   });
 
   useEffect(() => {
-    if (!isEditing && !form.getValues("reference")) {
-      const newReference = generateOrderReference();
-      form.setValue("reference", newReference);
-      console.log("OrderForm: Generated new reference:", newReference);
+    if (!isEditing && !form.getValues("reference") && generateOrderReference) {
+      try {
+        const newReference = generateOrderReference();
+        if (newReference) {
+          form.setValue("reference", newReference);
+          console.log("OrderForm: Generated new reference:", newReference);
+        }
+      } catch (error) {
+        console.error("Failed to generate order reference:", error);
+        // Fallback reference generation
+        const fallbackRef = `ORD-${Date.now().toString().slice(-6)}`;
+        form.setValue("reference", fallbackRef);
+      }
     }
   }, [isEditing, form, generateOrderReference]);
 
@@ -147,13 +172,18 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   }, [safeSettings.defaultVatRate]);
 
   useEffect(() => {
-    if (form.watch("contactId")) {
-      const contact = getContactById(form.watch("contactId"));
-      if (contact && contact.email) {
-        setEmailData(prev => ({
-          ...prev,
-          recipient: contact.email
-        }));
+    const contactId = form.watch("contactId");
+    if (contactId && getContactById) {
+      try {
+        const contact = getContactById(contactId);
+        if (contact && contact.email) {
+          setEmailData(prev => ({
+            ...prev,
+            recipient: contact.email
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to get contact by ID:", error);
       }
     }
   }, [form.watch("contactId"), getContactById]);
@@ -162,12 +192,30 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     const updatedRows = [...newRows];
     updatedRows[rowIndex].code = code;
     
-    if (code.length >= 2) {
-      const suggestions = products.filter(product => 
-        product.code.toLowerCase().includes(code.toLowerCase())
-      ).slice(0, 10);
-      updatedRows[rowIndex].suggestions = suggestions;
-      updatedRows[rowIndex].showSuggestions = true;
+    if (code.length >= 2 && Array.isArray(products)) {
+      // Clear existing timeout to prevent memory leaks
+      if (updatedRows[rowIndex].searchTimeout) {
+        clearTimeout(updatedRows[rowIndex].searchTimeout);
+      }
+      
+      // Debounce the search to prevent excessive filtering
+      const searchTimeout = setTimeout(() => {
+        const suggestions = products.filter(product => 
+          product && product.code && 
+          product.code.toLowerCase().includes(code.toLowerCase())
+        ).slice(0, 10);
+        
+        setNewRows(currentRows => {
+          const newRows = [...currentRows];
+          if (newRows[rowIndex]) {
+            newRows[rowIndex].suggestions = suggestions;
+            newRows[rowIndex].showSuggestions = true;
+          }
+          return newRows;
+        });
+      }, 300);
+      
+      updatedRows[rowIndex].searchTimeout = searchTimeout;
     } else {
       updatedRows[rowIndex].suggestions = [];
       updatedRows[rowIndex].showSuggestions = false;

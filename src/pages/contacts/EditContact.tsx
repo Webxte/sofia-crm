@@ -1,6 +1,6 @@
 
 import { useParams, Navigate } from "react-router-dom";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import ContactForm from "@/components/contacts/ContactForm";
 
 const EditContact = () => {

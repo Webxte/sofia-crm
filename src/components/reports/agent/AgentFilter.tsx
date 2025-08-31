@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMeetings } from "@/context/meetings";
-import { useOrders } from "@/context/OrdersContext";
-import { useContacts } from "@/context/ContactsContext";
-import { useTasks } from "@/context/TasksContext";
+import { useOrders } from "@/context/orders/OrdersContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
+import { useTasks } from "@/context/tasks";
 
 interface AgentFilterProps {
   selectedAgent: string | null;

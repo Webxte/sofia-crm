@@ -6,7 +6,7 @@ import { ContactOrders } from "./history/ContactOrders";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarClock, ShoppingBag } from "lucide-react";
 import { useMeetings } from "@/context/meetings";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders } from "@/context/orders/OrdersContext";
 
 interface ContactHistoryProps {
   contact: Contact;

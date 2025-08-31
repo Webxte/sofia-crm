@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { useTasks } from '@/context/TasksContext';
-import { useContacts } from '@/context/ContactsContext';
+import { useTasks } from '@/context/tasks';
+import { useContacts } from '@/context/contacts/ContactsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';

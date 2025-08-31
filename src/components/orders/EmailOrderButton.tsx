@@ -4,7 +4,7 @@ import { Mail } from "lucide-react";
 import { useState } from "react";
 import { Order } from "@/types";
 import { OrderEmailDialog } from "./email/OrderEmailDialog";
-import { useContacts } from "@/context/ContactsContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 
 interface EmailOrderButtonProps {
   order: Order;

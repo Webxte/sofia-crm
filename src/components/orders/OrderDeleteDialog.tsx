@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders } from "@/context/orders/OrdersContext";
 import { toast } from "sonner";
 
 interface OrderDeleteDialogProps {

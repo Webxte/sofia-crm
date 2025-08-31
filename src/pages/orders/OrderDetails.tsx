@@ -1,7 +1,7 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useOrders } from "@/context/OrdersContext";
-import { useContacts } from "@/context/ContactsContext";
+import { useOrders } from "@/context/orders/OrdersContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Mail } from "lucide-react";
 import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";

@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMeetings } from "@/context/meetings";
-import { useOrders } from "@/context/OrdersContext";
-import { useContacts } from "@/context/ContactsContext";
-import { useTasks } from "@/context/TasksContext";
+import { useOrders } from "@/context/orders/OrdersContext";
+import { useContacts } from "@/context/contacts/ContactsContext";
+import { useTasks } from "@/context/tasks";
 import { subMonths } from "date-fns";
 import { AgentFilter } from "./agent/AgentFilter";
 import { AgentOverviewCards } from "./agent/AgentOverviewCards";

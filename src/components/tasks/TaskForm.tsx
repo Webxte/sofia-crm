@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Task } from "@/types";
-import { useTasks } from "@/context/TasksContext";
+import { useTasks } from "@/context/tasks";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
