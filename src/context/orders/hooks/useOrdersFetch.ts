@@ -51,7 +51,7 @@ export const useOrdersFetch = () => {
         const orderItems = (itemsData || [])
           .filter(item => item.order_id === order.id)
           .map(item => {
-            // Get the corresponding product
+            // Get the corresponding product - use current getProductById function
             const product = getProductById(item.product_id) || {
               id: item.product_id,
               code: item.code,
@@ -104,7 +104,7 @@ export const useOrdersFetch = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, getProductById]);
+  }, [isAuthenticated, user]); // Removed getProductById from dependencies to prevent infinite loop
 
   // Auto-fetch when authentication state changes
   useEffect(() => {
