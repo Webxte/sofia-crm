@@ -28,16 +28,27 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   const contact = order ? getContactById(order.contactId) : null;
   const contactName = contact?.fullName || contact?.company || "Customer";
   
-  // Generate default values for the form
+  // Safe settings access with fallbacks
+  const safeSettings = settings || {
+    defaultEmailSubject: '',
+    defaultEmailMessage: '',
+    defaultContactEmailMessage: '',
+    companyName: '',
+    companyEmail: '',
+    emailFooter: '',
+    emailSenderName: ''
+  };
+  
+  // Generate default values for the form with null safety
   const defaultValues = {
     recipient: customerEmail || contact?.email || "",
     cc: "",
-    subject: generateDefaultEmailSubject(reference, settings.defaultEmailSubject),
+    subject: generateDefaultEmailSubject(reference, safeSettings.defaultEmailSubject || ''),
     message: generateDefaultEmailContent(
       order, 
       contactName, 
       reference, 
-      settings.defaultEmailMessage ? settings.defaultEmailMessage : undefined
+      safeSettings.defaultEmailMessage || undefined
     ),
   };
   

@@ -31,22 +31,22 @@ export const DirectSettingsProvider = ({ children }: DirectSettingsProviderProps
         companyAddress: '',
         companyPhone: '',
         companyEmail: '',
-        defaultEmailSubject: '',
-        defaultEmailMessage: '',
-        defaultContactEmailMessage: '',
+        defaultEmailSubject: 'Order Details',
+        defaultEmailMessage: 'Please find your order details below.',
+        defaultContactEmailMessage: 'Thank you for your inquiry.',
         defaultTermsAndConditions: '',
         customLinks: [],
         catalogUrl: '',
         priceListUrl: '',
-        emailFooter: '',
-        emailSenderName: '',
+        emailFooter: 'This is an automated message from your CRM system.',
+        emailSenderName: 'CRM System',
         termsEnabled: false,
         defaultVatRate: 0,
         bulkEmailTemplate: '',
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      loading: false,
+      loading: true,
       updateSettings: async () => {},
       refreshSettings: async () => {},
       fetchSettings: async () => {}
@@ -81,7 +81,29 @@ const SettingsProviderWithHooks = ({
   const operations = {
     ...fetchOperations,
     ...updateOperations,
-    fetchSettings: fetchOperations.refreshSettings
+    fetchSettings: fetchOperations.refreshSettings,
+    // Ensure settings always has fallback values
+    settings: fetchOperations.settings || {
+      id: '',
+      companyName: '',
+      companyAddress: '',
+      companyPhone: '',
+      companyEmail: '',
+      defaultEmailSubject: 'Order Details',
+      defaultEmailMessage: 'Please find your order details below.',
+      defaultContactEmailMessage: 'Thank you for your inquiry.',
+      defaultTermsAndConditions: '',
+      customLinks: [],
+      catalogUrl: '',
+      priceListUrl: '',
+      emailFooter: 'This is an automated message from your CRM system.',
+      emailSenderName: 'CRM System',
+      termsEnabled: false,
+      defaultVatRate: 0,
+      bulkEmailTemplate: '',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
   };
 
   // Fetch settings when authenticated

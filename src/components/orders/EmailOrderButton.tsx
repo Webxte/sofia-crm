@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Order } from "@/types";
 import { OrderEmailDialog } from "./email/OrderEmailDialog";
 import { useContacts } from "@/context/contacts/ContactsContext";
+import OrderEmailErrorBoundary from "./OrderEmailErrorBoundary";
 
 interface EmailOrderButtonProps {
   order: Order;
@@ -37,13 +38,15 @@ export const EmailOrderButton = ({ order, size }: EmailOrderButtonProps) => {
         )}
       </Button>
 
-      <OrderEmailDialog
-        orderId={order.id}
-        reference={order.reference}
-        customerEmail={contact?.email}
-        open={open}
-        onOpenChange={setOpen}
-      />
+      <OrderEmailErrorBoundary onRetry={() => setOpen(false)}>
+        <OrderEmailDialog
+          orderId={order.id}
+          reference={order.reference}
+          customerEmail={contact?.email}
+          open={open}
+          onOpenChange={setOpen}
+        />
+      </OrderEmailErrorBoundary>
     </>
   );
 };
