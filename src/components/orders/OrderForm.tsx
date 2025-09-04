@@ -198,19 +198,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         clearTimeout(updatedRows[rowIndex].searchTimeout);
       }
       
-      // Immediate search for exact matches (auto-completion behavior)
-      const exactMatch = products.find(product => 
-        product && product.code && 
-        product.code.toLowerCase() === code.toLowerCase()
-      );
-      
-      if (exactMatch) {
-        // Auto-populate if exact match found
-        handleProductSelected(rowIndex, exactMatch);
-        return;
-      }
-      
-      // Search for suggestions immediately (no debounce for better UX)
       const searchTerm = code.toLowerCase();
       
       // First, find products that start with the search term
@@ -219,7 +206,25 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         product.code.toLowerCase().startsWith(searchTerm)
       );
       
-      // Then, find products that contain the search term (but don't start with it)
+      // Check for exact match first
+      const exactMatch = products.find(product => 
+        product && product.code && 
+        product.code.toLowerCase() === searchTerm
+      );
+      
+      if (exactMatch) {
+        // Auto-populate if exact match found
+        handleProductSelected(rowIndex, exactMatch);
+        return;
+      }
+      
+      // Auto-complete if there's exactly one product that starts with the typed code (even with 1+ characters)
+      if (startsWith.length === 1 && code.length >= 1) {
+        handleProductSelected(rowIndex, startsWith[0]);
+        return;
+      }
+      
+      // If multiple matches, show suggestions
       const contains = products.filter(product => 
         product && product.code && 
         product.code.toLowerCase().includes(searchTerm) &&
@@ -228,12 +233,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       
       // Combine results, prioritizing those that start with the search term
       const suggestions = [...startsWith, ...contains].slice(0, 10);
-      
-      // Auto-complete if there's exactly one product that starts with the typed code
-      if (startsWith.length === 1 && code.length >= 2) {
-        handleProductSelected(rowIndex, startsWith[0]);
-        return;
-      }
       
       updatedRows[rowIndex].suggestions = suggestions;
       updatedRows[rowIndex].showSuggestions = suggestions.length > 0 && code.length > 0;
