@@ -109,6 +109,9 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     suggestions: any[];
     showSuggestions: boolean;
     searchTimeout?: NodeJS.Timeout;
+    subtotal?: number;
+    productId?: string;
+    product?: any;
   }>>([{
     code: "",
     description: "",
@@ -245,33 +248,32 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   };
 
   const handleProductSelected = (rowIndex: number, product: any) => {
+    console.log("Product selected:", product);
     const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
     const defaultQuantity = product.caseQuantity || 1;
     
-    const orderItem: OrderItem = {
-      id: Math.random().toString(36).substring(2, 9),
-      productId: product.id,
+    console.log("Populating row with:", {
+      code: product.code,
+      description: product.description,
+      price: product.price,
+      quantity: defaultQuantity,
+      vat: vatRate,
+      subtotal: product.price * defaultQuantity
+    });
+    
+    // Populate the current row with product data instead of clearing it
+    const updatedRows = [...newRows];
+    updatedRows[rowIndex] = {
       code: product.code,
       description: product.description,
       price: product.price,
       quantity: defaultQuantity,
       vat: vatRate,
       subtotal: product.price * defaultQuantity,
-      product: product as any
-    };
-
-    setOrderItems(prev => [...prev, orderItem]);
-    
-    // Reset the current row and add a new empty row if this was the last one
-    const updatedRows = [...newRows];
-    updatedRows[rowIndex] = {
-      code: "",
-      description: "",
-      price: 0,
-      quantity: 1,
-      vat: safeSettings.defaultVatRate || 0,
       suggestions: [],
-      showSuggestions: false
+      showSuggestions: false,
+      productId: product.id,
+      product: product
     };
     
     // Add a new empty row if this was the last one
@@ -818,7 +820,12 @@ ${safeSettings.companyEmail || ""}`;
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => updateNewRowField(rowIndex, 'quantity', Math.max(1, row.quantity - 1))}
+                            onClick={() => {
+                              updateNewRowField(rowIndex, 'quantity', Math.max(1, row.quantity - 1));
+                              if (row.price) {
+                                updateNewRowField(rowIndex, 'subtotal', row.price * Math.max(1, row.quantity - 1));
+                              }
+                            }}
                             className="h-7 w-7 p-0"
                           >
                             -
@@ -828,7 +835,13 @@ ${safeSettings.companyEmail || ""}`;
                             min="1" 
                             step="1"
                             value={row.quantity}
-                            onChange={(e) => updateNewRowField(rowIndex, 'quantity', parseInt(e.target.value) || 1)}
+                            onChange={(e) => {
+                              const quantity = parseInt(e.target.value) || 1;
+                              updateNewRowField(rowIndex, 'quantity', quantity);
+                              if (row.price) {
+                                updateNewRowField(rowIndex, 'subtotal', row.price * quantity);
+                              }
+                            }}
                             className="p-1 h-7 text-sm text-center mx-1"
                             style={{ width: '50px' }}
                           />
@@ -836,7 +849,12 @@ ${safeSettings.companyEmail || ""}`;
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => updateNewRowField(rowIndex, 'quantity', row.quantity + 1)}
+                            onClick={() => {
+                              updateNewRowField(rowIndex, 'quantity', row.quantity + 1);
+                              if (row.price) {
+                                updateNewRowField(rowIndex, 'subtotal', row.price * (row.quantity + 1));
+                              }
+                            }}
                             className="h-7 w-7 p-0"
                           >
                             +
@@ -844,10 +862,48 @@ ${safeSettings.companyEmail || ""}`;
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-400">
-                        €{(row.price * row.quantity).toFixed(2)}
+                        €{((row.subtotal || (row.price * row.quantity)) || 0).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                        {newRows.length > 1 && (
+                        {row.productId ? (
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              // Convert new row to order item
+                              const orderItem: OrderItem = {
+                                id: Math.random().toString(36).substring(2, 9),
+                                productId: row.productId!,
+                                code: row.code,
+                                description: row.description,
+                                price: row.price,
+                                quantity: row.quantity,
+                                vat: row.vat,
+                                subtotal: row.subtotal || (row.price * row.quantity),
+                                product: row.product
+                              };
+                              
+                              setOrderItems(prev => [...prev, orderItem]);
+                              
+                              // Clear this row
+                              const updatedRows = [...newRows];
+                              updatedRows[rowIndex] = {
+                                code: "",
+                                description: "",
+                                price: 0,
+                                quantity: 1,
+                                vat: safeSettings.defaultVatRate || 0,
+                                suggestions: [],
+                                showSuggestions: false
+                              };
+                              setNewRows(updatedRows);
+                            }}
+                            className="h-7 px-2"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        ) : newRows.length > 1 ? (
                           <Button
                             type="button"
                             variant="ghost"
@@ -857,7 +913,7 @@ ${safeSettings.companyEmail || ""}`;
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
-                        )}
+                        ) : null}
                       </td>
                     </tr>
                   ))}
