@@ -99,6 +99,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderItems, setOrderItems] = useState<OrderItem[]>(order?.items || []);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   // Always have at least one empty row for new items
   const [newRows, setNewRows] = useState<Array<{
     code: string;
@@ -234,8 +235,10 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         !product.code.toLowerCase().startsWith(searchTerm)
       );
       
-      // Combine results, prioritizing those that start with the search term
-      const suggestions = [...startsWith, ...contains].slice(0, 10);
+      // Combine results, prioritizing those that start with the search term, sorted A-Z
+      const sortedStartsWith = startsWith.sort((a, b) => a.code.localeCompare(b.code));
+      const sortedContains = contains.sort((a, b) => a.code.localeCompare(b.code));
+      const suggestions = [...sortedStartsWith, ...sortedContains].slice(0, 10);
       
       updatedRows[rowIndex].suggestions = suggestions;
       updatedRows[rowIndex].showSuggestions = suggestions.length > 0 && code.length > 0;
@@ -244,6 +247,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
       updatedRows[rowIndex].showSuggestions = false;
     }
     
+    setHighlightedIndex(-1);
     setNewRows(updatedRows);
   };
 
@@ -445,10 +449,9 @@ ${safeSettings.companyEmail || ""}`;
         });
         navigate("/orders");
       } else {
+        console.log("OrderForm: Submitting new order with items:", orderItems.length);
         await addOrder(orderData);
-        toast.success("Success", {
-          description: "Order created successfully",
-        });
+        // addOrder handles success toast internally
         navigate("/orders");
       }
     } catch (error) {
@@ -748,36 +751,66 @@ ${safeSettings.companyEmail || ""}`;
                                 }, 150);
                               }}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter' && row.suggestions.length === 1) {
+                                if (e.key === 'ArrowDown') {
                                   e.preventDefault();
-                                  handleProductSelected(rowIndex, row.suggestions[0]);
+                                  if (!row.showSuggestions && row.suggestions.length > 0) {
+                                    const updatedRows = [...newRows];
+                                    updatedRows[rowIndex].showSuggestions = true;
+                                    setNewRows(updatedRows);
+                                  }
+                                  setHighlightedIndex(prev => 
+                                    prev < row.suggestions.length - 1 ? prev + 1 : 0
+                                  );
+                                } else if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  setHighlightedIndex(prev => 
+                                    prev > 0 ? prev - 1 : row.suggestions.length - 1
+                                  );
+                                } else if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (highlightedIndex >= 0 && highlightedIndex < row.suggestions.length) {
+                                    handleProductSelected(rowIndex, row.suggestions[highlightedIndex]);
+                                    setHighlightedIndex(-1);
+                                  } else if (row.suggestions.length === 1) {
+                                    handleProductSelected(rowIndex, row.suggestions[0]);
+                                  }
                                 } else if (e.key === 'Escape') {
                                   const updatedRows = [...newRows];
                                   updatedRows[rowIndex].showSuggestions = false;
                                   setNewRows(updatedRows);
+                                  setHighlightedIndex(-1);
                                 }
                               }}
                             />
                             {row.showSuggestions && row.suggestions.length > 0 && (
                               <div className="absolute z-50 left-0 right-0 bg-popover border border-border rounded-md shadow-lg mt-1">
                                 <div className="max-h-60 overflow-y-auto">
-                                  {row.suggestions.map((product) => (
-                                    <div
-                                      key={product.id}
-                                      className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border last:border-b-0 transition-colors flex justify-between items-center"
-                                      onMouseDown={(e) => e.preventDefault()}
-                                      onClick={() => handleProductSelected(rowIndex, product)}
-                                    >
-                                      <div className="flex gap-2 items-center min-w-0">
-                                        <span className="font-medium text-sm text-foreground whitespace-nowrap">{product.code}</span>
-                                        <span className="text-sm text-muted-foreground truncate">{product.description}</span>
+                                {row.suggestions.map((product, sIdx) => (
+                                      <div
+                                        key={product.id}
+                                        className={cn(
+                                          "px-3 py-1.5 cursor-pointer border-b border-border last:border-b-0 transition-colors flex justify-between items-center",
+                                          sIdx === highlightedIndex 
+                                            ? "bg-accent text-accent-foreground" 
+                                            : "hover:bg-accent hover:text-accent-foreground"
+                                        )}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onMouseEnter={() => setHighlightedIndex(sIdx)}
+                                        onClick={() => {
+                                          handleProductSelected(rowIndex, product);
+                                          setHighlightedIndex(-1);
+                                        }}
+                                      >
+                                        <div className="flex gap-2 items-center min-w-0">
+                                          <span className="font-medium text-xs text-foreground whitespace-nowrap">{product.code}</span>
+                                          <span className="text-xs text-muted-foreground truncate">{product.description}</span>
+                                        </div>
+                                        <div className="flex gap-3 text-[10px] text-muted-foreground whitespace-nowrap ml-4">
+                                          <span>€{product.price?.toFixed(2)}</span>
+                                          <span>Qty: {product.caseQuantity || 1}</span>
+                                        </div>
                                       </div>
-                                      <div className="flex gap-4 text-xs text-muted-foreground whitespace-nowrap ml-4">
-                                        <span>€{product.price?.toFixed(2)}</span>
-                                        <span>Qty: {product.caseQuantity || 1}</span>
-                                      </div>
-                                    </div>
-                                  ))}
+                                    ))}
                                 </div>
                               </div>
                             )}
