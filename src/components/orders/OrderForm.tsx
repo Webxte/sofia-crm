@@ -250,7 +250,9 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   const handleProductSelected = (rowIndex: number, product: any) => {
     console.log("Product selected:", product);
     const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
-    const quantity = newRows[rowIndex]?.quantity || product.caseQuantity || 1;
+    // Use product's caseQuantity as default, only override if user manually changed quantity
+    const rowQty = newRows[rowIndex]?.quantity;
+    const quantity = (rowQty && rowQty !== 1) ? rowQty : (product.caseQuantity || 1);
     
     // Immediately add as an order item
     const orderItem: OrderItem = {
@@ -640,48 +642,48 @@ ${safeSettings.companyEmail || ""}`;
                 <tbody className="bg-card divide-y divide-border">
                   {orderItems.map((item, index) => (
                     <tr key={index}>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         <Input 
                           value={item.code}
                           onChange={(e) => updateOrderItem(index, 'code', e.target.value)}
-                          className="p-1 h-7 text-sm"
+                          className="p-1 h-7 text-xs"
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-2 py-2">
                         <Input 
                           value={item.description}
                           onChange={(e) => updateOrderItem(index, 'description', e.target.value)}
-                          className="p-1 h-7 text-sm"
+                          className="p-1 h-7 text-xs"
                         />
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                      <td className="px-2 py-2 whitespace-nowrap text-right">
                         <Input 
                           type="number" 
                           min="0" 
                           step="0.01"
                           value={item.price}
                           onChange={(e) => updateOrderItem(index, 'price', parseFloat(e.target.value) || 0)}
-                          className="p-1 h-7 text-sm text-right"
+                          className="p-1 h-7 text-xs text-right"
                         />
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                      <td className="px-2 py-2 whitespace-nowrap text-right">
                         <Input 
                           type="number" 
                           min="0" 
                           step="0.01"
                           value={item.vat || 0}
                           onChange={(e) => updateOrderItem(index, 'vat', parseFloat(e.target.value) || 0)}
-                          className="p-1 h-7 text-sm text-right"
+                          className="p-1 h-7 text-xs text-right w-16"
                         />
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                      <td className="px-2 py-2 whitespace-nowrap text-right">
                         <div className="flex items-center justify-center">
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => updateOrderItem(index, 'quantity', Math.max(1, item.quantity - 1))}
-                            className="h-7 w-7 p-0"
+                            className="h-6 w-6 p-0 text-xs"
                           >
                             -
                           </Button>
@@ -691,24 +693,23 @@ ${safeSettings.companyEmail || ""}`;
                             step="1"
                             value={item.quantity}
                             onChange={(e) => updateOrderItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                            className="p-1 h-7 text-sm text-center mx-1"
-                            style={{ width: '50px' }}
+                            className="p-1 h-7 text-xs text-center mx-1 w-12"
                           />
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => updateOrderItem(index, 'quantity', item.quantity + 1)}
-                            className="h-7 w-7 p-0"
+                            className="h-6 w-6 p-0 text-xs"
                           >
                             +
                           </Button>
                         </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                      <td className="px-2 py-2 whitespace-nowrap text-xs text-right">
                         €{item.subtotal.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                      <td className="px-2 py-2 whitespace-nowrap text-xs text-center">
                         <Button
                           type="button"
                           variant="ghost"
