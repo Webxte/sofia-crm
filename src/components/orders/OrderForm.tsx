@@ -221,8 +221,8 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         return;
       }
       
-      // Auto-complete if there's exactly one product that starts with the typed code (even with 1+ characters)
-      if (startsWith.length === 1 && code.length >= 1) {
+      // Auto-complete if there's exactly one product that starts with the typed code (need at least 2 chars)
+      if (startsWith.length === 1 && code.length >= 3) {
         handleProductSelected(rowIndex, startsWith[0]);
         return;
       }
@@ -250,45 +250,34 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   const handleProductSelected = (rowIndex: number, product: any) => {
     console.log("Product selected:", product);
     const vatRate = product.vat !== undefined ? product.vat : safeSettings.defaultVatRate || 0;
-    const defaultQuantity = product.caseQuantity || 1;
+    const quantity = newRows[rowIndex]?.quantity || product.caseQuantity || 1;
     
-    console.log("Populating row with:", {
-      code: product.code,
-      description: product.description,
-      price: product.price,
-      quantity: defaultQuantity,
-      vat: vatRate,
-      subtotal: product.price * defaultQuantity
-    });
-    
-    // Populate the current row with product data instead of clearing it
-    const updatedRows = [...newRows];
-    updatedRows[rowIndex] = {
-      code: product.code,
-      description: product.description,
-      price: product.price,
-      quantity: defaultQuantity,
-      vat: vatRate,
-      subtotal: product.price * defaultQuantity,
-      suggestions: [],
-      showSuggestions: false,
+    // Immediately add as an order item
+    const orderItem: OrderItem = {
+      id: Math.random().toString(36).substring(2, 9),
       productId: product.id,
+      code: product.code,
+      description: product.description,
+      price: product.price,
+      quantity,
+      vat: vatRate,
+      subtotal: product.price * quantity,
       product: product
     };
     
-    // Add a new empty row if this was the last one
-    if (rowIndex === newRows.length - 1) {
-      updatedRows.push({
-        code: "",
-        description: "",
-        price: 0,
-        quantity: 1,
-        vat: safeSettings.defaultVatRate || 0,
-        suggestions: [],
-        showSuggestions: false
-      });
-    }
+    setOrderItems(prev => [...prev, orderItem]);
     
+    // Reset the current new row
+    const updatedRows = [...newRows];
+    updatedRows[rowIndex] = {
+      code: "",
+      description: "",
+      price: 0,
+      quantity: 1,
+      vat: safeSettings.defaultVatRate || 0,
+      suggestions: [],
+      showSuggestions: false
+    };
     setNewRows(updatedRows);
   };
 
@@ -733,187 +722,88 @@ ${safeSettings.companyEmail || ""}`;
                     </tr>
                   ))}
                   
-                  {/* New product entry rows */}
+                  {/* New product entry row - single wide input like published app */}
                   {newRows.map((row, rowIndex) => (
                     <tr key={`new-${rowIndex}`} className="bg-muted/50">
-                      <td className="px-4 py-3 relative">
-                        <Input
-                          placeholder="Enter product code"
-                          value={row.code}
-                          onChange={(e) => handleNewRowCodeChange(rowIndex, e.target.value)}
-                          onFocus={() => {
-                            if (row.suggestions.length > 0) {
-                              const updatedRows = [...newRows];
-                              updatedRows[rowIndex].showSuggestions = true;
-                              setNewRows(updatedRows);
-                            }
-                          }}
-                          onBlur={(e) => {
-                            // Delay hiding suggestions to allow for clicks, but close immediately if clicking outside
-                            setTimeout(() => {
-                              const updatedRows = [...newRows];
-                              updatedRows[rowIndex].showSuggestions = false;
-                              setNewRows(updatedRows);
-                            }, 150);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && row.suggestions.length === 1) {
-                              e.preventDefault();
-                              handleProductSelected(rowIndex, row.suggestions[0]);
-                            } else if (e.key === 'Escape') {
-                              const updatedRows = [...newRows];
-                              updatedRows[rowIndex].showSuggestions = false;
-                              setNewRows(updatedRows);
-                            }
-                          }}
-                        />
-                        {row.showSuggestions && row.suggestions.length > 0 && (
-                          <div className="absolute z-50 w-full max-w-md bg-popover border border-border rounded-md shadow-lg mt-1">
-                            <div className="max-h-60 overflow-y-auto">
-                              {row.suggestions.map((product) => (
-                                <div
-                                  key={product.id}
-                                  className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border last:border-b-0 transition-colors"
-                                  onClick={() => handleProductSelected(rowIndex, product)}
-                                >
-                                  <div className="font-medium text-sm text-foreground">{product.code}</div>
-                                  <div className="text-xs text-muted-foreground truncate">{product.description}</div>
-                                  <div className="text-xs text-muted-foreground">€{product.price?.toFixed(2)} - Qty: {product.caseQuantity || 1}</div>
+                      <td colSpan={5} className="px-4 py-3 relative">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              placeholder="Enter product code"
+                              value={row.code}
+                              onChange={(e) => handleNewRowCodeChange(rowIndex, e.target.value)}
+                              onFocus={() => {
+                                if (row.suggestions.length > 0) {
+                                  const updatedRows = [...newRows];
+                                  updatedRows[rowIndex].showSuggestions = true;
+                                  setNewRows(updatedRows);
+                                }
+                              }}
+                              onBlur={() => {
+                                setTimeout(() => {
+                                  const updatedRows = [...newRows];
+                                  updatedRows[rowIndex].showSuggestions = false;
+                                  setNewRows(updatedRows);
+                                }, 150);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && row.suggestions.length === 1) {
+                                  e.preventDefault();
+                                  handleProductSelected(rowIndex, row.suggestions[0]);
+                                } else if (e.key === 'Escape') {
+                                  const updatedRows = [...newRows];
+                                  updatedRows[rowIndex].showSuggestions = false;
+                                  setNewRows(updatedRows);
+                                }
+                              }}
+                            />
+                            {row.showSuggestions && row.suggestions.length > 0 && (
+                              <div className="absolute z-50 left-0 right-0 bg-popover border border-border rounded-md shadow-lg mt-1">
+                                <div className="max-h-60 overflow-y-auto">
+                                  {row.suggestions.map((product) => (
+                                    <div
+                                      key={product.id}
+                                      className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer border-b border-border last:border-b-0 transition-colors flex justify-between items-center"
+                                      onMouseDown={(e) => e.preventDefault()}
+                                      onClick={() => handleProductSelected(rowIndex, product)}
+                                    >
+                                      <div className="flex gap-2 items-center min-w-0">
+                                        <span className="font-medium text-sm text-foreground whitespace-nowrap">{product.code}</span>
+                                        <span className="text-sm text-muted-foreground truncate">{product.description}</span>
+                                      </div>
+                                      <div className="flex gap-4 text-xs text-muted-foreground whitespace-nowrap ml-4">
+                                        <span>€{product.price?.toFixed(2)}</span>
+                                        <span>Qty: {product.caseQuantity || 1}</span>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Input 
-                          placeholder="Description"
-                          value={row.description}
-                          onChange={(e) => updateNewRowField(rowIndex, 'description', e.target.value)}
-                          className="p-1 h-7 text-sm"
-                        />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          step="0.01"
-                          placeholder="0.00"
-                          value={row.price || ''}
-                          onChange={(e) => updateNewRowField(rowIndex, 'price', parseFloat(e.target.value) || 0)}
-                          className="p-1 h-7 text-sm text-right"
-                        />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          step="0.01"
-                          value={row.vat || 0}
-                          onChange={(e) => updateNewRowField(rowIndex, 'vat', parseFloat(e.target.value) || 0)}
-                          className="p-1 h-7 text-sm text-right"
-                        />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                        <div className="flex items-center justify-center">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              updateNewRowField(rowIndex, 'quantity', Math.max(1, row.quantity - 1));
-                              if (row.price) {
-                                updateNewRowField(rowIndex, 'subtotal', row.price * Math.max(1, row.quantity - 1));
-                              }
-                            }}
-                            className="h-7 w-7 p-0"
-                          >
-                            -
-                          </Button>
-                          <Input 
-                            type="number" 
-                            min="1" 
-                            step="1"
-                            value={row.quantity}
-                            onChange={(e) => {
-                              const quantity = parseInt(e.target.value) || 1;
-                              updateNewRowField(rowIndex, 'quantity', quantity);
-                              if (row.price) {
-                                updateNewRowField(rowIndex, 'subtotal', row.price * quantity);
-                              }
-                            }}
-                            className="p-1 h-7 text-sm text-center mx-1"
-                            style={{ width: '50px' }}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              updateNewRowField(rowIndex, 'quantity', row.quantity + 1);
-                              if (row.price) {
-                                updateNewRowField(rowIndex, 'subtotal', row.price * (row.quantity + 1));
-                              }
-                            }}
-                            className="h-7 w-7 p-0"
-                          >
-                            +
-                          </Button>
                         </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-400">
-                        €{((row.subtotal || (row.price * row.quantity)) || 0).toFixed(2)}
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          step="1"
+                          value={row.quantity}
+                          onChange={(e) => updateNewRowField(rowIndex, 'quantity', parseInt(e.target.value) || 1)}
+                          className="p-1 h-7 text-sm text-center"
+                          style={{ width: '60px' }}
+                        />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                        {row.productId ? (
-                          <Button
-                            type="button"
-                            variant="default"
-                            size="sm"
-                            onClick={() => {
-                              // Convert new row to order item
-                              const orderItem: OrderItem = {
-                                id: Math.random().toString(36).substring(2, 9),
-                                productId: row.productId!,
-                                code: row.code,
-                                description: row.description,
-                                price: row.price,
-                                quantity: row.quantity,
-                                vat: row.vat,
-                                subtotal: row.subtotal || (row.price * row.quantity),
-                                product: row.product
-                              };
-                              
-                              setOrderItems(prev => [...prev, orderItem]);
-                              
-                              // Clear this row
-                              const updatedRows = [...newRows];
-                              updatedRows[rowIndex] = {
-                                code: "",
-                                description: "",
-                                price: 0,
-                                quantity: 1,
-                                vat: safeSettings.defaultVatRate || 0,
-                                suggestions: [],
-                                showSuggestions: false
-                              };
-                              setNewRows(updatedRows);
-                            }}
-                            className="h-7 px-2"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        ) : newRows.length > 1 ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeNewRow(rowIndex)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        ) : null}
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          onClick={() => setIsProductSelectorOpen(true)}
+                          className="h-7 px-2"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
