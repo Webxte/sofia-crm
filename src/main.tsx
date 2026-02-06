@@ -1,19 +1,18 @@
-import React from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { ThemeProvider } from 'next-themes';
 import './index.css';
 import App from './App';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
 
-// Create a new QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       retry: false,
     },
   },
@@ -24,10 +23,8 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-const root = createRoot(rootElement);
-
-root.render(
-  <React.StrictMode>
+createRoot(rootElement).render(
+  <StrictMode>
     <ErrorBoundary>
       <HelmetProvider>
         <Helmet>
@@ -45,5 +42,5 @@ root.render(
         </QueryClientProvider>
       </HelmetProvider>
     </ErrorBoundary>
-  </React.StrictMode>
+  </StrictMode>
 );
