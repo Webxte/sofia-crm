@@ -3,19 +3,20 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { Resend } from "npm:resend@2.0.0";
 
-// Initialize Resend with API key
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-// Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Define CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_CC_RECIPIENTS = 10;
+const MAX_SUBJECT_LENGTH = 200;
+const MAX_MESSAGE_LENGTH = 50000;
 
 interface MeetingEmailRequest {
   to: string;
@@ -30,122 +31,128 @@ interface MeetingEmailRequest {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("Received meeting email request");
-    
-    // Get request body
-    const body: MeetingEmailRequest = await req.json();
-    
-    // Log the request for debugging
-    console.log("Meeting email request details:", {
-      to: body.to,
-      subject: body.subject,
-      meetingId: body.meetingId,
-      meetingType: body.meetingType,
-      meetingDate: body.meetingDate,
-      cc: body.cc || [],
-      fromName: body.fromName,
-      fromEmail: body.fromEmail
-    });
-    
-    // Check for Resend API key
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error("Missing RESEND_API_KEY environment variable");
-      throw new Error("Email service is not properly configured. Please set the RESEND_API_KEY.");
+    // Authenticate the user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
     }
-    
-    // Validate required fields
+
+    const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
+    const userId = claimsData.claims.sub;
+
+    const body: MeetingEmailRequest = await req.json();
+
+    // Input validation
     if (!body.to || !body.subject || !body.message) {
       throw new Error("Missing required fields: to, subject, message");
     }
-    
-    // Fetch settings for email customization
-    const { data: settings, error: settingsError } = await supabase
+    if (!emailRegex.test(body.to)) {
+      throw new Error("Invalid recipient email format");
+    }
+    if (body.subject.length > MAX_SUBJECT_LENGTH) {
+      throw new Error(`Subject must be less than ${MAX_SUBJECT_LENGTH} characters`);
+    }
+    if (body.message.length > MAX_MESSAGE_LENGTH) {
+      throw new Error(`Message must be less than ${MAX_MESSAGE_LENGTH} characters`);
+    }
+    if (body.cc && body.cc.length > MAX_CC_RECIPIENTS) {
+      throw new Error(`Maximum ${MAX_CC_RECIPIENTS} CC recipients allowed`);
+    }
+    for (const email of (body.cc || [])) {
+      if (!emailRegex.test(email)) {
+        throw new Error(`Invalid CC email format: ${email}`);
+      }
+    }
+
+    // Use service role client for data access
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify ownership: user must own the meeting or be admin
+    if (body.meetingId) {
+      const { data: meeting } = await supabase
+        .from("meetings")
+        .select("agent_id")
+        .eq("id", body.meetingId)
+        .single();
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      const isAdmin = profile?.role === 'admin';
+      if (meeting && meeting.agent_id !== userId && !isAdmin) {
+        return new Response(JSON.stringify({ error: 'Forbidden: You do not own this meeting' }), { status: 403, headers: corsHeaders });
+      }
+    }
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      throw new Error("Email service is not properly configured. Please set the RESEND_API_KEY.");
+    }
+
+    // Fetch settings
+    const { data: settings } = await supabase
       .from("settings")
       .select("*")
       .limit(1)
       .maybeSingle();
-    
-    if (settingsError) {
-      console.error("Settings fetch error:", settingsError);
-    }
-    
-    // Set up email configuration based on settings
+
     const emailSenderName = settings?.email_sender_name || "CRM System";
     const emailFooter = settings?.email_footer || "This is an automated message from your CRM system.";
-    const showFooterInEmails = settings?.show_footer_in_emails !== false; // Default to true if not set
-    
-    console.log("Using email settings:", {
-      senderName: emailSenderName,
-      footer: emailFooter,
-      showFooter: showFooterInEmails
-    });
-    
-    // Format message with proper line breaks for HTML
+    const showFooterInEmails = settings?.show_footer_in_emails !== false;
+
     const htmlMessage = body.message.replace(/\n/g, "<br />");
-    
-    console.log("Sending meeting email with Resend API");
-    
-    // Prepare email HTML with footer if enabled
+
     const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>${body.subject}</h2>
         <p>Meeting Type: ${body.meetingType}</p>
         <p>Date: ${body.meetingDate}</p>
-        <div style="margin-top: 20px;">
-          ${htmlMessage}
-        </div>
-        
+        <div style="margin-top: 20px;">${htmlMessage}</div>
         ${showFooterInEmails ? `
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
           <p>${emailFooter}</p>
-        </div>
-        ` : ''}
+        </div>` : ''}
       </div>
     `;
-    
-    // Use settings for sender name
-    const fromEmail = "info@belmorso.eu";
-    const senderName = emailSenderName;
-    const fromAddress = `${senderName} <${fromEmail}>`;
-    
-    console.log(`Using sender name: ${senderName}`);
-    console.log(`Email from address: ${fromAddress}`);
-    
-    // Send email using Resend
+
+    const fromAddress = `${emailSenderName} <info@belmorso.eu>`;
+
     const { data, error } = await resend.emails.send({
       from: fromAddress,
       to: body.to,
       subject: body.subject,
       html: emailContent,
       cc: body.cc,
-      reply_to: fromEmail,
+      reply_to: "info@belmorso.eu",
     });
-    
+
     if (error) {
-      console.error("Resend API error:", error);
       throw new Error(`Failed to send email: ${error.message}`);
     }
-    
-    console.log("Meeting email sent successfully:", data);
-    
+
     return new Response(JSON.stringify({ success: true, data }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
     });
-    
   } catch (error: any) {
     console.error("Error in send-meeting-email function:", error);
-    
     return new Response(JSON.stringify({ success: false, error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500,
     });
   }
 });
