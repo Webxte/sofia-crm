@@ -3,6 +3,15 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { Resend } from "npm:resend@2.0.0";
 
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -129,13 +138,13 @@ serve(async (req) => {
       processedMessage = processedMessage.replace(/\[Company\]/g, body.contactCompany);
     }
 
-    const htmlMessage = processedMessage.replace(/\n/g, "<br />");
+    const htmlMessage = escapeHtml(processedMessage).replace(/\n/g, "<br />");
 
     const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         ${htmlMessage}
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
-          <p>${emailFooter}</p>
+          <p>${escapeHtml(emailFooter)}</p>
         </div>
       </div>
     `;

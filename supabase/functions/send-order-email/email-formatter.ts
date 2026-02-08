@@ -1,5 +1,13 @@
-
 import { Order, OrderItem, Contact, Settings } from "./types.ts";
+
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 export const formatEmailContent = (
   order: Order,
@@ -10,8 +18,8 @@ export const formatEmailContent = (
   includeOrderDetails: boolean
 ): string => {
   // Process message and subject with contact company placeholder
-  const processedSubject = subject.replace(/\[Company\]/g, contact?.company || "");
-  const processedMessage = message.replace(/\[Company\]/g, contact?.company || "");
+  const processedSubject = escapeHtml(subject.replace(/\[Company\]/g, contact?.company || ""));
+  const processedMessage = escapeHtml(message.replace(/\[Company\]/g, contact?.company || ""));
   
   // Get email settings with defaults
   const emailSenderName = settings?.email_sender_name || "CRM System";
@@ -64,8 +72,8 @@ const generateOrderDetailsHtml = (order: Order): string => {
     
     itemsHtml += `
       <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;">${item.code}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${item.description}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(item.code)}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(item.description)}</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
         <td style="padding: 8px; border: 1px solid #ddd;">€${item.price.toFixed(2)}</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.vat ? `${item.vat}%` : '0%'}</td>
@@ -84,9 +92,9 @@ const generateOrderDetailsHtml = (order: Order): string => {
   return `
     <div style="margin-top: 20px; margin-bottom: 20px;">
       <h2 style="color: #333;">Order Details</h2>
-      <p><strong>Order Reference:</strong> ${order.reference || order.id.slice(0, 8).toUpperCase()}</p>
+      <p><strong>Order Reference:</strong> ${escapeHtml(order.reference || order.id.slice(0, 8).toUpperCase())}</p>
       <p><strong>Date:</strong> ${orderDate}</p>
-      <p><strong>Status:</strong> ${order.status}</p>
+      <p><strong>Status:</strong> ${escapeHtml(order.status)}</p>
       
       <h3>Items</h3>
       <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
@@ -119,12 +127,12 @@ const generateOrderDetailsHtml = (order: Order): string => {
         </tfoot>
       </table>
       
-      ${order.notes ? `<h3>Notes</h3><p>${order.notes}</p>` : ''}
+      ${order.notes ? `<h3>Notes</h3><p>${escapeHtml(order.notes)}</p>` : ''}
       
       ${order.terms_and_conditions ? 
         `<h3>Terms and Conditions</h3>
          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px;">
-           ${order.terms_and_conditions}
+           ${escapeHtml(order.terms_and_conditions)}
          </div>` : ''
       }
     </div>

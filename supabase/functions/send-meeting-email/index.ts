@@ -3,6 +3,15 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { Resend } from "npm:resend@2.0.0";
 
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -116,17 +125,17 @@ serve(async (req) => {
     const emailFooter = settings?.email_footer || "This is an automated message from your CRM system.";
     const showFooterInEmails = settings?.show_footer_in_emails !== false;
 
-    const htmlMessage = body.message.replace(/\n/g, "<br />");
+    const htmlMessage = escapeHtml(body.message).replace(/\n/g, "<br />");
 
     const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>${body.subject}</h2>
-        <p>Meeting Type: ${body.meetingType}</p>
-        <p>Date: ${body.meetingDate}</p>
+        <h2>${escapeHtml(body.subject)}</h2>
+        <p>Meeting Type: ${escapeHtml(body.meetingType)}</p>
+        <p>Date: ${escapeHtml(body.meetingDate)}</p>
         <div style="margin-top: 20px;">${htmlMessage}</div>
         ${showFooterInEmails ? `
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
-          <p>${emailFooter}</p>
+          <p>${escapeHtml(emailFooter)}</p>
         </div>` : ''}
       </div>
     `;
