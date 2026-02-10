@@ -45,9 +45,9 @@ export const parseProductCSV = (csvData: string) => {
     if (values.length >= 4) {
       const [code, description, priceStr, costStr, vatStr, caseQuantityStr, firstOrderCommissionStr, nextOrdersCommissionStr] = values;
       
-      // Parse numeric values
-      const price = parseFloat(priceStr.trim());
-      const cost = parseFloat(costStr.trim());
+      // Strip currency symbols (€, $, £, etc.) before parsing
+      const price = parseFloat(priceStr.trim().replace(/[€$£¥]/g, ''));
+      const cost = parseFloat(costStr.trim().replace(/[€$£¥]/g, ''));
       
       // Important fix: explicitly handle VAT values - null/undefined/empty values should be stored as 0
       // Use explicit 0 instead of null for vat field to ensure consistent behavior
