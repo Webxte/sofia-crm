@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, ReactNode, useState } from "react";
+import React, { createContext, useContext, useEffect, ReactNode, useState, useMemo, useRef } from "react";
 import { ProductsContextType } from "./types";
 import { useProductsOperations } from "./useProductsOperations";
 import { useAuth } from "../AuthContext";
@@ -14,15 +14,13 @@ export const DirectProductsProvider = ({ children }: DirectProductsProviderProps
   const [isReady, setIsReady] = useState(false);
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   
-  // Wait for auth to be ready before initializing products
   useEffect(() => {
     if (!authLoading) {
       setIsReady(true);
     }
   }, [authLoading]);
 
-  // Always provide a fallback context value that satisfies the interface
-  const fallbackContextValue: ProductsContextType = {
+  const fallbackContextValue: ProductsContextType = useMemo(() => ({
     products: [],
     loading: !isReady || authLoading,
     addProduct: async () => null,
@@ -35,9 +33,8 @@ export const DirectProductsProvider = ({ children }: DirectProductsProviderProps
     importProductsFromCsv: async () => {},
     importProductsFromFile: async () => {},
     importProducts: async () => {},
-  };
+  }), [isReady, authLoading]);
 
-  // If not ready, provide the fallback context
   if (!isReady) {
     return (
       <ProductsContext.Provider value={fallbackContextValue}>
@@ -46,11 +43,9 @@ export const DirectProductsProvider = ({ children }: DirectProductsProviderProps
     );
   }
 
-  // Once ready, render the component with hooks
   return <ProductsProviderWithHooks isAuthenticated={isAuthenticated}>{children}</ProductsProviderWithHooks>;
 };
 
-// Component that uses hooks - only rendered when ready
 const ProductsProviderWithHooks = ({ 
   children, 
   isAuthenticated 
@@ -59,13 +54,19 @@ const ProductsProviderWithHooks = ({
   isAuthenticated: boolean; 
 }) => {
   const operations = useProductsOperations();
+  const hasFetchedRef = useRef(false);
 
-  // Fetch products when authenticated
+  // Stable reference to fetchProducts
+  const fetchProductsRef = useRef(operations.fetchProducts);
+  fetchProductsRef.current = operations.fetchProducts;
+
+  // Fetch products ONCE when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      operations.refreshProducts();
+    if (isAuthenticated && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchProductsRef.current();
     }
-  }, [isAuthenticated, operations]);
+  }, [isAuthenticated]);
 
   return (
     <ProductsContext.Provider value={operations}>
