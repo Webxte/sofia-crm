@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { toast } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
@@ -9,18 +9,19 @@ import { useAuth } from "@/context/AuthContext";
 export const useProductsOperations = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
+  
   const { isAdmin } = useAuth();
 
+  const isFetchingRef = useRef(false);
+
   const fetchProducts = useCallback(async () => {
-    // Prevent multiple simultaneous fetches
-    if (isFetching) {
+    if (isFetchingRef.current) {
       console.log("Already fetching products, skipping...");
       return;
     }
 
     try {
-      setIsFetching(true);
+      isFetchingRef.current = true;
       setLoading(true);
       console.log("Fetching products...");
       
@@ -58,9 +59,9 @@ export const useProductsOperations = () => {
       });
     } finally {
       setLoading(false);
-      setIsFetching(false);
+      isFetchingRef.current = false;
     }
-  }, [isFetching]);
+  }, []);
 
   const addProduct = useCallback(async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
     try {
