@@ -23,16 +23,24 @@ export const getStatusColor = (status: string) => {
   }
 };
 
-export const buildCompanyNameMap = (contacts: Contact[]) => {
-  console.log("Building company name map from contacts:", contacts.length);
-  const map = contacts.reduce((acc, contact) => {
-    const name = contact.company || contact.fullName || "Unknown";
-    acc[contact.id] = name;
-    console.log(`Contact mapping: ${contact.id} -> ${name}`);
-    return acc;
-  }, {} as Record<string, string>);
+export const buildCompanyNameMap = (contacts: Contact[], orders?: Order[]) => {
+  const map: Record<string, string> = {};
   
-  console.log("Final company name map:", map);
+  // First, map from contacts array
+  contacts.forEach(contact => {
+    map[contact.id] = contact.company || contact.fullName || "Unknown";
+  });
+  
+  // Then fill gaps from order's joined contact data
+  if (orders) {
+    orders.forEach(order => {
+      const o = order as any;
+      if (!map[order.contactId] && (o.contactCompany || o.contactFullName)) {
+        map[order.contactId] = o.contactCompany || o.contactFullName || "Unknown";
+      }
+    });
+  }
+  
   return map;
 };
 

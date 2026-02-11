@@ -22,10 +22,10 @@ export const useOrdersFetch = () => {
       setLoading(true);
       console.log("useOrdersFetch: Fetching orders for user:", user.id);
       
-      // Simple query - let RLS handle the filtering automatically
+      // Join with contacts to always have company/name info
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('*')
+        .select('*, contacts(full_name, company)')
         .order('created_at', { ascending: false });
       
       if (ordersError) {
@@ -75,9 +75,16 @@ export const useOrdersFetch = () => {
             } as OrderItem;
           });
         
+        // Extract joined contact data
+        const contactData = (order as any).contacts;
+        const contactCompany = contactData?.company || null;
+        const contactFullName = contactData?.full_name || null;
+        
         return {
           id: order.id,
           contactId: order.contact_id,
+          contactCompany: contactCompany,
+          contactFullName: contactFullName,
           agentId: order.agent_id,
           agentName: order.agent_name,
           date: order.date,

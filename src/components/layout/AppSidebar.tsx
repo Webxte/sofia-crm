@@ -56,7 +56,8 @@ export function AppSidebar() {
   const handleNavClick = () => {
     // Close sidebar on mobile when any navigation item is clicked
     if (window.innerWidth < 768) {
-      setOpen(false)
+      // Use setTimeout to allow navigation to complete before closing
+      setTimeout(() => setOpen(false), 100)
     }
   }
 

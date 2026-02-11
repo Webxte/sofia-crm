@@ -84,8 +84,7 @@ const Orders = () => {
   // Build a map of contact IDs to company names for quick lookup
   let companyNameMap = {};
   try {
-    companyNameMap = buildCompanyNameMap(contacts);
-    console.log("Company name map built successfully:", Object.keys(companyNameMap).length, "entries");
+    companyNameMap = buildCompanyNameMap(contacts, orders);
   } catch (error) {
     console.error("Error building company name map:", error);
     companyNameMap = {};
