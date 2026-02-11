@@ -39,7 +39,7 @@ const items = [
 ]
 
 export function AppSidebar() {
-  const { state, setOpen } = useSidebar()
+  const { state, setOpenMobile } = useSidebar()
   const location = useLocation()
   const currentPath = location.pathname
   const { isAdmin } = useAuth()
@@ -54,11 +54,8 @@ export function AppSidebar() {
     isActiveRoute ? "bg-muted text-primary font-medium" : "hover:bg-muted/50"
 
   const handleNavClick = () => {
-    // Close sidebar on mobile when any navigation item is clicked
-    if (window.innerWidth < 768) {
-      // Use setTimeout to allow navigation to complete before closing
-      setTimeout(() => setOpen(false), 100)
-    }
+    // Close mobile sidebar sheet when any navigation item is clicked
+    setOpenMobile(false)
   }
 
   // Filter items - Settings only for admins, but show all others

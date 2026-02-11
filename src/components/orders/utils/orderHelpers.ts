@@ -26,20 +26,20 @@ export const getStatusColor = (status: string) => {
 export const buildCompanyNameMap = (contacts: Contact[], orders?: Order[]) => {
   const map: Record<string, string> = {};
   
-  // First, map from contacts array
-  contacts.forEach(contact => {
-    map[contact.id] = contact.company || contact.fullName || "Unknown";
-  });
-  
-  // Then fill gaps from order's joined contact data
+  // First, use joined contact data from orders (always available via DB join)
   if (orders) {
     orders.forEach(order => {
       const o = order as any;
-      if (!map[order.contactId] && (o.contactCompany || o.contactFullName)) {
-        map[order.contactId] = o.contactCompany || o.contactFullName || "Unknown";
+      if (o.contactCompany || o.contactFullName) {
+        map[order.contactId] = o.contactCompany || o.contactFullName;
       }
     });
   }
+  
+  // Then override/fill from contacts array (may have more up-to-date data)
+  contacts.forEach(contact => {
+    map[contact.id] = contact.company || contact.fullName || map[contact.id] || "Unknown";
+  });
   
   return map;
 };
