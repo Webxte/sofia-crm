@@ -449,6 +449,13 @@ export type Database = {
     }
     Functions: {
       get_current_user_role: { Args: never; Returns: string }
+      get_order_contact_info: {
+        Args: { p_contact_id: string }
+        Returns: {
+          company: string
+          full_name: string
+        }[]
+      }
       is_user_admin: { Args: never; Returns: boolean }
     }
     Enums: {
