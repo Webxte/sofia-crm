@@ -37,16 +37,9 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Calendar as CalendarIcon, Plus, Trash, Mail, Save } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { ProductSelector } from "./ProductSelector";
 import { useOrderFormCleanup } from "./OrderFormCleanup";
+import { OrderEmailDialog } from "./email/OrderEmailDialog";
 
 const orderSchema = z.object({
   contactId: z.string({
@@ -124,12 +117,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   }]);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
-  const [emailData, setEmailData] = useState({
-    recipient: "",
-    subject: "Your Order",
-    message: ""
-  });
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   console.log("OrderForm: Settings default VAT rate:", safeSettings.defaultVatRate);
 
@@ -180,12 +167,6 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     if (contactId && getContactById) {
       try {
         const contact = getContactById(contactId);
-        if (contact && contact.email) {
-          setEmailData(prev => ({
-            ...prev,
-            recipient: contact.email
-          }));
-        }
       } catch (error) {
         console.error("Failed to get contact by ID:", error);
       }
@@ -334,85 +315,14 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
     return calculateSubtotal() + calculateVatTotal();
   };
 
-  const prepareEmailContent = () => {
-    const contact = getContactById(form.getValues("contactId"));
-    const orderDate = format(form.getValues("date"), "PPP");
-    const reference = form.getValues("reference") || "N/A";
-    
-    const items = orderItems.map(item => 
-      `${item.quantity} x ${item.description} (${item.code}): €${item.subtotal.toFixed(2)}`
-    ).join("\n");
-    
-    return `Dear ${contact?.fullName || "Customer"},
-
-Your order (Ref: ${reference}) from ${orderDate} has been processed.
-
-Order Details:
-${items}
-
-Subtotal: €${calculateSubtotal().toFixed(2)}
-VAT: €${calculateVatTotal().toFixed(2)}
-Total: €${calculateTotal().toFixed(2)}
-
-${form.getValues("termsAndConditions") || ""}
-
-Thank you for your business.
-${safeSettings.companyName || ""}
-${safeSettings.companyPhone || ""}
-${safeSettings.companyEmail || ""}`;
-  };
-
   const handleEmailDialogOpen = () => {
-    const contact = getContactById(form.getValues("contactId"));
-    
-    if (!contact?.email) {
-      toast.error("No email address", {
-        description: "The selected contact doesn't have an email address",
-      });
-      return;
-    }
-    
-    setEmailData({
-      recipient: contact.email,
-      subject: `Order Confirmation - Ref: ${form.getValues("reference") || order?.id?.slice(0, 6).toUpperCase() || ""}`,
-      message: prepareEmailContent()
-    });
-    
-    setIsEmailDialogOpen(true);
-  };
-
-  const handleSendEmail = async () => {
-    if (!order?.id) {
+    if (!order) {
       toast.error("Save Required", {
         description: "Please save the order before sending email",
       });
       return;
     }
-    
-    setIsSendingEmail(true);
-    
-    try {
-      const emailSent = await sendOrderEmail(order.id, {
-        recipient: emailData.recipient,
-        subject: emailData.subject,
-        message: emailData.message
-      });
-      
-      if (emailSent) {
-        toast.success("Email Sent", {
-          description: `Order sent to ${emailData.recipient}`,
-        });
-        setIsEmailDialogOpen(false);
-      } else {
-        throw new Error("Failed to send email");
-      }
-    } catch (error) {
-      toast.error("Error", {
-        description: "Failed to send email",
-      });
-    } finally {
-      setIsSendingEmail(false);
-    }
+    setIsEmailDialogOpen(true);
   };
 
   const onSubmit = async (data: OrderFormValues) => {
@@ -766,13 +676,21 @@ ${safeSettings.companyEmail || ""}`;
                                   setHighlightedIndex(prev => 
                                     prev > 0 ? prev - 1 : row.suggestions.length - 1
                                   );
-                                } else if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  if (highlightedIndex >= 0 && highlightedIndex < row.suggestions.length) {
-                                    handleProductSelected(rowIndex, row.suggestions[highlightedIndex]);
-                                    setHighlightedIndex(-1);
-                                  } else if (row.suggestions.length === 1) {
-                                    handleProductSelected(rowIndex, row.suggestions[0]);
+                                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                                  if (row.showSuggestions && row.suggestions.length > 0) {
+                                    e.preventDefault();
+                                    if (highlightedIndex >= 0 && highlightedIndex < row.suggestions.length) {
+                                      handleProductSelected(rowIndex, row.suggestions[highlightedIndex]);
+                                      setHighlightedIndex(-1);
+                                    } else if (row.suggestions.length === 1) {
+                                      handleProductSelected(rowIndex, row.suggestions[0]);
+                                    } else {
+                                      // Select the first suggestion
+                                      handleProductSelected(rowIndex, row.suggestions[0]);
+                                      setHighlightedIndex(-1);
+                                    }
+                                  } else if (e.key === 'Enter') {
+                                    e.preventDefault();
                                   }
                                 } else if (e.key === 'Escape') {
                                   const updatedRows = [...newRows];
@@ -928,58 +846,15 @@ ${safeSettings.companyEmail || ""}`;
         </form>
       </Form>
       
-      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Send Order by Email</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="recipient">Recipient</Label>
-              <Input
-                id="recipient"
-                value={emailData.recipient}
-                onChange={(e) => setEmailData(prev => ({ ...prev, recipient: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                value={emailData.subject}
-                onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
-              <Textarea
-                id="message"
-                rows={10}
-                value={emailData.message}
-                onChange={(e) => setEmailData(prev => ({ ...prev, message: e.target.value }))}
-                className="font-mono text-sm"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsEmailDialogOpen(false)}
-              disabled={isSendingEmail}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleSendEmail}
-              disabled={isSendingEmail}
-            >
-              {isSendingEmail ? "Sending..." : "Send Email"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {order && (
+        <OrderEmailDialog
+          orderId={order.id}
+          reference={order.reference || form.getValues("reference")}
+          customerEmail={getContactById(order.contactId)?.email}
+          open={isEmailDialogOpen}
+          onOpenChange={setIsEmailDialogOpen}
+        />
+      )}
 
       <ProductSelector 
         open={isProductSelectorOpen}
