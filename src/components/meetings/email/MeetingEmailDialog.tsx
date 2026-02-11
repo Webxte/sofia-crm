@@ -41,7 +41,7 @@ export const MeetingEmailDialog = ({ meeting, open, onOpenChange }: MeetingEmail
     resolver: zodResolver(emailFormSchema),
     defaultValues: {
       to: contact?.email || "",
-      cc: [],
+      cc: ["office@tastewithgusto.ie"],
       subject: `Follow-up: ${meeting.type} on ${format(new Date(meeting.date), 'MMMM d, yyyy')}`,
       message: `Dear ${contact?.fullName || "Customer"},
 

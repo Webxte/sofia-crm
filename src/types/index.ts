@@ -9,6 +9,7 @@ export interface Contact {
   position: string;
   address: string;
   source: string;
+  category: string;
   notes: string;
   agentId: string;
   agentName: string;

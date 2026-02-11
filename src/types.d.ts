@@ -40,6 +40,7 @@ export interface Contact {
   address?: string;
   notes?: string;
   source?: string;
+  category?: string;
   agentId?: string;
   agentName?: string;
   organizationId?: string;

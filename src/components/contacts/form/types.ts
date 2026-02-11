@@ -2,6 +2,20 @@
 import { z } from "zod";
 import { Contact } from "@/types";
 
+export const CONTACT_CATEGORIES = [
+  "Butchers",
+  "Coffee Shops",
+  "Distributor",
+  "Fishmongers",
+  "Fruit & Vegetable",
+  "Grocery Shop",
+  "Market Trader",
+  "Off Licence",
+  "Refill Shops",
+  "Restaurants",
+  "Other",
+] as const;
+
 export const contactFormSchema = z.object({
   fullName: z.string().optional(),
   company: z.string().optional(),
@@ -13,6 +27,7 @@ export const contactFormSchema = z.object({
   mobile: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   source: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 }).refine((data) => {
   // Either fullName or company must be provided

@@ -30,6 +30,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
       mobile: contact?.mobile || initialData?.mobile || "",
       address: contact?.address || initialData?.address || "",
       source: contact?.source || initialData?.source || (user?.name ? user.name : ""),
+      category: contact?.category || initialData?.category || "",
       notes: contact?.notes || initialData?.notes || "",
     },
   });
@@ -46,6 +47,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         mobile: contact.mobile || "",
         address: contact.address || "",
         source: contact.source || (user?.name ? user.name : ""),
+        category: contact.category || "",
         notes: contact.notes || "",
       });
     } else if (initialData) {

@@ -36,7 +36,7 @@ Best regards,
     resolver: zodResolver(emailFormSchema),
     defaultValues: {
       to: contact.email || "",
-      cc: [],
+      cc: ["office@tastewithgusto.ie"],
       subject: "Follow-up from our meeting",
       message: getDefaultMessage(),
     },

@@ -43,6 +43,7 @@ export type Database = {
           address: string | null
           agent_id: string | null
           agent_name: string | null
+          category: string | null
           company: string | null
           created_at: string
           email: string | null
@@ -59,6 +60,7 @@ export type Database = {
           address?: string | null
           agent_id?: string | null
           agent_name?: string | null
+          category?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
@@ -75,6 +77,7 @@ export type Database = {
           address?: string | null
           agent_id?: string | null
           agent_name?: string | null
+          category?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
