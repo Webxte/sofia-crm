@@ -53,9 +53,12 @@ export function AppSidebar() {
   const getNavCls = (isActiveRoute: boolean) =>
     isActiveRoute ? "bg-muted text-primary font-medium" : "hover:bg-muted/50"
 
-  const handleNavClick = () => {
+  const handleNavClick = (e: React.MouseEvent) => {
     // Close mobile sidebar sheet when any navigation item is clicked
-    setOpenMobile(false)
+    // Use requestAnimationFrame to ensure navigation completes first
+    requestAnimationFrame(() => {
+      setOpenMobile(false)
+    })
   }
 
   // Filter items - Settings only for admins, but show all others

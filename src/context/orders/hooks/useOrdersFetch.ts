@@ -45,19 +45,39 @@ export const useOrdersFetch = () => {
         throw itemsError;
       }
       
+      // Find orders where the join returned null (contacts hidden by RLS)
+      const missingContactIds = [...new Set(
+        (ordersData || [])
+          .filter(order => !(order as any).contacts)
+          .map(order => order.contact_id)
+      )];
+      
+      // Fetch missing contact info using SECURITY DEFINER function
+      const missingContactMap: Record<string, { company: string | null; full_name: string | null }> = {};
+      if (missingContactIds.length > 0) {
+        const results = await Promise.all(
+          missingContactIds.map(id =>
+            supabase.rpc('get_order_contact_info', { p_contact_id: id }).then(res => ({ id, data: res.data }))
+          )
+        );
+        results.forEach(({ id, data }) => {
+          if (data && data.length > 0) {
+            missingContactMap[id] = data[0];
+          }
+        });
+      }
+
       // Map items to their respective orders
       const formattedOrders = (ordersData || []).map(order => {
-        // Find all items for this order
         const orderItems = (itemsData || [])
           .filter(item => item.order_id === order.id)
           .map(item => {
-            // Get the corresponding product - use current getProductById function
             const product = getProductById(item.product_id) || {
               id: item.product_id,
               code: item.code,
               description: item.description,
               price: item.price,
-              cost: item.price * 0.7, // Estimate cost if not available
+              cost: item.price * 0.7,
               createdAt: new Date(),
               updatedAt: new Date()
             };
@@ -75,16 +95,16 @@ export const useOrdersFetch = () => {
             } as OrderItem;
           });
         
-        // Extract joined contact data
-        const contactData = (order as any).contacts;
+        // Use joined contact data, falling back to RPC results for RLS-blocked contacts
+        const contactData = (order as any).contacts || missingContactMap[order.contact_id];
         const contactCompany = contactData?.company || null;
         const contactFullName = contactData?.full_name || null;
         
         return {
           id: order.id,
           contactId: order.contact_id,
-          contactCompany: contactCompany,
-          contactFullName: contactFullName,
+          contactCompany,
+          contactFullName,
           agentId: order.agent_id,
           agentName: order.agent_name,
           date: order.date,
