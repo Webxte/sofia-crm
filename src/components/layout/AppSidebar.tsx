@@ -7,6 +7,7 @@ import {
   Calendar, 
   ShoppingBag, 
   CheckSquare, 
+  BarChart3,
   Settings 
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
@@ -33,6 +34,7 @@ const items = [
   { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Orders", url: "/orders", icon: ShoppingBag },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
+  { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
 ]
 
