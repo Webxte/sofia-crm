@@ -20,6 +20,7 @@ import AgentReports from "@/components/reports/AgentReports";
 import OverviewCards from "@/components/reports/OverviewCards";
 import SalesChart from "@/components/reports/SalesChart";
 import { ActivitiesCharts, StatusChart } from "@/components/reports/DistributionCharts";
+import MyPerformance from "@/components/reports/MyPerformance";
 
 const Reports = () => {
   const [timeFrame, setTimeFrame] = useState<"30" | "90" | "365" | "all">("30");
@@ -108,11 +109,16 @@ const Reports = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="my-performance">
         <TabsList>
+          <TabsTrigger value="my-performance">My Performance</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="agents">Agent Performance</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="my-performance">
+          <MyPerformance />
+        </TabsContent>
         
         <TabsContent value="overview" className="space-y-6">
           {/* Overview Cards */}
