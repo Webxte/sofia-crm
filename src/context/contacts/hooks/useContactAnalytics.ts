@@ -2,20 +2,25 @@
 import { useCallback } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export const useContactAnalytics = (contacts: Contact[]) => {
+  const { user } = useAuth();
+  
   const trackContactView = useCallback(async (contactId: string) => {
+    if (!user?.id) return;
     try {
       await supabase
         .from("analytics_events")
         .insert([{
           event_name: "contact_viewed",
           event_data: { contact_id: contactId },
+          user_id: user.id,
         }]);
     } catch (error) {
       console.error("Error tracking contact view:", error);
     }
-  }, []);
+  }, [user?.id]);
 
   const analyzeContactData = useCallback(() => {
     const totalContacts = contacts.length;
