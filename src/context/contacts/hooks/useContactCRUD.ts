@@ -32,8 +32,9 @@ export const useContactCRUD = () => {
         position: contactData.position,
         address: contactData.address,
         source: contactData.source,
+        category: contactData.category,
         notes: contactData.notes,
-        agent_id: user.id, // This will be validated by RLS policies
+        agent_id: user.id,
         agent_name: user.name || user.email || "",
       };
 
@@ -62,6 +63,7 @@ export const useContactCRUD = () => {
         position: data.position || "",
         address: data.address || "",
         source: data.source || "",
+        category: data.category || "",
         notes: data.notes || "",
         agentId: data.agent_id || "",
         agentName: data.agent_name || "",
@@ -101,6 +103,7 @@ export const useContactCRUD = () => {
         position: contactData.position,
         address: contactData.address,
         source: contactData.source,
+        category: contactData.category,
         notes: contactData.notes,
         updated_at: new Date().toISOString(),
       };
@@ -125,6 +128,7 @@ export const useContactCRUD = () => {
         position: data.position || "",
         address: data.address || "",
         source: data.source || "",
+        category: data.category || "",
         notes: data.notes || "",
         agentId: data.agent_id || "",
         agentName: data.agent_name || "",

@@ -1,0 +1,1 @@
+ALTER TABLE public.contacts ADD COLUMN category text DEFAULT NULL;

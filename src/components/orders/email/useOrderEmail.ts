@@ -42,7 +42,7 @@ export const useOrderEmail = ({ orderId, customerEmail, orderReference }: UseOrd
   // Generate default values for the form with null safety
   const defaultValues = {
     recipient: customerEmail || contact?.email || "",
-    cc: "",
+    cc: "office@tastewithgusto.ie",
     subject: generateDefaultEmailSubject(reference, safeSettings.defaultEmailSubject || ''),
     message: generateDefaultEmailContent(
       order, 

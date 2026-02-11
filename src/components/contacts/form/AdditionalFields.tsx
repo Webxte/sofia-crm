@@ -3,8 +3,9 @@ import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { ContactFormValues } from "./types";
+import { ContactFormValues, CONTACT_CATEGORIES } from "./types";
 
 interface AdditionalFieldsProps {
   form: UseFormReturn<ContactFormValues>;
@@ -15,6 +16,28 @@ const AdditionalFields: React.FC<AdditionalFieldsProps> = ({ form, isMobile }) =
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Category</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger className={isMobile ? "text-sm h-9" : ""}>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CONTACT_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage className={isMobile ? "text-xs" : ""} />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="source"

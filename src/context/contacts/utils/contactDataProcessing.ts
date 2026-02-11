@@ -13,6 +13,7 @@ export const processContacts = (data: any[]): Contact[] => {
     company: item.company,
     position: item.position,
     source: item.source,
+    category: item.category || "",
     agentId: item.agent_id,
     agentName: item.agent_name,
     notes: item.notes,
@@ -34,6 +35,7 @@ export const contactToDbRecord = (contact: Partial<Contact>) => {
   if (contact.company !== undefined) updates.company = contact.company;
   if (contact.position !== undefined) updates.position = contact.position;
   if (contact.source !== undefined) updates.source = contact.source;
+  if (contact.category !== undefined) updates.category = contact.category;
   if (contact.agentId !== undefined) updates.agent_id = contact.agentId;
   if (contact.agentName !== undefined) updates.agent_name = contact.agentName;
   if (contact.notes !== undefined) updates.notes = contact.notes;
