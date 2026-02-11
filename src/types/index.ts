@@ -76,6 +76,8 @@ export interface OrderItem {
 export interface Order {
   id: string;
   contactId: string;
+  contactCompany?: string | null;
+  contactFullName?: string | null;
   agentId: string;
   agentName: string;
   date: string;
