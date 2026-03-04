@@ -46,6 +46,7 @@ export const useContactsFetch = () => {
         position: contact.position || '',
         address: contact.address || '',
         source: contact.source || '',
+        category: contact.category || '',
         notes: contact.notes || '',
         agentId: contact.agent_id || '',
         agentName: contact.agent_name || '',
