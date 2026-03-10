@@ -13,7 +13,15 @@ const EditContact = () => {
     return <Navigate to="/contacts" replace />;
   }
   
-  return <ContactForm contact={contact} isEditing={true} />;
+  const navigate = useNavigate();
+  
+  return (
+    <ContactForm 
+      contact={contact} 
+      isEditing={true} 
+      onContactCreated={() => navigate("/contacts")}
+    />
+  );
 };
 
 export default EditContact;

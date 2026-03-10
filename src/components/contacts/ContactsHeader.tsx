@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import DownloadContactsByDate from "./DownloadContactsByDate";
 
 interface ContactsHeaderProps {
   onImportClick: () => void;
@@ -21,6 +22,7 @@ export const ContactsHeader = ({ onImportClick }: ContactsHeaderProps) => {
         </p>
       </div>
       <div className="flex items-center gap-2">
+        <DownloadContactsByDate />
         {isAdmin && (
           <Button 
             variant="outline" 
