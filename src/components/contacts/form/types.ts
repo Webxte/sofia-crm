@@ -43,4 +43,5 @@ export interface ContactFormProps {
   initialData?: Partial<ContactFormValues>;
   contact?: Contact;
   isEditing?: boolean;
+  onContactCreated?: (contact: Contact) => void;
 }
