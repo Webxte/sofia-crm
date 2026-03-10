@@ -2,22 +2,14 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useContacts } from "@/context/ContactsContext";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { contactFormSchema, ContactFormValues, ContactFormProps } from "./types";
 import { Contact } from "@/types";
 
-export const useContactForm = ({ initialData, contact, isEditing = false }: ContactFormProps) => {
+export const useContactForm = ({ initialData, contact, isEditing = false, onContactCreated }: ContactFormProps) => {
   const { addContact, updateContact } = useContacts();
-  const navigate = useNavigate();
   const { user } = useAuth();
-  
-  console.log("useContactForm: Initializing with", {
-    isEditing,
-    hasUser: !!user,
-    userId: user?.id
-  });
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -36,7 +28,6 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
   });
   
   useEffect(() => {
-    // Update form values when initialData or contact changes
     if (contact) {
       form.reset({
         fullName: contact.fullName || "",
@@ -51,7 +42,6 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
         notes: contact.notes || "",
       });
     } else if (initialData) {
-      // For new contacts, ensure source is set to user's name if available
       form.reset({
         ...initialData,
         source: initialData.source || (user?.name ? user.name : "")
@@ -61,49 +51,29 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
 
   const onSubmit = async (values: ContactFormValues) => {
     try {
-      console.log("useContactForm: Contact form submission started", {
-        isEditing,
-        hasUser: !!user,
-        userId: user?.id,
-        formValues: values
-      });
-
       if (!user) {
-        console.error("useContactForm: No user found for contact form submission");
-        toast.error("Error", {
-          description: "You must be logged in to add contacts",
-        });
+        toast.error("Error", { description: "You must be logged in to add contacts" });
         return;
       }
       
-      // Add agent information
       const contactData = {
         ...values,
         agentId: user.id,
         agentName: user.name || user.email || '',
       };
       
-      console.log("useContactForm: Contact data prepared for submission:", {
-        agentId: contactData.agentId
-      });
-      
-      // Ensure source is set if not provided
       if (!values.source && user?.name) {
         contactData.source = user.name;
       }
       
       if (isEditing && contact) {
-        // Update existing contact
-        console.log("useContactForm: Updating existing contact:", contact.id);
-        const result = await updateContact(contact.id, contactData);
-        console.log("useContactForm: Contact update result:", !!result);
-        
-        toast.success("Success", {
-          description: "Contact updated successfully!",
-        });
+        await updateContact(contact.id, contactData);
+        toast.success("Success", { description: "Contact updated successfully!" });
+        // For editing, navigate is handled by the caller or we use onContactCreated
+        if (onContactCreated) {
+          onContactCreated({ ...contact, ...contactData });
+        }
       } else {
-        // Create new contact with current timestamp
-        console.log("useContactForm: Creating new contact");
         const now = new Date();
         const newContact: Omit<Contact, "id"> = {
           ...contactData,
@@ -111,44 +81,21 @@ export const useContactForm = ({ initialData, contact, isEditing = false }: Cont
           updatedAt: now
         };
         
-        console.log("useContactForm: Final contact data for creation:", {
-          agentId: newContact.agentId,
-          fullName: newContact.fullName,
-          email: newContact.email
-        });
-        
         const result = await addContact(newContact);
-        console.log("useContactForm: Contact creation result:", !!result);
         
         if (result) {
-          console.log("useContactForm: Contact created successfully with ID:", result.id);
-          toast.success("Success", {
-            description: "Contact created successfully!",
-          });
-        } else {
-          console.error("useContactForm: Contact creation returned null result");
-          toast.warning("Warning", {
-            description: "Contact may not have been created properly. Please check the contacts list.",
-          });
+          toast.success("Success", { description: "Contact created successfully!" });
+          if (onContactCreated) {
+            onContactCreated(result);
+          }
         }
       }
-      
-      // Navigate back to contacts page
-      console.log("useContactForm: Navigating to contacts page");
-      navigate("/contacts");
-      
     } catch (error) {
-      console.error("useContactForm: Contact form submission error:", error);
-      
-      // Check if it's an RLS policy error
+      console.error("Contact form submission error:", error);
       if (error instanceof Error && (error.message.includes('row-level security') || error.message.includes('permission'))) {
-        toast.error("Permission Error", {
-          description: "You don't have permission to perform this action.",
-        });
+        toast.error("Permission Error", { description: "You don't have permission to perform this action." });
       } else {
-        toast.error("Error", {
-          description: isEditing ? "Failed to update contact." : "Failed to create contact.",
-        });
+        toast.error("Error", { description: isEditing ? "Failed to update contact." : "Failed to create contact." });
       }
     }
   };

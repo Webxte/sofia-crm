@@ -1,5 +1,5 @@
 
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { useContacts } from "@/context/contacts/ContactsContext";
 import ContactForm from "@/components/contacts/ContactForm";
 
@@ -13,7 +13,15 @@ const EditContact = () => {
     return <Navigate to="/contacts" replace />;
   }
   
-  return <ContactForm contact={contact} isEditing={true} />;
+  const navigate = useNavigate();
+  
+  return (
+    <ContactForm 
+      contact={contact} 
+      isEditing={true} 
+      onContactCreated={() => navigate("/contacts")}
+    />
+  );
 };
 
 export default EditContact;
