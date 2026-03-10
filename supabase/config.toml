@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.send-meeting-email]
 verify_jwt = false
+
+[functions.scan-business-card]
+verify_jwt = false
