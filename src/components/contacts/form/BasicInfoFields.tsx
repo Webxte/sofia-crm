@@ -44,19 +44,6 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form, isMobile }) => 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}
-          name="position"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className={isMobile ? "text-sm" : ""}>Position</FormLabel>
-              <FormControl>
-                <Input placeholder="Software Engineer" {...field} className={isMobile ? "text-sm h-9" : ""} />
-              </FormControl>
-              <FormMessage className={isMobile ? "text-xs" : ""} />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -68,6 +55,57 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ form, isMobile }) => 
                   value={field.value || ''} 
                   className={isMobile ? "text-sm h-9" : ""}
                 />
+              </FormControl>
+              <FormMessage className={isMobile ? "text-xs" : ""} />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mobile"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Mobile</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="+353 87 1234567" 
+                  {...field} 
+                  value={field.value || ''} 
+                  className={isMobile ? "text-sm h-9" : ""}
+                />
+              </FormControl>
+              <FormMessage className={isMobile ? "text-xs" : ""} />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Phone</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="+353 1 123-4567" 
+                  {...field} 
+                  value={field.value || ''} 
+                  className={isMobile ? "text-sm h-9" : ""}
+                />
+              </FormControl>
+              <FormMessage className={isMobile ? "text-xs" : ""} />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="position"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Position</FormLabel>
+              <FormControl>
+                <Input placeholder="Owner" {...field} className={isMobile ? "text-sm h-9" : ""} />
               </FormControl>
               <FormMessage className={isMobile ? "text-xs" : ""} />
             </FormItem>

@@ -1,11 +1,6 @@
 
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
 import BasicInfoFields from "./form/BasicInfoFields";
 import ContactInfoFields from "./form/ContactInfoFields";
@@ -14,9 +9,14 @@ import { useContactForm } from "./form/useContactForm";
 import { ContactFormProps } from "./form/types";
 import FormSubmitButton from "./form/FormSubmitButton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Contact } from "@/types";
 
-const ContactForm = ({ initialData, contact, isEditing = false }: ContactFormProps) => {
-  const { form, onSubmit } = useContactForm({ initialData, contact, isEditing });
+interface ExtendedContactFormProps extends Omit<ContactFormProps, 'onContactCreated'> {
+  onContactCreated?: (contact: Contact) => void;
+}
+
+const ContactForm = ({ initialData, contact, isEditing = false, onContactCreated }: ExtendedContactFormProps) => {
+  const { form, onSubmit } = useContactForm({ initialData, contact, isEditing, onContactCreated });
   const isMobile = useIsMobile();
 
   return (
