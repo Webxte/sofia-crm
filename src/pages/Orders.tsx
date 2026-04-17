@@ -19,6 +19,8 @@ import {
   filterOrders
 } from "@/components/orders/utils/orderHelpers";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/use-pagination";
+import { ContactsPagination } from "@/components/contacts/ContactsPagination";
 
 const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +76,6 @@ const Orders = () => {
   // Sync contact visibility with order visibility
   useEffect(() => {
     try {
-      console.log("Orders: Setting showAllContacts to:", showAllOrders);
       setShowAllContacts(showAllOrders);
     } catch (error) {
       console.error("Error setting showAllContacts:", error);
@@ -86,40 +87,37 @@ const Orders = () => {
   try {
     companyNameMap = buildCompanyNameMap(contacts, orders);
   } catch (error) {
-    console.error("Error building company name map:", error);
     companyNameMap = {};
   }
-  
-  // Debug logging for admin functionality
-  console.log("Orders page - Admin status:", { isAdmin, userId: user?.id, showAllOrders });
-  console.log("Orders page - Contacts count:", contacts.length, "Orders count:", orders.length);
-  
+
   let filteredOrders = [];
   try {
     filteredOrders = filterOrders(orders, {
       searchQuery,
       filterStatus,
       contactId,
-      isAdmin: showAllOrders, // Allow both admins and agents to see all when toggle is on
+      isAdmin: showAllOrders,
       userId: user?.id,
       getContactById
     });
-    console.log("Filtered orders successfully:", filteredOrders.length, "orders");
   } catch (error) {
-    console.error("Error filtering orders:", error);
     filteredOrders = [];
   }
-  
+
   let sortedOrders = [];
   try {
     sortedOrders = [...filteredOrders].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-    console.log("Sorted orders successfully:", sortedOrders.length, "orders");
   } catch (error) {
-    console.error("Error sorting orders:", error);
     sortedOrders = [];
   }
+
+  const pagination = usePagination({ data: sortedOrders, itemsPerPage: 20 });
+
+  useEffect(() => {
+    pagination.resetPage();
+  }, [searchQuery, filterStatus, showAllOrders, contactId]);
 
   const handleExport = () => {
     try {
@@ -141,12 +139,7 @@ const Orders = () => {
   };
 
   const handleShowAllOrdersChange = (show: boolean) => {
-    try {
-      console.log("Orders: Changing showAllOrders to:", show);
-      setShowAllOrders(show);
-    } catch (error) {
-      console.error("Error changing showAllOrders:", error);
-    }
+    setShowAllOrders(show);
   };
 
   return (
@@ -168,18 +161,31 @@ const Orders = () => {
       {sortedOrders.length === 0 ? (
         <OrdersEmptyState />
       ) : (
-        effectiveViewMode === "grid" ? (
-          <OrdersGridView 
-            orders={sortedOrders} 
-            getStatusColor={getStatusColor}
-            companyNameMap={companyNameMap}
+        <>
+          {effectiveViewMode === "grid" ? (
+            <OrdersGridView
+              orders={pagination.paginatedData}
+              getStatusColor={getStatusColor}
+              companyNameMap={companyNameMap}
+            />
+          ) : (
+            <OrdersListView
+              orders={pagination.paginatedData}
+              companyNameMap={companyNameMap}
+            />
+          )}
+          <ContactsPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            startIndex={pagination.startIndex}
+            endIndex={pagination.endIndex}
+            hasNextPage={pagination.hasNextPage}
+            hasPreviousPage={pagination.hasPreviousPage}
+            onNextPage={pagination.goToNextPage}
+            onPreviousPage={pagination.goToPreviousPage}
           />
-        ) : (
-          <OrdersListView 
-            orders={sortedOrders}
-            companyNameMap={companyNameMap}
-          />
-        )
+        </>
       )}
     </div>
   );

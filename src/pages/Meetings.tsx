@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMeetings } from '@/context/meetings';
 import { useContacts } from '@/context/contacts/ContactsContext';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +14,8 @@ import { MeetingsFilter } from '@/components/meetings/MeetingsFilter';
 import { MeetingsList } from '@/components/meetings/MeetingsList';
 import { MeetingsGrid } from '@/components/meetings/MeetingsGrid';
 import { MeetingEmailDialog } from '@/components/meetings/email/MeetingEmailDialog';
+import { usePagination } from '@/hooks/use-pagination';
+import { ContactsPagination } from '@/components/contacts/ContactsPagination';
 
 const Meetings = () => {
   const { meetings, deleteMeeting } = useMeetings();
@@ -36,9 +38,6 @@ const Meetings = () => {
   React.useEffect(() => {
     setViewMode(isMobile ? "grid" : "list");
   }, [isMobile]);
-
-  // Debug logging for admin functionality
-  console.log("Meetings page - Admin status:", { isAdmin, userId: user?.id, showAllMeetings });
 
   const filteredMeetings = meetings
     .filter(meeting => {
@@ -63,8 +62,6 @@ const Meetings = () => {
              companyName.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
-  console.log("Filtered meetings count:", filteredMeetings.length, "Total meetings:", meetings.length);
-
   const sortedMeetings = [...filteredMeetings].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
@@ -76,6 +73,12 @@ const Meetings = () => {
     }
   });
   
+  const pagination = usePagination({ data: sortedMeetings, itemsPerPage: 20 });
+
+  useEffect(() => {
+    pagination.resetPage();
+  }, [searchQuery, selectedMeetingType, selectedSort, showAllMeetings]);
+
   const handleCreateMeeting = () => {
     navigate('/meetings/new');
   };
@@ -129,12 +132,25 @@ const Meetings = () => {
         <Tabs value={viewMode} className="w-full">
           <TabsContent value="list" className="mt-4">
             {sortedMeetings.length > 0 ? (
-              <MeetingsList
-                meetings={sortedMeetings}
-                onViewMeeting={handleViewMeeting}
-                onCreateOrder={handleCreateOrder}
-                onDeleteMeeting={handleDeleteMeeting}
-              />
+              <>
+                <MeetingsList
+                  meetings={pagination.paginatedData}
+                  onViewMeeting={handleViewMeeting}
+                  onCreateOrder={handleCreateOrder}
+                  onDeleteMeeting={handleDeleteMeeting}
+                />
+                <ContactsPagination
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  totalItems={pagination.totalItems}
+                  startIndex={pagination.startIndex}
+                  endIndex={pagination.endIndex}
+                  hasNextPage={pagination.hasNextPage}
+                  hasPreviousPage={pagination.hasPreviousPage}
+                  onNextPage={pagination.goToNextPage}
+                  onPreviousPage={pagination.goToPreviousPage}
+                />
+              </>
             ) : (
               <EmptyState
                 icon={<Calendar size={40} />}
@@ -145,15 +161,28 @@ const Meetings = () => {
               />
             )}
           </TabsContent>
-          
+
           <TabsContent value="grid" className="mt-4">
             {sortedMeetings.length > 0 ? (
-              <MeetingsGrid
-                meetings={sortedMeetings}
-                onViewDetails={handleViewMeeting}
-                onCreateOrder={handleCreateOrder}
-                onSendEmail={handleSendEmail}
-              />
+              <>
+                <MeetingsGrid
+                  meetings={pagination.paginatedData}
+                  onViewDetails={handleViewMeeting}
+                  onCreateOrder={handleCreateOrder}
+                  onSendEmail={handleSendEmail}
+                />
+                <ContactsPagination
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  totalItems={pagination.totalItems}
+                  startIndex={pagination.startIndex}
+                  endIndex={pagination.endIndex}
+                  hasNextPage={pagination.hasNextPage}
+                  hasPreviousPage={pagination.hasPreviousPage}
+                  onNextPage={pagination.goToNextPage}
+                  onPreviousPage={pagination.goToPreviousPage}
+                />
+              </>
             ) : (
               <EmptyState
                 icon={<MessagesSquare size={40} />}

@@ -1,23 +1,24 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/context/tasks';
 import { useContacts } from '@/context/contacts/ContactsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TaskCard } from '@/components/tasks/TaskCard';
 import { Plus, CheckSquare, ListTodo, RefreshCcw, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Helmet } from 'react-helmet-async';
+import { usePagination } from '@/hooks/use-pagination';
+import { ContactsPagination } from '@/components/contacts/ContactsPagination';
 
 const Tasks = () => {
   const { tasks, updateTask, deleteTask } = useTasks();
@@ -62,6 +63,12 @@ const Tasks = () => {
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
   
+  const pagination = usePagination({ data: sortedTasks, itemsPerPage: 20 });
+
+  useEffect(() => {
+    pagination.resetPage();
+  }, [searchQuery, priorityFilter, statusFilter]);
+
   const handleCreateTask = () => {
     navigate('/tasks/new');
   };
@@ -151,7 +158,7 @@ const Tasks = () => {
 
         {sortedTasks.length > 0 ? (
           <div className="space-y-4">
-            {sortedTasks.map((task) => {
+            {pagination.paginatedData.map((task) => {
               const contact = task.contactId ? getContactById(task.contactId) : undefined;
               const contactName = contact ? (contact.company || contact.fullName || '') : '';
               
@@ -233,6 +240,17 @@ const Tasks = () => {
                 </div>
               );
             })}
+            <ContactsPagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              startIndex={pagination.startIndex}
+              endIndex={pagination.endIndex}
+              hasNextPage={pagination.hasNextPage}
+              hasPreviousPage={pagination.hasPreviousPage}
+              onNextPage={pagination.goToNextPage}
+              onPreviousPage={pagination.goToPreviousPage}
+            />
           </div>
         ) : (
           <EmptyState
