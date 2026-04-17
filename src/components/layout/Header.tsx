@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { GlobalSearch } from "./GlobalSearch";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -29,6 +30,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          <GlobalSearch />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">

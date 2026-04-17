@@ -16,6 +16,7 @@ const formatTask = (row: Record<string, unknown>): Task => ({
   contactName: '',
   agentId: (row.agent_id as string) || '',
   agentName: (row.agent_name as string) || '',
+  recurrence: ((row.recurrence as string) || 'none') as Task["recurrence"],
   createdAt: new Date(row.created_at as string),
   updatedAt: new Date(row.updated_at as string),
 });

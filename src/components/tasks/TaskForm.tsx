@@ -30,6 +30,7 @@ const TaskForm = ({ task, isEditing = false, contactId }: TaskFormProps) => {
         priority: data.priority || "medium",
         contactId: data.contactId === "none" ? undefined : data.contactId,
         status: data.status || "active",
+        recurrence: (data.recurrence || "none") as "none" | "daily" | "weekly" | "monthly",
         ...(data.agentId   && { agentId:   data.agentId }),
         ...(data.agentName && { agentName: data.agentName }),
       };

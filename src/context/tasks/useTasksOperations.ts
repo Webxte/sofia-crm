@@ -12,9 +12,9 @@ export const useTasksOperations = () => {
     return result;
   };
 
-  const updateTask = async (id: string, taskData: Parameters<typeof updateTaskBase>[1]) => {
-    const result = await updateTaskBase(id, taskData);
-    await fetchTasks(); // Refresh tasks after updating
+  const updateTask = async (id: string, taskData: Parameters<typeof updateTaskBase>[1], existingTask?: Parameters<typeof updateTaskBase>[2]) => {
+    const result = await updateTaskBase(id, taskData, existingTask);
+    await fetchTasks();
     return result;
   };
 

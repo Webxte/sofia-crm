@@ -53,7 +53,7 @@ const TaskDetails = () => {
   }
   
   const handleCompleteTask = async () => {
-    if (id) await updateTask(id, { status: "completed" });
+    if (id) await updateTask(id, { status: "completed" }, task);
     navigate('/tasks');
   };
   

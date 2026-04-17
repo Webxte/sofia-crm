@@ -5,7 +5,9 @@ import { useContacts } from '@/context/contacts/ContactsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, CheckSquare, ListTodo, RefreshCcw, Trash2 } from 'lucide-react';
+import { Plus, CheckSquare, ListTodo, RefreshCcw, Trash2, Download, Repeat } from 'lucide-react';
+import { downloadCSV } from '@/lib/exportCSV';
+import { toast } from 'sonner';
 import { EmptyState } from '@/components/EmptyState';
 import { Input } from '@/components/ui/input';
 import {
@@ -69,6 +71,32 @@ const Tasks = () => {
     pagination.resetPage();
   }, [searchQuery, priorityFilter, statusFilter]);
 
+  const handleExport = () => {
+    if (sortedTasks.length === 0) {
+      toast.error("Nothing to export", { description: "No tasks match the current filters." });
+      return;
+    }
+    const headers = ["Title", "Status", "Priority", "Due Date", "Due Time", "Contact", "Agent", "Description"];
+    const rows = sortedTasks.map(task => {
+      const contact = task.contactId ? getContactById(task.contactId) : undefined;
+      const contactName = task.contactId
+        ? (contact ? (contact.company || contact.fullName || '') : 'Deleted contact')
+        : '';
+      return [
+        task.title,
+        task.status,
+        task.priority,
+        task.dueDate || '',
+        task.dueTime || '',
+        contactName,
+        task.agentName || '',
+        task.description || '',
+      ];
+    });
+    downloadCSV([headers, ...rows], `tasks_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success("Export complete", { description: `${sortedTasks.length} task(s) exported.` });
+  };
+
   const handleCreateTask = () => {
     navigate('/tasks/new');
   };
@@ -78,7 +106,8 @@ const Tasks = () => {
   };
 
   const handleCompleteTask = async (taskId: string) => {
-    await updateTask(taskId, { status: 'completed' });
+    const task = tasks.find(t => t.id === taskId);
+    await updateTask(taskId, { status: 'completed' }, task);
   };
 
   const handleReactivateTask = async (taskId: string) => {
@@ -102,9 +131,14 @@ const Tasks = () => {
               Manage your tasks and follow-ups
             </p>
           </div>
-          <Button onClick={handleCreateTask}>
-            <Plus className="mr-2 h-4 w-4" /> Add Task
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-1" /> Export
+            </Button>
+            <Button onClick={handleCreateTask}>
+              <Plus className="mr-2 h-4 w-4" /> Add Task
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 mb-4">
@@ -178,6 +212,11 @@ const Tasks = () => {
                         </Badge>
                         {task.status === 'completed' && (
                           <Badge className="bg-green-500">Completed</Badge>
+                        )}
+                        {task.recurrence && task.recurrence !== 'none' && (
+                          <Badge variant="outline" className="text-xs border-blue-300 text-blue-700 flex items-center gap-1">
+                            <Repeat className="h-3 w-3" />{task.recurrence}
+                          </Badge>
                         )}
                       </div>
                       {task.dueDate && (

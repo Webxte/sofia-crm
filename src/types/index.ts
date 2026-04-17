@@ -44,6 +44,7 @@ export interface Task {
   contactId?: string;
   agentId: string;
   agentName: string;
+  recurrence?: "none" | "daily" | "weekly" | "monthly";
   createdAt: Date;
   updatedAt: Date;
 }

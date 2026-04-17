@@ -41,7 +41,7 @@ const Contacts = () => {
   
   return (
     <div className="space-y-6">
-      <ContactsHeader onImportClick={() => setShowImporter(true)} />
+      <ContactsHeader onImportClick={() => setShowImporter(true)} filteredContacts={filteredContacts} />
       
       <ContactsToolbar
         searchQuery={searchQuery}

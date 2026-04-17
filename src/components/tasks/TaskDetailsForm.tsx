@@ -39,6 +39,7 @@ const taskSchema = z.object({
   }),
   contactId: z.string().optional(),
   status: z.enum(["active", "completed"]).default("active"),
+  recurrence: z.enum(["none", "daily", "weekly", "monthly"]).default("none"),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -48,7 +49,7 @@ interface TaskDetailsFormProps {
   contactId?: string;
   isEditing?: boolean;
   isSubmitting: boolean;
-  onSubmit: (data: TaskFormValues & { agentId?: string; agentName?: string }) => void;
+  onSubmit: (data: TaskFormValues & { agentId?: string; agentName?: string; recurrence?: string }) => void;
   onCancel: () => void;
 }
 
@@ -71,6 +72,7 @@ export const TaskDetailsForm = ({
     priority: task?.priority || "medium",
     contactId: contactId || task?.contactId || "none",
     status: task?.status || "active",
+    recurrence: (task?.recurrence as TaskFormValues["recurrence"]) || "none",
   };
 
   const form = useForm<TaskFormValues>({
@@ -133,6 +135,27 @@ export const TaskDetailsForm = ({
           control={form.control}
           name="description"
           render={({ field }) => <TaskDescriptionField field={field} />}
+        />
+
+        <FormField
+          control={form.control}
+          name="recurrence"
+          render={({ field }) => (
+            <div className="space-y-1">
+              <Label>Recurrence</Label>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No recurrence" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         />
 
         {isAdmin && agents.length > 0 && (

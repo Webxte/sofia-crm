@@ -45,8 +45,8 @@ export const buildCompanyNameMap = (contacts: Contact[], orders?: Order[]) => {
 };
 
 export const generateOrdersCSV = (orders: Order[], companyNameMap: Record<string, string>) => {
-  const headers = ['Reference', 'Customer', 'Date', 'Status', 'Total', 'VAT Total', 'Agent', 'Notes'];
-  
+  const headers = ['Reference', 'Customer', 'Date', 'Status', 'Total', 'VAT Total', 'Agent', 'Payment Date', 'Payment Method', 'Invoice Number', 'Notes'];
+
   const rows = orders.map(order => [
     order.reference || '',
     companyNameMap[order.contactId] || 'Unknown',
@@ -55,6 +55,9 @@ export const generateOrdersCSV = (orders: Order[], companyNameMap: Record<string
     order.total.toString(),
     order.vatTotal?.toString() || '0',
     order.agentName || '',
+    order.paymentDate || '',
+    order.paymentMethod || '',
+    order.invoiceNumber || '',
     order.notes || ''
   ]);
   
