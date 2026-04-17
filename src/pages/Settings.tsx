@@ -10,6 +10,7 @@ import UserManagement from "@/components/settings/UserManagement";
 import ContactEmailTemplates from "@/components/settings/ContactEmailTemplates";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
+import AuditLog from "@/components/settings/AuditLog";
 import { useSettings } from "@/context/settings";
 import { useProducts } from "@/context/products/ProductsContext";
 import { Settings as SettingsType } from "@/types";
@@ -133,7 +134,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="company" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>
           <TabsTrigger value="contact-email">Contact Email</TabsTrigger>
@@ -142,6 +143,7 @@ const Settings = () => {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
+          <TabsTrigger value="audit">Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="company" className="space-y-4">
@@ -254,6 +256,10 @@ const Settings = () => {
               <ContactImportSettings />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-4">
+          <AuditLog />
         </TabsContent>
       </Tabs>
     </div>
