@@ -8,7 +8,7 @@ const formatTask = (row: Record<string, unknown>): Task => ({
   id: row.id as string,
   title: row.title as string,
   description: (row.description as string) || '',
-  status: row.status as "active" | "completed",
+  status: (row.status === "completed" ? "completed" : "active") as Task["status"],
   priority: row.priority as "low" | "medium" | "high",
   dueDate: (row.due_date as string) || undefined,
   dueTime: (row.due_time as string) || '',

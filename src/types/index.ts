@@ -38,7 +38,7 @@ export interface Task {
   title: string;
   description: string;
   priority: "low" | "medium" | "high" | "urgent";
-  status: "pending" | "in_progress" | "completed" | "cancelled";
+  status: "active" | "completed";
   dueDate?: string;
   dueTime?: string;
   contactId?: string;

@@ -128,6 +128,18 @@ serve(async (req) => {
       throw new Error(`Failed to send email: ${error.message}`);
     }
 
+    // Log the sent email
+    await supabase.from("email_logs").insert({
+      contact_id: order.contact_id || null,
+      order_id: orderId,
+      type: "order",
+      to_email: recipient,
+      subject,
+      body_preview: message.slice(0, 500),
+      sent_by_id: userId,
+      sent_by_name: user.user_metadata?.name || user.email || null,
+    });
+
     return new Response(
       JSON.stringify({ success: true, message: "Email sent successfully", data }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }

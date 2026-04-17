@@ -3,8 +3,9 @@ import React from "react";
 import { Contact } from "@/types";
 import { ContactMeetings } from "./history/ContactMeetings";
 import { ContactOrders } from "./history/ContactOrders";
+import { ContactEmails } from "./history/ContactEmails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarClock, ShoppingBag } from "lucide-react";
+import { CalendarClock, ShoppingBag, Mail } from "lucide-react";
 import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/orders/OrdersContext";
 
@@ -44,8 +45,12 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
             <ShoppingBag className="mr-2 h-4 w-4" />
             Orders ({sortedOrders.length})
           </TabsTrigger>
+          <TabsTrigger value="emails" className="flex items-center">
+            <Mail className="mr-2 h-4 w-4" />
+            Emails
+          </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="meetings">
           {meetingsEmpty ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -55,7 +60,7 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
             <ContactMeetings meetings={sortedMeetings} />
           )}
         </TabsContent>
-        
+
         <TabsContent value="orders">
           {ordersEmpty ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -64,6 +69,10 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
           ) : (
             <ContactOrders orders={sortedOrders} />
           )}
+        </TabsContent>
+
+        <TabsContent value="emails">
+          <ContactEmails contactId={contact.id} />
         </TabsContent>
       </Tabs>
     </div>
