@@ -51,7 +51,7 @@ export const generateDefaultEmailContent = (
  */
 export const generateDefaultEmailSubject = (reference: string, defaultSubject?: string): string => {
   if (defaultSubject) {
-    return defaultSubject.replace(/\[Reference\]/g, reference);
+    return defaultSubject.replace(/\[Reference\]/g, () => reference);
   }
   return `Order Confirmation - Ref: ${reference}`;
 };
@@ -71,17 +71,22 @@ export const getEmailPlaceholders = () => {
 };
 
 /**
- * Fills email template with actual data
+ * Fills email template with actual data.
+ * Uses a single-pass replacement to prevent second-order substitution
+ * (e.g. a contact named "[Reference]" being replaced twice).
  */
 export const fillEmailTemplate = (template: string, order: Order, contactName: string, companyName: string, reference: string): string => {
   const orderDate = format(new Date(order.date), 'MMMM do, yyyy');
   const total = formatCurrency(order.total);
-  
-  return template
-    .replace(/\[Name\]/g, contactName)
-    .replace(/\[Company\]/g, companyName || "")
-    .replace(/\[Date\]/g, orderDate)
-    .replace(/\[Reference\]/g, reference)
-    .replace(/\[Total\]/g, total)
-    .replace(/\[Status\]/g, order.status);
+
+  const values: Record<string, string> = {
+    '[Name]': contactName || '',
+    '[Company]': companyName || '',
+    '[Date]': orderDate,
+    '[Reference]': reference || '',
+    '[Total]': total,
+    '[Status]': order.status || '',
+  };
+
+  return template.replace(/\[Name\]|\[Company\]|\[Date\]|\[Reference\]|\[Total\]|\[Status\]/g, (match) => values[match] ?? match);
 };

@@ -11,8 +11,18 @@ export const useEmailForm = (contact: Contact) => {
   const [newCc, setNewCc] = useState("");
   const [selectedCustomLink, setSelectedCustomLink] = useState<string | null>(null);
   
+  const safeUrl = (url: string | undefined, fallback: string): string => {
+    if (!url) return fallback;
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? url : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const getDefaultMessage = () => {
-    const defaultTemplate = settings.defaultContactEmailMessage || 
+    const defaultTemplate = settings.defaultContactEmailMessage ||
       `Dear [Name],
 
 Thank you for your time during our recent meeting. As discussed, I've attached the links to our product catalog and price list.
@@ -24,12 +34,15 @@ Please don't hesitate to reach out if you have any questions.
 
 Best regards,
 [Company Name]`;
-    
-    return defaultTemplate
-      .replace(/\[Name\]/g, contact.fullName || "valued customer")
-      .replace(/\[Company Name\]/g, settings.companyName || "The Team")
-      .replace(/\[Catalog URL\]/g, settings.catalogUrl || "[Catalog URL]")
-      .replace(/\[Price List URL\]/g, settings.priceListUrl || "[Price List URL]");
+
+    const values: Record<string, string> = {
+      '[Name]': contact.fullName || 'valued customer',
+      '[Company Name]': settings.companyName || 'The Team',
+      '[Catalog URL]': safeUrl(settings.catalogUrl, '[Catalog URL]'),
+      '[Price List URL]': safeUrl(settings.priceListUrl, '[Price List URL]'),
+    };
+
+    return defaultTemplate.replace(/\[Name\]|\[Company Name\]|\[Catalog URL\]|\[Price List URL\]/g, (match) => values[match] ?? match);
   };
   
   const form = useForm<EmailFormValues>({
