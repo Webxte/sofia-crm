@@ -27,6 +27,8 @@ const Meetings = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMeetingType, setSelectedMeetingType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "grid" : "list");
   const [showAllMeetings, setShowAllMeetings] = useState(false);
   
@@ -48,6 +50,11 @@ const Meetings = () => {
       
       if (selectedMeetingType === 'all') return true;
       return meeting.type === selectedMeetingType;
+    })
+    .filter(meeting => {
+      if (dateFrom && meeting.date < dateFrom) return false;
+      if (dateTo && meeting.date > dateTo) return false;
+      return true;
     })
     .filter(meeting => {
       if (!searchQuery) return true;
@@ -77,7 +84,7 @@ const Meetings = () => {
 
   useEffect(() => {
     pagination.resetPage();
-  }, [searchQuery, selectedMeetingType, selectedSort, showAllMeetings]);
+  }, [searchQuery, selectedMeetingType, selectedSort, dateFrom, dateTo, showAllMeetings]);
 
   const handleCreateMeeting = () => {
     navigate('/meetings/new');
@@ -123,6 +130,10 @@ const Meetings = () => {
           onMeetingTypeChange={setSelectedMeetingType}
           selectedSort={selectedSort}
           onSortChange={setSelectedSort}
+          dateFrom={dateFrom}
+          onDateFromChange={setDateFrom}
+          dateTo={dateTo}
+          onDateToChange={setDateTo}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           showAllMeetings={showAllMeetings}

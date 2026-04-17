@@ -75,6 +75,8 @@ export const useTaskCRUD = () => {
           due_date: taskData.dueDate,
           due_time: taskData.dueTime,
           contact_id: taskData.contactId,
+          ...(taskData.agentId   !== undefined && { agent_id:   taskData.agentId }),
+          ...(taskData.agentName !== undefined && { agent_name: taskData.agentName }),
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)

@@ -1,9 +1,18 @@
 
+import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Task } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Form,
   FormField,
@@ -14,6 +23,8 @@ import { TaskDateField } from "./fields/TaskDateField";
 import { TaskTimeField } from "./fields/TaskTimeField";
 import { TaskContactField } from "./fields/TaskContactField";
 import { TaskDescriptionField } from "./fields/TaskDescriptionField";
+import { useAuth } from "@/context/AuthContext";
+import { useAgents } from "@/hooks/useAgents";
 
 // Define the schema for task validation
 const taskSchema = z.object({
@@ -37,18 +48,21 @@ interface TaskDetailsFormProps {
   contactId?: string;
   isEditing?: boolean;
   isSubmitting: boolean;
-  onSubmit: (data: TaskFormValues) => void;
+  onSubmit: (data: TaskFormValues & { agentId?: string; agentName?: string }) => void;
   onCancel: () => void;
 }
 
-export const TaskDetailsForm = ({ 
-  task, 
-  contactId, 
-  isEditing = false, 
-  isSubmitting, 
-  onSubmit, 
-  onCancel 
+export const TaskDetailsForm = ({
+  task,
+  contactId,
+  isEditing = false,
+  isSubmitting,
+  onSubmit,
+  onCancel,
 }: TaskDetailsFormProps) => {
+  const { isAdmin, user } = useAuth();
+  const agents = useAgents();
+  const [selectedAgentId, setSelectedAgentId] = React.useState(task?.agentId || user?.id || "");
   const defaultValues: Partial<TaskFormValues> = {
     title: task?.title || "",
     description: task?.description || "",
@@ -64,9 +78,18 @@ export const TaskDetailsForm = ({
     defaultValues,
   });
 
+  const handleSubmit = (data: TaskFormValues) => {
+    const agent = agents.find(a => a.id === selectedAgentId);
+    onSubmit({
+      ...data,
+      agentId: selectedAgentId || undefined,
+      agentName: agent?.name || undefined,
+    });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="title"
@@ -111,6 +134,22 @@ export const TaskDetailsForm = ({
           name="description"
           render={({ field }) => <TaskDescriptionField field={field} />}
         />
+
+        {isAdmin && agents.length > 0 && (
+          <div className="space-y-1">
+            <Label>Assigned Agent</Label>
+            <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {agents.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="flex justify-end gap-4">
           <Button 

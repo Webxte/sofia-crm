@@ -20,9 +20,8 @@ const TaskForm = ({ task, isEditing = false, contactId }: TaskFormProps) => {
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
-    
+
     try {
-      // Make sure required fields are present
       const taskData = {
         title: data.title,
         description: data.description || "",
@@ -31,6 +30,8 @@ const TaskForm = ({ task, isEditing = false, contactId }: TaskFormProps) => {
         priority: data.priority || "medium",
         contactId: data.contactId === "none" ? undefined : data.contactId,
         status: data.status || "active",
+        ...(data.agentId   && { agentId:   data.agentId }),
+        ...(data.agentName && { agentName: data.agentName }),
       };
       
       if (isEditing && task) {

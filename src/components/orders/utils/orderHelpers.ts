@@ -99,13 +99,15 @@ export const filterOrders = (
   filters: {
     searchQuery: string;
     filterStatus: string;
+    dateFrom?: string;
+    dateTo?: string;
     contactId: string | null;
     isAdmin: boolean;
     userId: string | undefined;
     getContactById: (id: string) => Contact | undefined;
   }
 ) => {
-  const { searchQuery, filterStatus, contactId, isAdmin, userId, getContactById } = filters;
+  const { searchQuery, filterStatus, dateFrom, dateTo, contactId, isAdmin, userId, getContactById } = filters;
   
   console.log("filterOrders called with:", { 
     ordersCount: orders.length, 
@@ -125,6 +127,10 @@ export const filterOrders = (
     
     // Filter by status
     if (filterStatus !== "all" && order.status !== filterStatus) return false;
+
+    // Filter by date range
+    if (dateFrom && order.date < dateFrom) return false;
+    if (dateTo && order.date > dateTo) return false;
     
     // Filter by search query
     if (searchQuery) {

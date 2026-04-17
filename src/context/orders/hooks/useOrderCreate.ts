@@ -8,7 +8,7 @@ import { format } from "date-fns";
 export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
   const { user } = useAuth();
 
-  const addOrder = async (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">): Promise<void> => {
+  const addOrder = async (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">): Promise<string | undefined> => {
     try {
       if (!user) {
         toast.error("Error", {
@@ -87,10 +87,12 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
       
       // Refresh orders to get the complete data including items
       await refreshOrders();
-      
+
       toast.success("Success", {
         description: "Order added successfully",
       });
+
+      return orderResult.id as string;
     } catch (err) {
       console.error('Unexpected error adding order:', err);
       toast.error("Error", {

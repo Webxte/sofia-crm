@@ -25,6 +25,8 @@ import { ContactsPagination } from "@/components/contacts/ContactsPagination";
 const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [showAllOrders, setShowAllOrders] = useState(false);
   
@@ -95,6 +97,8 @@ const Orders = () => {
     filteredOrders = filterOrders(orders, {
       searchQuery,
       filterStatus,
+      dateFrom,
+      dateTo,
       contactId,
       isAdmin: showAllOrders,
       userId: user?.id,
@@ -117,7 +121,7 @@ const Orders = () => {
 
   useEffect(() => {
     pagination.resetPage();
-  }, [searchQuery, filterStatus, showAllOrders, contactId]);
+  }, [searchQuery, filterStatus, dateFrom, dateTo, showAllOrders, contactId]);
 
   const handleExport = () => {
     try {
@@ -145,11 +149,15 @@ const Orders = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <OrdersHeader contactId={contactId} />
-      <OrdersFilter 
+      <OrdersFilter
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
+        dateFrom={dateFrom}
+        setDateFrom={setDateFrom}
+        dateTo={dateTo}
+        setDateTo={setDateTo}
         viewMode={effectiveViewMode}
         setViewMode={setViewMode}
         handleExport={handleExport}

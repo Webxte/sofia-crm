@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useOrders } from "@/context/orders/OrdersContext";
 import { useContacts } from "@/context/contacts/ContactsContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Mail } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Copy } from "lucide-react";
 import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";
 import { OrderEmailDialog } from "@/components/orders/email/OrderEmailDialog";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/utils/formatting";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -19,11 +20,39 @@ const OrderDetails = () => {
   const { getOrderById } = useOrders();
   const { getContactById } = useContacts();
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [cloning, setCloning] = useState(false);
   const isMobile = useIsMobile();
+  const { addOrder } = useOrders();
   
   const order = id ? getOrderById(id) : undefined;
   const contact = order ? getContactById(order.contactId) : null;
   
+  const handleClone = async () => {
+    if (!order) return;
+    setCloning(true);
+    try {
+      const newId = await addOrder({
+        contactId: order.contactId,
+        contactCompany: order.contactCompany,
+        contactFullName: order.contactFullName,
+        agentId: order.agentId,
+        agentName: order.agentName,
+        date: format(new Date(), "yyyy-MM-dd"),
+        status: "draft",
+        items: order.items,
+        total: order.total,
+        vatTotal: order.vatTotal,
+        notes: order.notes,
+        termsAndConditions: order.termsAndConditions,
+      });
+      if (newId) navigate(`/orders/${newId}`);
+    } catch {
+      toast.error("Error", { description: "Failed to clone order" });
+    } finally {
+      setCloning(false);
+    }
+  };
+
   if (!order) {
     return (
       <div className="p-4 sm:p-8 text-center">
@@ -46,7 +75,16 @@ const OrderDetails = () => {
           <OrderStatusBadge status={order.status} />
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button 
+          <Button
+            variant="outline"
+            size={isMobile ? "sm" : "default"}
+            onClick={handleClone}
+            disabled={cloning}
+            className="flex-grow sm:flex-grow-0"
+          >
+            <Copy className="mr-2 h-4 w-4" /> {cloning ? "Cloning…" : "Clone"}
+          </Button>
+          <Button
             variant="outline"
             size={isMobile ? "sm" : "default"}
             onClick={() => setEmailDialogOpen(true)}
