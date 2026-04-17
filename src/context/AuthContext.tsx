@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [getUserWithName]);
 
   const isAuthenticated = React.useMemo(() => !!user && !!session, [user, session]);
-  const isAdmin = React.useMemo(() => user?.user_metadata?.role === "admin" || false, [user]);
+  const isAdmin = React.useMemo(() => user?.app_metadata?.role === "admin" || false, [user]);
 
   const login = React.useCallback(async (email: string, password: string) => {
     try {
@@ -139,17 +139,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createUser = React.useCallback(async (name: string, email: string, password: string, role: "admin" | "agent") => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { name, role } },
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke("create-user", {
+        body: { name, email, password, role },
+        headers: { Authorization: `Bearer ${currentSession?.access_token}` },
       });
-      if (error) throw error;
-      if (data.user) {
-        toast.success("Account created!", {
-          description: "Your account has been created successfully.",
-        });
-      }
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      toast.success("Account created!", {
+        description: "Your account has been created successfully.",
+      });
     } catch (error: any) {
       toast.error("Failed to create account", {
         description: error.message || "Please try again.",
