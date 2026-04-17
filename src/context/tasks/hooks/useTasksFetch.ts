@@ -1,8 +1,24 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Task } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+
+const formatTask = (row: Record<string, unknown>): Task => ({
+  id: row.id as string,
+  title: row.title as string,
+  description: (row.description as string) || '',
+  status: row.status as "active" | "completed",
+  priority: row.priority as "low" | "medium" | "high",
+  dueDate: (row.due_date as string) || undefined,
+  dueTime: (row.due_time as string) || '',
+  contactId: (row.contact_id as string) || '',
+  contactName: '',
+  agentId: (row.agent_id as string) || '',
+  agentName: (row.agent_name as string) || '',
+  createdAt: new Date(row.created_at as string),
+  updatedAt: new Date(row.updated_at as string),
+});
 
 export const useTasksFetch = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -34,23 +50,7 @@ export const useTasksFetch = () => {
 
       console.log("useTasksFetch: Raw tasks data from Supabase:", data);
 
-      const formattedTasks: Task[] = (data || []).map(task => ({
-        id: task.id,
-        title: task.title,
-        description: task.description || '',
-        status: task.status as "active" | "completed",
-        priority: task.priority as "low" | "medium" | "high",
-        dueDate: task.due_date || undefined, // Keep as ISO string
-        dueTime: task.due_time || '',
-        contactId: task.contact_id || '',
-        contactName: '', // Set empty string since contact_name doesn't exist in DB
-        agentId: task.agent_id || '',
-        agentName: task.agent_name || '',
-        createdAt: new Date(task.created_at),
-        updatedAt: new Date(task.updated_at),
-      }));
-
-      console.log(`useTasksFetch: Successfully formatted ${formattedTasks.length} tasks`);
+      const formattedTasks = (data || []).map(t => formatTask(t as Record<string, unknown>));
       setTasks(formattedTasks);
     } catch (error) {
       console.error('useTasksFetch: Error in fetchTasks:', error);
@@ -62,6 +62,23 @@ export const useTasksFetch = () => {
       setLoading(false);
     }
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const channel = supabase
+      .channel('tasks-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setTasks(prev => [formatTask(payload.new as Record<string, unknown>), ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setTasks(prev => prev.map(t => t.id === payload.new.id ? formatTask(payload.new as Record<string, unknown>) : t));
+        } else if (payload.eventType === 'DELETE') {
+          setTasks(prev => prev.filter(t => t.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAuthenticated, user?.id]);
 
   return {
     tasks,

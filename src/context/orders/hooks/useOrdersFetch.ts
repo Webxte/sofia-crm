@@ -133,13 +133,20 @@ export const useOrdersFetch = () => {
     }
   }, [isAuthenticated, user]); // Removed getProductById from dependencies to prevent infinite loop
 
-  // Auto-fetch when authentication state changes
   useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log("useOrdersFetch: Auth state changed, fetching orders");
-      fetchOrders();
-    }
+    if (isAuthenticated && user) fetchOrders();
   }, [isAuthenticated, user, fetchOrders]);
+
+  // Orders have nested order_items, so refetch on any change rather than patch in place
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const channel = supabase
+      .channel('orders-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { fetchOrders(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => { fetchOrders(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAuthenticated, user?.id, fetchOrders]);
 
   return {
     orders,

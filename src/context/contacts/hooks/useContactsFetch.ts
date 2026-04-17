@@ -1,9 +1,27 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Contact } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+
+const formatContact = (row: Record<string, unknown>): Contact => ({
+  id: row.id as string,
+  fullName: (row.full_name as string) || '',
+  company: (row.company as string) || '',
+  email: (row.email as string) || '',
+  phone: (row.phone as string) || '',
+  mobile: (row.mobile as string) || '',
+  position: (row.position as string) || '',
+  address: (row.address as string) || '',
+  source: (row.source as string) || '',
+  category: (row.category as string) || '',
+  notes: (row.notes as string) || '',
+  agentId: (row.agent_id as string) || '',
+  agentName: (row.agent_name as string) || '',
+  createdAt: new Date(row.created_at as string),
+  updatedAt: new Date(row.updated_at as string),
+});
 
 export const useContactsFetch = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -36,25 +54,7 @@ export const useContactsFetch = () => {
       const contactsData = data || [];
       console.log("useContactsFetch: Raw contacts data from Supabase:", contactsData?.length || 0);
 
-      const formattedContacts: Contact[] = contactsData.map(contact => ({
-        id: contact.id,
-        fullName: contact.full_name || '',
-        company: contact.company || '',
-        email: contact.email || '',
-        phone: contact.phone || '',
-        mobile: contact.mobile || '',
-        position: contact.position || '',
-        address: contact.address || '',
-        source: contact.source || '',
-        category: contact.category || '',
-        notes: contact.notes || '',
-        agentId: contact.agent_id || '',
-        agentName: contact.agent_name || '',
-        createdAt: new Date(contact.created_at),
-        updatedAt: new Date(contact.updated_at),
-      }));
-
-      console.log(`useContactsFetch: Successfully formatted ${formattedContacts.length} contacts`);
+      const formattedContacts = contactsData.map(c => formatContact(c as Record<string, unknown>));
       setContacts(formattedContacts);
     } catch (error) {
       console.error('useContactsFetch: Error in fetchContacts:', error);
@@ -66,6 +66,23 @@ export const useContactsFetch = () => {
       setLoading(false);
     }
   }, [isAuthenticated, user, isAdmin]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const channel = supabase
+      .channel('contacts-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setContacts(prev => [formatContact(payload.new as Record<string, unknown>), ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setContacts(prev => prev.map(c => c.id === payload.new.id ? formatContact(payload.new as Record<string, unknown>) : c));
+        } else if (payload.eventType === 'DELETE') {
+          setContacts(prev => prev.filter(c => c.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAuthenticated, user?.id]);
 
   return {
     contacts,

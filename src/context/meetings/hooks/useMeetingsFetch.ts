@@ -4,6 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
+const formatMeeting = (row: Record<string, unknown>): Meeting => ({
+  id: row.id as string,
+  contactId: row.contact_id as string,
+  contactName: (row.contact_name as string) || '',
+  type: row.type as "meeting" | "phone" | "email" | "online" | "other",
+  date: row.date as string,
+  time: row.time as string,
+  location: (row.location as string) || '',
+  notes: row.notes as string,
+  nextSteps: (row.next_steps as string[]) || [],
+  agentId: (row.agent_id as string) || '',
+  agentName: (row.agent_name as string) || '',
+  createdAt: new Date(row.created_at as string),
+  updatedAt: new Date(row.updated_at as string),
+});
+
 export const useMeetingsFetch = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
@@ -33,23 +49,7 @@ export const useMeetingsFetch = () => {
 
       console.log("useMeetingsFetch: Raw meetings data from Supabase:", data?.length || 0);
 
-      const formattedMeetings: Meeting[] = (data || []).map(meeting => ({
-        id: meeting.id,
-        contactId: meeting.contact_id,
-        contactName: meeting.contact_name || '',
-        type: meeting.type as "meeting" | "phone" | "email" | "online" | "other",
-        date: meeting.date,
-        time: meeting.time,
-        location: meeting.location || '',
-        notes: meeting.notes,
-        nextSteps: meeting.next_steps || [],
-        agentId: meeting.agent_id || '',
-        agentName: meeting.agent_name || '',
-        createdAt: new Date(meeting.created_at),
-        updatedAt: new Date(meeting.updated_at),
-      }));
-
-      console.log(`useMeetingsFetch: Successfully formatted ${formattedMeetings.length} meetings`);
+      const formattedMeetings = (data || []).map(m => formatMeeting(m as Record<string, unknown>));
       setMeetings(formattedMeetings);
     } catch (error) {
       console.error('useMeetingsFetch: Error in fetchMeetings:', error);
@@ -62,13 +62,26 @@ export const useMeetingsFetch = () => {
     }
   }, [isAuthenticated, user]);
 
-  // Auto-fetch when authentication state changes
   useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log("useMeetingsFetch: Auth state changed, fetching meetings");
-      fetchMeetings();
-    }
+    if (isAuthenticated && user) fetchMeetings();
   }, [isAuthenticated, user, fetchMeetings]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const channel = supabase
+      .channel('meetings-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meetings' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setMeetings(prev => [formatMeeting(payload.new as Record<string, unknown>), ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setMeetings(prev => prev.map(m => m.id === payload.new.id ? formatMeeting(payload.new as Record<string, unknown>) : m));
+        } else if (payload.eventType === 'DELETE') {
+          setMeetings(prev => prev.filter(m => m.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAuthenticated, user?.id]);
 
   return {
     meetings,
