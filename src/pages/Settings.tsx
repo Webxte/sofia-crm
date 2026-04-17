@@ -9,6 +9,7 @@ import CustomLinksSettings from "@/components/settings/CustomLinksSettings";
 import UserManagement from "@/components/settings/UserManagement";
 import ContactEmailTemplates from "@/components/settings/ContactEmailTemplates";
 import ProductImportSettings from "@/components/settings/ProductImportSettings";
+import ProductManagement from "@/components/settings/ProductManagement";
 import ContactImportSettings from "@/components/settings/ContactImportSettings";
 import AuditLog from "@/components/settings/AuditLog";
 import { useSettings } from "@/context/settings";
@@ -233,9 +234,20 @@ const Settings = () => {
         <TabsContent value="products" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Product Import Settings</CardTitle>
+              <CardTitle>Product Catalogue</CardTitle>
               <CardDescription>
-                Configure settings for importing products from CSV files.
+                View, add, edit, and delete products in your catalogue.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductManagement />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Import from CSV</CardTitle>
+              <CardDescription>
+                Bulk-import products from a CSV file (upserts by code).
               </CardDescription>
             </CardHeader>
             <CardContent>
