@@ -4,8 +4,9 @@ import { Contact } from "@/types";
 import { ContactMeetings } from "./history/ContactMeetings";
 import { ContactOrders } from "./history/ContactOrders";
 import { ContactEmails } from "./history/ContactEmails";
+import { ContactTimeline } from "./history/ContactTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarClock, ShoppingBag, Mail } from "lucide-react";
+import { CalendarClock, ShoppingBag, Mail, Activity } from "lucide-react";
 import { useMeetings } from "@/context/meetings";
 import { useOrders } from "@/context/orders/OrdersContext";
 
@@ -35,8 +36,12 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
     <div className="space-y-4">
       <h2 className="text-xl font-semibold mb-4">Contact History</h2>
       
-      <Tabs defaultValue="meetings">
+      <Tabs defaultValue="timeline">
         <TabsList>
+          <TabsTrigger value="timeline" className="flex items-center">
+            <Activity className="mr-2 h-4 w-4" />
+            Timeline
+          </TabsTrigger>
           <TabsTrigger value="meetings" className="flex items-center">
             <CalendarClock className="mr-2 h-4 w-4" />
             Meetings ({sortedMeetings.length})
@@ -50,6 +55,10 @@ const ContactHistory: React.FC<ContactHistoryProps> = ({ contact }) => {
             Emails
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="timeline">
+          <ContactTimeline contactId={contact.id} />
+        </TabsContent>
 
         <TabsContent value="meetings">
           {meetingsEmpty ? (
