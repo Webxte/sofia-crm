@@ -160,7 +160,9 @@ const Tasks = () => {
           <div className="space-y-4">
             {pagination.paginatedData.map((task) => {
               const contact = task.contactId ? getContactById(task.contactId) : undefined;
-              const contactName = contact ? (contact.company || contact.fullName || '') : '';
+              const contactName = task.contactId
+                ? (contact ? (contact.company || contact.fullName || '') : 'Deleted contact')
+                : '';
               
               return (
                 <div

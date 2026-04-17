@@ -50,7 +50,9 @@ const MeetingDetails = () => {
   };
   
   // Create a friendly description for the meeting title using contact information
-  const meetingTitle = contact ? (contact.company || contact.fullName || 'Unknown Contact') : 'Meeting (No contact specified)';
+  const meetingTitle = meeting?.contactId
+    ? (contact ? (contact.company || contact.fullName || 'Unknown Contact') : 'Deleted contact')
+    : 'Meeting (No contact specified)';
   
   const handleEmailContact = () => {
     if (contact && contact.email) {
