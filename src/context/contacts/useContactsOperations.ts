@@ -6,7 +6,7 @@ import { useContactUtils } from "./hooks/useContactUtils";
 export const useContactsOperations = () => {
   const { contacts, setContacts, loading, fetchContacts } = useContactsFetch();
   const { addContact: addContactBase, updateContact: updateContactBase, deleteContact: deleteContactBase } = useContactCRUD();
-  const { sendContactEmail, bulkUpdateContacts: bulkUpdateContactsBase, importContactsFromCsv: importContactsFromCsvBase } = useContactUtils();
+  const { sendContactEmail, bulkUpdateContacts: bulkUpdateContactsBase, importContactsFromCsv: importContactsFromCsvBase, previewCsvImport, executeImport: executeImportBase } = useContactUtils();
 
   // Wrap CRUD operations to update local state
   const addContact = async (contactData: Parameters<typeof addContactBase>[0]) => {
@@ -50,6 +50,9 @@ export const useContactsOperations = () => {
   const importContactsFromCsv = (file: File) =>
     importContactsFromCsvBase(file, () => refreshContacts(false));
 
+  const executeImport = (contacts: any[]) =>
+    executeImportBase(contacts, () => refreshContacts(false));
+
   return {
     contacts,
     loading,
@@ -61,5 +64,7 @@ export const useContactsOperations = () => {
     sendContactEmail,
     bulkUpdateContacts,
     importContactsFromCsv,
+    previewCsvImport,
+    executeImport,
   };
 };

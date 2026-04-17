@@ -25,6 +25,8 @@ interface ContactsContextType {
   deleteContact: (id: string) => Promise<boolean>;
   refreshContacts: () => Promise<void>;
   importContactsFromCsv: (file: File) => Promise<void>;
+  previewCsvImport: (file: File, defaultSource?: string) => Promise<{ toImport: any[]; duplicates: { row: any; matchedOn: string }[] } | null>;
+  executeImport: (contacts: any[]) => Promise<void>;
 }
 
 const ContactsContext = createContext<ContactsContextType | undefined>(undefined);
@@ -42,6 +44,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
     updateContact, 
     deleteContact,
     importContactsFromCsv,
+    previewCsvImport,
+    executeImport,
   } = useContactsOperations();
 
   // Initial fetch when authentication is ready
@@ -121,6 +125,8 @@ export const ContactsProvider = ({ children }: { children: ReactNode }) => {
         deleteContact,
         refreshContacts,
         importContactsFromCsv,
+        previewCsvImport,
+        executeImport,
       }}
     >
       {children}
