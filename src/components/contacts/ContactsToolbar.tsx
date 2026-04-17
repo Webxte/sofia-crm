@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Mail } from "lucide-react";
+import { Mail, Merge } from "lucide-react";
 import { ContactsFilter } from "@/components/contacts/ContactsFilter";
 import { ContactSortingMenu } from "@/components/contacts/ContactSortingMenu";
 import { SortField, SortDirection } from "@/hooks/use-contact-sorting";
@@ -22,6 +22,7 @@ interface ContactsToolbarProps {
   onSortChange: (field: SortField) => void;
   filteredContactsCount: number;
   onBulkEmailClick: () => void;
+  onMergeClick: () => void;
 }
 
 export const ContactsToolbar = ({
@@ -41,6 +42,7 @@ export const ContactsToolbar = ({
   onSortChange,
   filteredContactsCount,
   onBulkEmailClick,
+  onMergeClick,
 }: ContactsToolbarProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
@@ -59,9 +61,12 @@ export const ContactsToolbar = ({
       />
 
       <div className="flex gap-2 items-center mt-2 sm:mt-0">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button variant="outline" size="sm" onClick={onMergeClick}>
+          <Merge className="h-4 w-4 mr-1" /> Merge
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onBulkEmailClick}
           disabled={filteredContactsCount === 0}
           className="mr-2"

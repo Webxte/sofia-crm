@@ -1,14 +1,16 @@
 
-import React from "react";
+import React, { useState } from "react";
 import ContactImporter from "@/components/contacts/ContactImporter";
 import { ContactsHeader } from "@/components/contacts/ContactsHeader";
 import { ContactsToolbar } from "@/components/contacts/ContactsToolbar";
 import { ContactsContent } from "@/components/contacts/ContactsContent";
 import { ContactsPagination } from "@/components/contacts/ContactsPagination";
 import { BulkEmailDialog } from "@/components/contacts/BulkEmailDialog";
+import { ContactMergeDialog } from "@/components/contacts/ContactMergeDialog";
 import { useContactsPage } from "@/hooks/use-contacts-page";
 
 const Contacts = () => {
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
   const {
     contacts,
     filteredContacts,
@@ -60,6 +62,7 @@ const Contacts = () => {
         onSortChange={handleSortChange}
         filteredContactsCount={filteredContacts.length}
         onBulkEmailClick={() => setShowBulkEmailDialog(true)}
+        onMergeClick={() => setShowMergeDialog(true)}
       />
       
       <ContactsContent
@@ -104,6 +107,11 @@ const Contacts = () => {
           onOpenChange={setShowBulkEmailDialog}
         />
       )}
+
+      <ContactMergeDialog
+        open={showMergeDialog}
+        onOpenChange={setShowMergeDialog}
+      />
     </div>
   );
 };
