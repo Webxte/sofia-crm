@@ -17,6 +17,9 @@ export const useOrderUpdate = (refreshOrders: () => Promise<void>) => {
       if (orderData.notes !== undefined) updateData.notes = orderData.notes;
       if (orderData.termsAndConditions !== undefined) updateData.terms_and_conditions = orderData.termsAndConditions;
       if (orderData.reference !== undefined) updateData.reference = orderData.reference;
+      if (orderData.paymentDate !== undefined) updateData.payment_date = orderData.paymentDate || null;
+      if (orderData.paymentMethod !== undefined) updateData.payment_method = orderData.paymentMethod || null;
+      if (orderData.invoiceNumber !== undefined) updateData.invoice_number = orderData.invoiceNumber || null;
       
       // Add updated_at
       updateData.updated_at = new Date().toISOString();

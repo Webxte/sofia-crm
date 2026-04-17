@@ -115,6 +115,9 @@ export const useOrdersFetch = () => {
           notes: order.notes,
           termsAndConditions: order.terms_and_conditions,
           reference: order.reference,
+          paymentDate: (order as any).payment_date ?? null,
+          paymentMethod: (order as any).payment_method ?? null,
+          invoiceNumber: (order as any).invoice_number ?? null,
           createdAt: new Date(order.created_at),
           updatedAt: new Date(order.updated_at),
         };

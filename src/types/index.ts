@@ -89,6 +89,9 @@ export interface Order {
   notes?: string;
   termsAndConditions?: string;
   reference?: string;
+  paymentDate?: string | null;
+  paymentMethod?: string | null;
+  invoiceNumber?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

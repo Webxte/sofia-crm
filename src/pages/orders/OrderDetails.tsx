@@ -169,6 +169,32 @@ const OrderDetails = () => {
         </div>
       </div>
       
+      {order.status === "paid" && (order.paymentDate || order.paymentMethod || order.invoiceNumber) && (
+        <div className="border rounded-lg p-3 sm:p-4 border-emerald-200 bg-emerald-50">
+          <h3 className="text-base sm:text-lg font-medium mb-2 text-emerald-800">Payment Details</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {order.paymentDate && (
+              <>
+                <div className="text-sm text-muted-foreground">Payment Date:</div>
+                <div className="text-sm">{format(new Date(order.paymentDate), "PPP")}</div>
+              </>
+            )}
+            {order.paymentMethod && (
+              <>
+                <div className="text-sm text-muted-foreground">Method:</div>
+                <div className="text-sm">{order.paymentMethod}</div>
+              </>
+            )}
+            {order.invoiceNumber && (
+              <>
+                <div className="text-sm text-muted-foreground">Invoice #:</div>
+                <div className="text-sm font-mono">{order.invoiceNumber}</div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {order.notes && (
         <div className="border rounded-lg p-3 sm:p-4">
           <h3 className="text-base sm:text-lg font-medium mb-2">Notes</h3>
