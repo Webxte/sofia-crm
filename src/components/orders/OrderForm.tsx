@@ -176,58 +176,50 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   const handleNewRowCodeChange = (rowIndex: number, code: string) => {
     const updatedRows = [...newRows];
     updatedRows[rowIndex].code = code;
-    
+
     if (code.length >= 1 && Array.isArray(products)) {
-      // Clear existing timeout to prevent memory leaks
       if (updatedRows[rowIndex].searchTimeout) {
         clearTimeout(updatedRows[rowIndex].searchTimeout);
       }
-      
+
       const searchTerm = code.toLowerCase();
-      
-      // First, find products that start with the search term
-      const startsWith = products.filter(product => 
-        product && product.code && 
-        product.code.toLowerCase().startsWith(searchTerm)
-      );
-      
-      // Check for exact match first
-      const exactMatch = products.find(product => 
-        product && product.code && 
-        product.code.toLowerCase() === searchTerm
-      );
-      
+
+      // Exact code match → auto-populate immediately
+      const exactMatch = products.find(p => p?.code?.toLowerCase() === searchTerm);
       if (exactMatch) {
-        // Auto-populate if exact match found
         handleProductSelected(rowIndex, exactMatch);
         return;
       }
-      
-      // Auto-complete if there's exactly one product that starts with the typed code (need at least 2 chars)
-      if (startsWith.length === 1 && code.length >= 3) {
-        handleProductSelected(rowIndex, startsWith[0]);
+
+      // Gather matches: code starts-with, code contains, description contains
+      const codeStartsWith = products.filter(p => p?.code?.toLowerCase().startsWith(searchTerm));
+      const codeContains   = products.filter(p =>
+        p?.code?.toLowerCase().includes(searchTerm) && !p.code.toLowerCase().startsWith(searchTerm)
+      );
+      const descContains   = products.filter(p =>
+        p?.description?.toLowerCase().includes(searchTerm) &&
+        !p.code.toLowerCase().includes(searchTerm)
+      );
+
+      // Unique code that starts with the term (3+ chars) → auto-populate
+      if (codeStartsWith.length === 1 && code.length >= 3) {
+        handleProductSelected(rowIndex, codeStartsWith[0]);
         return;
       }
-      
-      // If multiple matches, show suggestions
-      const contains = products.filter(product => 
-        product && product.code && 
-        product.code.toLowerCase().includes(searchTerm) &&
-        !product.code.toLowerCase().startsWith(searchTerm)
-      );
-      
-      // Combine results, prioritizing those that start with the search term, sorted A-Z
-      const sortedStartsWith = startsWith.sort((a, b) => a.code.localeCompare(b.code));
-      const sortedContains = contains.sort((a, b) => a.code.localeCompare(b.code));
-      const suggestions = [...sortedStartsWith, ...sortedContains].slice(0, 10);
-      
+
+      const suggestions = [
+        ...codeStartsWith.sort((a, b) => a.code.localeCompare(b.code)),
+        ...codeContains.sort((a, b) => a.code.localeCompare(b.code)),
+        ...descContains.sort((a, b) => a.code.localeCompare(b.code)),
+      ].slice(0, 12);
+
       updatedRows[rowIndex].suggestions = suggestions;
-      updatedRows[rowIndex].showSuggestions = suggestions.length > 0 && code.length > 0;
+      updatedRows[rowIndex].showSuggestions = suggestions.length > 0;
     } else {
       updatedRows[rowIndex].suggestions = [];
       updatedRows[rowIndex].showSuggestions = false;
     }
-    
+
     setHighlightedIndex(-1);
     setNewRows(updatedRows);
   };
@@ -643,7 +635,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
                         <div className="flex items-center gap-2">
                           <div className="relative flex-1">
                             <Input
-                              placeholder="Enter product code"
+                              placeholder="Enter code or description…"
                               value={row.code}
                               onChange={(e) => handleNewRowCodeChange(rowIndex, e.target.value)}
                               onFocus={() => {
