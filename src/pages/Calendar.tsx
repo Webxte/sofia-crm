@@ -1,21 +1,23 @@
 
 import React, { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus, ArrowLeft, Clock, MapPin, User, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, ArrowLeft, Clock, MapPin, User, CalendarDays, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useMeetings } from '@/context/meetings';
+import { useTasks } from '@/context/tasks';
 import { useContacts } from '@/context/contacts/ContactsContext';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Helmet } from 'react-helmet-async';
-import { Meeting } from '@/types';
+import { Meeting, Task } from '@/types';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const { meetings } = useMeetings();
+  const { tasks } = useTasks();
   const { getContactById } = useContacts();
   const navigate = useNavigate();
 
@@ -39,11 +41,28 @@ const Calendar = () => {
     return grouped;
   }, [meetings]);
 
+  const tasksByDate = useMemo(() => {
+    const grouped: Record<string, Task[]> = {};
+    tasks.forEach(task => {
+      if (!task.dueDate) return;
+      const dateKey = task.dueDate.slice(0, 10);
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(task);
+    });
+    return grouped;
+  }, [tasks]);
+
   const selectedDayMeetings = useMemo(() => {
     if (!selectedDay) return [];
     const dateKey = format(selectedDay, 'yyyy-MM-dd');
     return (meetingsByDate[dateKey] || []).sort((a, b) => a.time.localeCompare(b.time));
   }, [selectedDay, meetingsByDate]);
+
+  const selectedDayTasks = useMemo(() => {
+    if (!selectedDay) return [];
+    const dateKey = format(selectedDay, 'yyyy-MM-dd');
+    return tasksByDate[dateKey] || [];
+  }, [selectedDay, tasksByDate]);
 
   const handlePreviousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -85,9 +104,10 @@ const Calendar = () => {
                   {format(selectedDay, 'EEEE, MMMM d, yyyy')}
                 </h1>
                 <p className="text-muted-foreground">
-                  {selectedDayMeetings.length === 0 
-                    ? 'No meetings scheduled' 
-                    : `${selectedDayMeetings.length} meeting${selectedDayMeetings.length > 1 ? 's' : ''}`}
+                  {[
+                    selectedDayMeetings.length > 0 && `${selectedDayMeetings.length} meeting${selectedDayMeetings.length > 1 ? 's' : ''}`,
+                    selectedDayTasks.length > 0 && `${selectedDayTasks.length} task${selectedDayTasks.length > 1 ? 's' : ''}`,
+                  ].filter(Boolean).join(' · ') || 'Nothing scheduled'}
                 </p>
               </div>
             </div>
@@ -96,13 +116,13 @@ const Calendar = () => {
             </Button>
           </div>
 
-          {selectedDayMeetings.length === 0 ? (
+          {selectedDayMeetings.length === 0 && selectedDayTasks.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <CalendarDays className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium mb-1">No meetings this day</h3>
+                <h3 className="text-lg font-medium mb-1">Nothing scheduled this day</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Schedule a new meeting to fill your calendar.
+                  Schedule a meeting or create a task with this due date.
                 </p>
                 <Button variant="outline" onClick={() => navigate('/meetings/new')}>
                   <Plus className="mr-2 h-4 w-4" /> Schedule Meeting
@@ -111,6 +131,48 @@ const Calendar = () => {
             </Card>
           ) : (
             <div className="space-y-3">
+              {selectedDayTasks.length > 0 && (
+                <div className="space-y-2">
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1">Tasks due</h2>
+                  {selectedDayTasks.map(task => (
+                    <Card
+                      key={task.id}
+                      className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-amber-400"
+                      onClick={() => navigate(`/tasks/${task.id}`)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckSquare className={cn("h-4 w-4 shrink-0", task.status === 'completed' ? 'text-green-500' : 'text-amber-500')} />
+                            <span className={cn("font-medium truncate", task.status === 'completed' && 'line-through text-muted-foreground')}>
+                              {task.title}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className={cn("text-xs",
+                              task.priority === 'high' ? 'border-red-300 text-red-700' :
+                              task.priority === 'medium' ? 'border-amber-300 text-amber-700' :
+                              'border-gray-300 text-gray-600'
+                            )}>
+                              {task.priority}
+                            </Badge>
+                            <Badge variant={task.status === 'completed' ? 'secondary' : 'outline'} className="text-xs">
+                              {task.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        {task.description && (
+                          <p className="text-sm text-muted-foreground mt-1 ml-6 line-clamp-1">{task.description}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {selectedDayMeetings.length > 0 && (
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1 pt-2">Meetings</h2>
+              )}
               {selectedDayMeetings.map(meeting => {
                 const contact = getContactById(meeting.contactId);
                 const displayName = contact?.company || contact?.fullName || meeting.contactName || 'Unknown Contact';
@@ -220,10 +282,11 @@ const Calendar = () => {
               {calendarDays.map(day => {
                 const dateKey = format(day, 'yyyy-MM-dd');
                 const dayMeetings = meetingsByDate[dateKey] || [];
+                const dayTasks = tasksByDate[dateKey] || [];
                 const isCurrentMonth = isSameMonth(day, currentDate);
                 const isToday = isSameDay(day, new Date());
-                const hasMeetings = dayMeetings.length > 0;
-                
+                const totalItems = dayMeetings.length + dayTasks.length;
+
                 return (
                   <div
                     key={day.toISOString()}
@@ -239,18 +302,28 @@ const Calendar = () => {
                       isToday && "text-primary font-bold"
                     )}>
                       <span>{format(day, 'd')}</span>
-                      {hasMeetings && (
+                      {totalItems > 0 && (
                         <span className="text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 leading-none">
-                          {dayMeetings.length}
+                          {totalItems}
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="space-y-0.5">
-                      {dayMeetings.slice(0, 2).map(meeting => {
+                      {dayTasks.slice(0, 1).map(task => (
+                        <div
+                          key={task.id}
+                          className="text-[10px] leading-tight px-1 py-0.5 rounded truncate bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                          title={task.title}
+                        >
+                          ✓ {task.title}
+                        </div>
+                      ))}
+
+                      {dayMeetings.slice(0, dayTasks.length > 0 ? 1 : 2).map(meeting => {
                         const contact = getContactById(meeting.contactId);
                         const displayName = contact?.company || contact?.fullName || meeting.contactName || '?';
-                        
+
                         return (
                           <div
                             key={meeting.id}
@@ -264,10 +337,10 @@ const Calendar = () => {
                           </div>
                         );
                       })}
-                      
-                      {dayMeetings.length > 2 && (
+
+                      {totalItems > (dayTasks.length > 0 ? 2 : 2) && (
                         <div className="text-[10px] text-muted-foreground px-1">
-                          +{dayMeetings.length - 2} more
+                          +{totalItems - (dayTasks.length > 0 ? 2 : 2)} more
                         </div>
                       )}
                     </div>
