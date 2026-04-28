@@ -9,6 +9,7 @@ export const useContactFilters = (
     userId,
     searchQuery,
     selectedSource,
+    selectedType,
     sortField,
     sortDirection
   }: {
@@ -16,6 +17,7 @@ export const useContactFilters = (
     userId?: string;
     searchQuery: string;
     selectedSource: string | null;
+    selectedType?: string | null;
     sortField: string;
     sortDirection: "asc" | "desc";
   }
@@ -38,10 +40,15 @@ export const useContactFilters = (
   
   // Then filter by source
   if (selectedSource) {
-    filtered = filtered.filter(contact => 
-      contact.source && 
+    filtered = filtered.filter(contact =>
+      contact.source &&
       contact.source.split(',').map(s => s.trim()).includes(selectedSource)
     );
+  }
+
+  // Then filter by contact type (lead / prospect / customer)
+  if (selectedType) {
+    filtered = filtered.filter(contact => (contact.contactType || 'lead') === selectedType);
   }
   
   // Sort the results

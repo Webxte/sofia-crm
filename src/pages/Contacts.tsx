@@ -22,6 +22,8 @@ const Contacts = () => {
     setSearchQuery,
     selectedSource,
     setSelectedSource,
+    selectedType,
+    setSelectedType,
     showAllContacts,
     setShowAllContacts,
     showImporter,
@@ -53,6 +55,8 @@ const Contacts = () => {
         selectedSource={selectedSource}
         onSourceChange={setSelectedSource}
         sources={sources}
+        selectedType={selectedType}
+        onTypeChange={setSelectedType}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onRefresh={handleRefresh}

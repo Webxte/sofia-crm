@@ -36,6 +36,10 @@ export const useContactCRUD = () => {
         notes: contactData.notes,
         agent_id: user.id,
         agent_name: user.name || user.email || "",
+        pipeline_stage: contactData.pipelineStage || 'lead',
+        pipeline_value: contactData.pipelineValue || 0,
+        pipeline_notes: contactData.pipelineNotes || '',
+        contact_type: contactData.contactType || 'lead',
       };
 
       console.log("Contact data being inserted:", newContact);
@@ -94,7 +98,7 @@ export const useContactCRUD = () => {
 
     setLoading(true);
     try {
-      const updateData = {
+      const updateData: Record<string, unknown> = {
         full_name: contactData.fullName,
         company: contactData.company,
         email: contactData.email,
@@ -107,6 +111,12 @@ export const useContactCRUD = () => {
         notes: contactData.notes,
         updated_at: new Date().toISOString(),
       };
+
+      // Only include pipeline/type fields when explicitly provided
+      if (contactData.pipelineStage !== undefined) updateData.pipeline_stage = contactData.pipelineStage;
+      if (contactData.pipelineValue  !== undefined) updateData.pipeline_value  = contactData.pipelineValue;
+      if (contactData.pipelineNotes  !== undefined) updateData.pipeline_notes  = contactData.pipelineNotes;
+      if (contactData.contactType    !== undefined) updateData.contact_type    = contactData.contactType;
 
       // RLS policies will ensure users can only update their own contacts or all if admin
       const { data, error } = await supabase
@@ -132,6 +142,10 @@ export const useContactCRUD = () => {
         notes: data.notes || "",
         agentId: data.agent_id || "",
         agentName: data.agent_name || "",
+        pipelineStage: data.pipeline_stage || 'lead',
+        pipelineValue: data.pipeline_value || 0,
+        pipelineNotes: data.pipeline_notes || '',
+        contactType: data.contact_type || 'lead',
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       } as Contact;

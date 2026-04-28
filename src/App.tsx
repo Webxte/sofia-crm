@@ -32,6 +32,7 @@ import Profile from './pages/Profile';
 import Calendar from './pages/Calendar';
 import NotFound from './pages/NotFound';
 import OrderDetails from './pages/orders/OrderDetails';
+import Pipeline from './pages/Pipeline';
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
       >
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="contacts" element={<Contacts />} />
+        <Route path="pipeline" element={<Pipeline />} />
         <Route path="contacts/new" element={<NewContact />} />
         <Route path="contacts/:id" element={<ContactDetails />} />
         <Route path="contacts/:id/edit" element={<EditContact />} />

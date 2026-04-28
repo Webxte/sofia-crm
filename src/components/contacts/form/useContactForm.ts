@@ -24,6 +24,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false, onCont
       source: contact?.source || initialData?.source || (user?.name ? user.name : ""),
       category: contact?.category || initialData?.category || "",
       notes: contact?.notes || initialData?.notes || "",
+      contactType: contact?.contactType || initialData?.contactType || "lead",
     },
   });
   
@@ -40,6 +41,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false, onCont
         source: contact.source || (user?.name ? user.name : ""),
         category: contact.category || "",
         notes: contact.notes || "",
+        contactType: contact.contactType || "lead",
       });
     } else if (initialData) {
       form.reset({
@@ -60,6 +62,7 @@ export const useContactForm = ({ initialData, contact, isEditing = false, onCont
         ...values,
         agentId: user.id,
         agentName: user.name || user.email || '',
+        contactType: values.contactType || 'lead',
       };
       
       if (!values.source && user?.name) {

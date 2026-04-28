@@ -3,8 +3,12 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Header } from "./Header";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 export default function Layout() {
+  const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -16,6 +20,9 @@ export default function Layout() {
           </main>
         </div>
       </div>
+      {shouldShowOnboarding && (
+        <OnboardingWizard onComplete={completeOnboarding} />
+      )}
     </SidebarProvider>
   );
 }

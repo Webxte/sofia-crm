@@ -13,6 +13,8 @@ interface ContactsToolbarProps {
   selectedSource: string | null;
   onSourceChange: (source: string | null) => void;
   sources: string[];
+  selectedType: string | null;
+  onTypeChange: (type: string | null) => void;
   viewMode: "grid" | "list";
   onViewModeChange: (mode: "grid" | "list") => void;
   onRefresh: () => void;
@@ -33,6 +35,8 @@ export const ContactsToolbar = ({
   selectedSource,
   onSourceChange,
   sources,
+  selectedType,
+  onTypeChange,
   viewMode,
   onViewModeChange,
   onRefresh,
@@ -54,6 +58,8 @@ export const ContactsToolbar = ({
         selectedSource={selectedSource}
         onSourceChange={onSourceChange}
         sources={sources}
+        selectedType={selectedType}
+        onTypeChange={onTypeChange}
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
         onRefresh={onRefresh}

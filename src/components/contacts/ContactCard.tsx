@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Building2, Mail, MapPin, MoreVertical, Phone, Eye, Trash2, Edit, ShoppingCart, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ContactEmailDialog } from "./email/ContactEmailDialog";
+import { ContactTypeBadge } from "./ContactTypeBadge";
 
 interface ContactCardProps {
   contact: Contact;
@@ -51,7 +52,7 @@ export const ContactCard = ({ contact, onDelete }: ContactCardProps) => {
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="icon" className="h-9 w-9 touch-manipulation">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -138,7 +139,8 @@ export const ContactCard = ({ contact, onDelete }: ContactCardProps) => {
         </CardContent>
         
         <CardFooter className="pt-3 border-t">
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 items-center">
+            <ContactTypeBadge type={contact.contactType} />
             {contact.source && (
               <Badge variant="secondary" className="text-xs">
                 {contact.source}

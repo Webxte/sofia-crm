@@ -1,14 +1,15 @@
 
 import { useState } from "react"
-import { 
-  Home, 
-  Users, 
-  Video, 
-  Calendar, 
-  ShoppingBag, 
-  CheckSquare, 
+import {
+  Home,
+  Users,
+  Video,
+  Calendar,
+  ShoppingBag,
+  CheckSquare,
   BarChart3,
-  Settings 
+  Settings,
+  KanbanSquare
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
@@ -28,9 +29,10 @@ import {
 } from "@/components/ui/sidebar"
 
 const items = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Contacts", url: "/contacts", icon: Users },
-  { title: "Meetings", url: "/meetings", icon: Video },
+  { title: "Dashboard",  url: "/",          icon: Home },
+  { title: "Contacts",   url: "/contacts",  icon: Users },
+  { title: "Pipeline",   url: "/pipeline",  icon: KanbanSquare },
+  { title: "Meetings",   url: "/meetings",  icon: Video },
   { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Orders", url: "/orders", icon: ShoppingBag },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },

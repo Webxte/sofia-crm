@@ -7,6 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UseFormReturn } from "react-hook-form";
 import { ContactFormValues, CONTACT_CATEGORIES } from "./types";
 
+const CONTACT_TYPE_OPTIONS = [
+  { value: 'lead',     label: 'Lead' },
+  { value: 'prospect', label: 'Prospect' },
+  { value: 'customer', label: 'Customer' },
+];
+
 interface AdditionalFieldsProps {
   form: UseFormReturn<ContactFormValues>;
   isMobile?: boolean;
@@ -16,6 +22,28 @@ const AdditionalFields: React.FC<AdditionalFieldsProps> = ({ form, isMobile }) =
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="contactType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className={isMobile ? "text-sm" : ""}>Contact Status</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || "lead"}>
+                <FormControl>
+                  <SelectTrigger className={isMobile ? "text-sm h-9" : ""}>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CONTACT_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage className={isMobile ? "text-xs" : ""} />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="category"

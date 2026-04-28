@@ -14,6 +14,7 @@ export const useContactsPage = () => {
   const { user, isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showImporter, setShowImporter] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
@@ -57,10 +58,11 @@ export const useContactsPage = () => {
       userId: user?.id,
       searchQuery,
       selectedSource,
+      selectedType,
       sortField,
       sortDirection
     });
-  }, [contacts, user?.id, searchQuery, selectedSource, sortField, sortDirection]);
+  }, [contacts, user?.id, searchQuery, selectedSource, selectedType, sortField, sortDirection]);
 
   // Add pagination
   const pagination = usePagination({ 
@@ -99,6 +101,8 @@ export const useContactsPage = () => {
     setSearchQuery,
     selectedSource,
     setSelectedSource,
+    selectedType,
+    setSelectedType,
     showAllContacts,
     setShowAllContacts,
     showImporter,

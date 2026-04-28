@@ -19,6 +19,10 @@ const formatContact = (row: Record<string, unknown>): Contact => ({
   notes: (row.notes as string) || '',
   agentId: (row.agent_id as string) || '',
   agentName: (row.agent_name as string) || '',
+  pipelineStage: ((row.pipeline_stage as string) || 'lead') as import('@/types').PipelineStage,
+  pipelineValue: (row.pipeline_value as number) || 0,
+  pipelineNotes: (row.pipeline_notes as string) || '',
+  contactType: ((row.contact_type as string) || 'lead') as import('@/types').ContactType,
   createdAt: new Date(row.created_at as string),
   updatedAt: new Date(row.updated_at as string),
 });

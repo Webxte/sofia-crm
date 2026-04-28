@@ -14,6 +14,8 @@ interface ContactsFilterProps {
   selectedSource: string | null;
   onSourceChange: (value: string | null) => void;
   sources: string[];
+  selectedType: string | null;
+  onTypeChange: (value: string | null) => void;
   viewMode: "grid" | "list";
   onViewModeChange: (mode: "grid" | "list") => void;
   onRefresh: () => void;
@@ -28,6 +30,8 @@ export const ContactsFilter = ({
   selectedSource,
   onSourceChange,
   sources,
+  selectedType,
+  onTypeChange,
   viewMode,
   onViewModeChange,
   onRefresh,
@@ -46,11 +50,25 @@ export const ContactsFilter = ({
           />
         </div>
         <div className="flex gap-2 items-center w-full sm:w-auto">
-          <Select 
-            value={selectedSource || "all"} 
+          <Select
+            value={selectedType || "all"}
+            onValueChange={(value) => onTypeChange(value === "all" ? null : value)}
+          >
+            <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="lead">Lead</SelectItem>
+              <SelectItem value="prospect">Prospect</SelectItem>
+              <SelectItem value="customer">Customer</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedSource || "all"}
             onValueChange={(value) => onSourceChange(value === "all" ? null : value)}
           >
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="All Sources" />
             </SelectTrigger>
             <SelectContent>

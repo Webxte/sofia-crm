@@ -12,7 +12,7 @@ export const useOrdersOperations = () => {
   const { user } = useAuth();
 
   const addOrder = async (orderData: any) => {
-    await createOrderHook(orderData);
+    return await createOrderHook(orderData);
   };
 
   const updateOrder = async (id: string, orderData: any) => {

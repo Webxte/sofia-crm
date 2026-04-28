@@ -1,4 +1,7 @@
 
+export type PipelineStage = 'lead' | 'contacted' | 'qualified' | 'proposal_sent' | 'negotiation' | 'won' | 'lost';
+export type ContactType = 'lead' | 'prospect' | 'customer';
+
 export interface Contact {
   id: string;
   fullName: string;
@@ -13,6 +16,11 @@ export interface Contact {
   notes: string;
   agentId: string;
   agentName: string;
+  // Pipeline fields
+  pipelineStage?: PipelineStage;
+  pipelineValue?: number;
+  pipelineNotes?: string;
+  contactType?: ContactType;
   createdAt: Date;
   updatedAt: Date;
 }

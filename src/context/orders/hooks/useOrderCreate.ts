@@ -23,8 +23,8 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
         agent_name: user.name || ''
       };
       
-      // Generate a reference if not provided - pass user email properly
-      const reference = orderData.reference || generateOrderReference([], user.email, user.id);
+      // Generate a fallback reference only if not provided by the form
+      const reference = orderData.reference || `ORD-${Date.now().toString().slice(-6)}`;
       
       console.log("useOrderCreate: Creating order with reference:", reference, "User email:", user.email);
       
@@ -52,8 +52,8 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
       
       if (orderError) {
         console.error('Error adding order:', orderError);
-        toast.error("Error", {
-          description: "Failed to add order",
+        toast.error("Failed to save order", {
+          description: orderError.message || "Database error — please try again",
         });
         return;
       }
@@ -78,9 +78,12 @@ export const useOrderCreate = (refreshOrders: () => Promise<void>) => {
       if (itemsError) {
         console.error('Error adding order items:', itemsError);
         // Attempt to delete the order if items insertion fails
-        await supabase.from('orders').delete().eq('id', orderResult.id);
-        toast.error("Error", {
-          description: "Failed to add order items",
+        const { error: deleteError } = await supabase.from('orders').delete().eq('id', orderResult.id);
+        if (deleteError) {
+          console.error('Error rolling back order after items failure:', deleteError);
+        }
+        toast.error("Failed to save order items", {
+          description: itemsError.message || "Database error — please try again",
         });
         return;
       }

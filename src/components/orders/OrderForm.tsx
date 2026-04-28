@@ -74,7 +74,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
   const { contacts = [], getContactById = () => undefined } = contactsContext || {};
   const { products = [], getProductByCode = () => undefined } = productsContext || {};
   const { 
-    addOrder = async () => {}, 
+    addOrder = async () => undefined,
     updateOrder = async () => {}, 
     sendOrderEmail = async () => false, 
     generateOrderReference = () => `ORD-${Date.now()}` 
@@ -211,7 +211,7 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         ...codeStartsWith.sort((a, b) => a.code.localeCompare(b.code)),
         ...codeContains.sort((a, b) => a.code.localeCompare(b.code)),
         ...descContains.sort((a, b) => a.code.localeCompare(b.code)),
-      ].slice(0, 12);
+      ];
 
       updatedRows[rowIndex].suggestions = suggestions;
       updatedRows[rowIndex].showSuggestions = suggestions.length > 0;
@@ -352,9 +352,12 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
         navigate("/orders");
       } else {
         console.log("OrderForm: Submitting new order with items:", orderItems.length);
-        await addOrder(orderData);
-        // addOrder handles success toast internally
-        navigate("/orders");
+        const newOrderId = await addOrder(orderData);
+        // addOrder handles success/error toasts internally
+        // Only navigate away if save succeeded (returned an ID)
+        if (newOrderId) {
+          navigate("/orders");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -693,8 +696,8 @@ const OrderForm = ({ order, isEditing = false, contactId }: OrderFormProps) => {
                               }}
                             />
                             {row.showSuggestions && row.suggestions.length > 0 && (
-                              <div className="absolute z-50 left-0 right-0 bg-popover border border-border rounded-md shadow-lg mt-1">
-                                <div className="max-h-60 overflow-y-auto">
+                              <div className="absolute z-50 left-0 right-0 bg-popover border border-border rounded-md shadow-lg mt-1" style={{ maxHeight: '320px', overflowY: 'auto' }}>
+                                <div>
                                 {row.suggestions.map((product, sIdx) => (
                                       <div
                                         key={product.id}

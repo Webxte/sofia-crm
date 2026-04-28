@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Mail, Calendar, ListTodo, Eye, ShoppingCart } from "lucide-react";
 import { ContactEmailDialog } from "./ContactEmailDialog";
+import { ContactTypeBadge } from "./ContactTypeBadge";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -39,9 +40,10 @@ export const ContactsList = ({ contacts, onScheduleMeeting, onCreateTask, onCrea
           <TableHeader>
             <TableRow>
               <TableHead>Company/Contact</TableHead>
+              <TableHead className="hidden sm:table-cell">Status</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="hidden md:table-cell">Phone</TableHead>
-              <TableHead>Source</TableHead>
+              <TableHead className="hidden lg:table-cell">Source</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -49,9 +51,12 @@ export const ContactsList = ({ contacts, onScheduleMeeting, onCreateTask, onCrea
             {contacts.map((contact) => (
               <TableRow key={contact.id}>
                 <TableCell className="font-medium">{getDisplayName(contact)}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <ContactTypeBadge type={contact.contactType} />
+                </TableCell>
                 <TableCell className="hidden md:table-cell">{contact.email || "-"}</TableCell>
                 <TableCell className="hidden md:table-cell">{contact.phone || "-"}</TableCell>
-                <TableCell>{contact.source || "-"}</TableCell>
+                <TableCell className="hidden lg:table-cell">{contact.source || "-"}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <TooltipProvider>

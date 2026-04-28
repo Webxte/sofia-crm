@@ -5,7 +5,7 @@ export interface OrdersContextType {
   orders: Order[];
   setOrders: (orders: Order[]) => void;
   loading: boolean;
-  addOrder: (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  addOrder: (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => Promise<string | undefined>;
   updateOrder: (id: string, orderData: Partial<Order>) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
   refreshOrders: () => Promise<void>;

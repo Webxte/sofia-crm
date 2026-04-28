@@ -29,6 +29,7 @@ export const contactFormSchema = z.object({
   source: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  contactType: z.enum(['lead', 'prospect', 'customer']).optional().default('lead'),
 }).refine((data) => {
   // Either fullName or company must be provided
   return !!data.fullName || !!data.company;
